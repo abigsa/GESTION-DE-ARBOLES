@@ -1,5 +1,5 @@
 const oracledb = require("oracledb");
-require("dotenv").config({ path: "../.env" });
+require("dotenv").config();
 
 const dbConfig = {
   user: process.env.DB_USER,

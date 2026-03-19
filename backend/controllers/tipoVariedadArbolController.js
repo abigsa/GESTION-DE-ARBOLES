@@ -82,20 +82,37 @@ const eliminar = async (req, res) => {
 // ----------------------------------------------------------
 const listar = async (req, res) => {
   let conn;
+
   try {
     conn = await getConnection();
+
     const result = await conn.execute(
-      `BEGIN PKG_TIPO_VARIEDAD_ARBOL.LISTAR(:cursor); END;`,
-      { cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR } }
+      `
+      BEGIN
+        PKG_TIPO_VARIEDAD_ARBOL.LISTAR(:cursor);
+      END;
+      `,
+      {
+        cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR }
+      }
     );
-    const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows();
-    await cursor.close();
-    res.status(200).json({ success: true, data: rows });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+
+    const resultSet = result.outBinds.cursor;
+    const rows = await resultSet.getRows(1000);
+    await resultSet.close();
+
+    res.json({
+      success: true,
+      data: rows
+    });
+  } catch (error) {
+    console.error("Error en listar:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   } finally {
-    await closeConnection(conn);
+    if (conn) await conn.close();
   }
 };
 
