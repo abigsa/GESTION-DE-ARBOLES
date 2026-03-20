@@ -1,157 +1,170 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react';
+import './App.css';
+import { resources } from './config/resources';
+import Sidebar from './components/Sidebar';
+import EntityForm from './components/EntityForm';
+import EntityTable from './components/EntityTable';
+
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000/api';
+
+function emptyForm(resource) {
+  return resource.fields.reduce((acc, field) => {
+    acc[field.name] = '';
+    return acc;
+  }, {});
+}
+
+function normalizeValue(field, value) {
+  if (value === '') return null;
+  if (field.type === 'number') return Number(value);
+  return value;
+}
 
 function App() {
-  const [data, setData] = useState([]);
-  const [nombre, setNombre] = useState("");
-  const [tipoUso, setTipoUso] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [editId, setEditId] = useState(null);
-
-  const API = "http://localhost:3000/api/tipos-variedad";
-
-  const fetchData = async () => {
-    try {
-      const res = await fetch(API);
-      const json = await res.json();
-      setData(json.data || []);
-    } catch (error) {
-      console.error("Error al obtener datos:", error);
-    }
-  };
+  const [activeKey, setActiveKey] = useState(resources[0].key);
+  const resource = useMemo(() => resources.find((item) => item.key === activeKey), [activeKey]);
+  const [rows, setRows] = useState([]);
+  const [formData, setFormData] = useState(emptyForm(resource));
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    setFormData(emptyForm(resource));
+    setEditingId(null);
+    setMessage('');
+    setError('');
+    fetchRows();
+  }, [resource]);
 
-  const handleSubmit = async (e) => {
+  async function fetchRows() {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}${resource.endpoint}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'No se pudo listar');
+      setRows(json.data || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleChange(name, value) {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    const body = resource.fields.reduce((acc, field) => {
+      acc[field.name] = normalizeValue(field, formData[field.name]);
+      return acc;
+    }, {});
+
+    const url = editingId
+      ? `${API_BASE}${resource.endpoint}/${editingId}`
+      : `${API_BASE}${resource.endpoint}`;
+
+    const method = editingId ? 'PUT' : 'POST';
 
     try {
-      if (editId) {
-        await fetch(`${API}/${editId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nombre_arbol: nombre,
-            tipo_uso: tipoUso,
-            descripcion: descripcion,
-          }),
-        });
-      } else {
-        await fetch(API, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nombre_arbol: nombre,
-            tipo_uso: tipoUso,
-            descripcion: descripcion,
-          }),
-        });
-      }
-
-      setNombre("");
-      setTipoUso("");
-      setDescripcion("");
-      setEditId(null);
-
-      fetchData();
-    } catch (error) {
-      console.error("Error al guardar:", error);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await fetch(`${API}/${id}`, {
-        method: "DELETE",
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
-      fetchData();
-    } catch (error) {
-      console.error("Error al eliminar:", error);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Operación fallida');
+      setMessage(json.message || 'Operación realizada con éxito');
+      setFormData(emptyForm(resource));
+      setEditingId(null);
+      await fetchRows();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
-  const handleEdit = (item) => {
-    setEditId(item.ID_TIPO_ARBOL);
-    setNombre(item.NOMBRE_ARBOL);
-    setTipoUso(item.TIPO_USO);
-    setDescripcion(item.DESCRIPCION);
-  };
+  function handleEdit(row) {
+    const next = emptyForm(resource);
+    resource.fields.forEach((field) => {
+      const upper = field.name.toUpperCase();
+      next[field.name] = row[upper] ?? row[field.name] ?? '';
+    });
+    setFormData(next);
+    setEditingId(row[resource.idField]);
+    setMessage('');
+    setError('');
+  }
+
+  async function handleDelete(id) {
+    if (!window.confirm('¿Deseas eliminar este registro?')) return;
+    setLoading(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch(`${API_BASE}${resource.endpoint}/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'No se pudo eliminar');
+      setMessage(json.message || 'Registro eliminado');
+      if (editingId === id) {
+        setEditingId(null);
+        setFormData(emptyForm(resource));
+      }
+      await fetchRows();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Tipos de Variedad de Árbol</h1>
+    <div className="layout">
+      <Sidebar resources={resources} activeKey={activeKey} onSelect={setActiveKey} />
+      <main className="content">
+        <header className="hero card">
+          <div>
+            <span className="eyebrow">Panel administrativo</span>
+            <h2>{resource.title}</h2>
+            <p>Gestiona registros de forma simple y comparte cambios con tu equipo usando un backend centralizado.</p>
+          </div>
+          <div className="hero-badge">🌱 Gestión de árboles</div>
+        </header>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
-        <input
-          type="text"
-          placeholder="Nombre"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          style={{ marginRight: "10px" }}
-        />
+        {message && <div className="alert success">{message}</div>}
+        {error && <div className="alert error">{error}</div>}
 
-        <input
-          type="text"
-          placeholder="Tipo de uso"
-          value={tipoUso}
-          onChange={(e) => setTipoUso(e.target.value)}
-          style={{ marginRight: "10px" }}
-        />
-
-        <input
-          type="text"
-          placeholder="Descripción"
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
-          style={{ marginRight: "10px" }}
-        />
-
-        <button type="submit">
-          {editId ? "Actualizar" : "Guardar"}
-        </button>
-      </form>
-
-      <table border="1" cellPadding="10" cellSpacing="0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Tipo de uso</th>
-            <th>Descripción</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.length > 0 ? (
-            data.map((item) => (
-              <tr key={item.ID_TIPO_ARBOL}>
-                <td>{item.ID_TIPO_ARBOL}</td>
-                <td>{item.NOMBRE_ARBOL}</td>
-                <td>{item.TIPO_USO}</td>
-                <td>{item.DESCRIPCION}</td>
-                <td>
-                  <button onClick={() => handleEdit(item)}>Editar</button>
-                  <button
-                    onClick={() => handleDelete(item.ID_TIPO_ARBOL)}
-                    style={{ marginLeft: "10px" }}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5">No hay registros</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+        <div className="grid">
+          <EntityForm
+            resource={resource}
+            formData={formData}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setEditingId(null);
+              setFormData(emptyForm(resource));
+            }}
+            editing={Boolean(editingId)}
+            loading={loading}
+          />
+          <EntityTable
+            rows={rows}
+            idField={resource.idField}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            loading={loading}
+          />
+        </div>
+      </main>
     </div>
   );
 }
