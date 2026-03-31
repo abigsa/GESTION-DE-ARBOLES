@@ -16,6 +16,7 @@ const sectorRoutes = require("./routes/sectorRoutes");
 const tipoFertilizanteRoutes = require("./routes/tipoFertilizanteRoutes");
 const tipoTratamientoRoutes = require("./routes/tipoTratamientoRoutes");
 const tipoVariedadArbolRoutes = require("./routes/tipoVariedadArbolRoutes");
+const movimientoInventarioArbolRoutes = require("./routes/movimientoInventarioArbolRoutes");
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use("/api/sector", sectorRoutes);
 app.use("/api/tipo-fertilizante", tipoFertilizanteRoutes);
 app.use("/api/tipo-tratamiento", tipoTratamientoRoutes);
 app.use("/api/tipos-variedad", tipoVariedadArbolRoutes);
+app.use("/api/movimiento-inventario", movimientoInventarioArbolRoutes);
 
 const PORT = process.env.PORT || 3000;
 
