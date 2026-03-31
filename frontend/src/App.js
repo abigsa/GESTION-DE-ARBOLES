@@ -1,170 +1,200 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import './App.css';
-import { resources } from './config/resources';
-import Sidebar from './components/Sidebar';
-import EntityForm from './components/EntityForm';
-import EntityTable from './components/EntityTable';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000/api';
-
-function emptyForm(resource) {
-  return resource.fields.reduce((acc, field) => {
-    acc[field.name] = '';
-    return acc;
-  }, {});
-}
-
-function normalizeValue(field, value) {
-  if (value === '') return null;
-  if (field.type === 'number') return Number(value);
-  return value;
-}
+import React, { useState } from "react";
+import "./App.css";
+import GenericCrudModule from "./components/GenericCrudModule";
+import MovimientoInventarioModule from "./components/MovimientoInventarioModule";
 
 function App() {
-  const [activeKey, setActiveKey] = useState(resources[0].key);
-  const resource = useMemo(() => resources.find((item) => item.key === activeKey), [activeKey]);
-  const [rows, setRows] = useState([]);
-  const [formData, setFormData] = useState(emptyForm(resource));
-  const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [activeModule, setActiveModule] = useState("tipos-variedad");
 
-  useEffect(() => {
-    setFormData(emptyForm(resource));
-    setEditingId(null);
-    setMessage('');
-    setError('');
-    fetchRows();
-  }, [resource]);
+  const menuItems = [
+    { key: "tipos-variedad", label: "Tipos de Variedad de Árbol" },
+    { key: "tipos-fertilizante", label: "Tipos de Fertilizante" },
+    { key: "tipos-tratamiento", label: "Tipos de Tratamiento" },
+    { key: "estados-arbol", label: "Estados del Árbol" },
+    { key: "fincas", label: "Fincas" },
+    { key: "sectores", label: "Sectores" },
+    { key: "plagas-enfermedades", label: "Plagas y Enfermedades" },
+    { key: "arboles", label: "Árboles" },
+    { key: "historial-estados", label: "Historial de Estados" },
+    { key: "registros-plaga", label: "Registros de Plaga" },
+    { key: "registros-tratamiento", label: "Registros de Tratamiento" },
+    { key: "resiembras", label: "Resiembras" },
+    { key: "movimiento-inventario", label: "Movimiento Inventario" }
+  ];
 
-  async function fetchRows() {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API_BASE}${resource.endpoint}`);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'No se pudo listar');
-      setRows(json.data || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  const modulesConfig = {
+    "tipos-variedad": {
+      title: "Tipos de Variedad de Árbol",
+      endpoint: "/tipos-variedad",
+      fields: [
+        { name: "nombre_arbol", label: "Nombre del árbol", type: "text" },
+        { name: "tipo_uso", label: "Tipo de uso", type: "text" },
+        { name: "descripcion", label: "Descripción", type: "text" }
+      ]
+    },
+    "tipos-fertilizante": {
+      title: "Tipos de Fertilizante",
+      endpoint: "/tipo-fertilizante",
+      fields: [
+        { name: "nombre", label: "Nombre", type: "text" },
+        { name: "descripcion", label: "Descripción", type: "text" }
+      ]
+    },
+    "tipos-tratamiento": {
+      title: "Tipos de Tratamiento",
+      endpoint: "/tipo-tratamiento",
+      fields: [
+        { name: "nombre", label: "Nombre", type: "text" },
+        { name: "descripcion", label: "Descripción", type: "text" }
+      ]
+    },
+    "estados-arbol": {
+      title: "Estados del Árbol",
+      endpoint: "/estado-arbol",
+      fields: [
+        { name: "nombre", label: "Nombre", type: "text" },
+        { name: "descripcion", label: "Descripción", type: "text" }
+      ]
+    },
+    fincas: {
+      title: "Fincas",
+      endpoint: "/finca",
+      fields: [
+        { name: "nombre", label: "Nombre", type: "text" },
+        { name: "ubicacion", label: "Ubicación", type: "text" },
+        { name: "descripcion", label: "Descripción", type: "text" }
+      ]
+    },
+    sectores: {
+      title: "Sectores",
+      endpoint: "/sector",
+      fields: [
+        { name: "id_finca", label: "ID Finca", type: "number" },
+        { name: "nombre_sector", label: "Nombre del sector", type: "text" },
+        { name: "area_hectareas", label: "Área hectáreas", type: "number" },
+        { name: "numero_surcos", label: "Número de surcos", type: "number" },
+        {
+          name: "posiciones_por_surco",
+          label: "Posiciones por surco",
+          type: "number"
+        },
+        { name: "tipo_cultivo", label: "Tipo de cultivo", type: "text" }
+      ]
+    },
+    "plagas-enfermedades": {
+      title: "Plagas y Enfermedades",
+      endpoint: "/plaga-enfermedad",
+      fields: [
+        { name: "nombre", label: "Nombre", type: "text" },
+        { name: "descripcion", label: "Descripción", type: "text" }
+      ]
+    },
+    arboles: {
+      title: "Árboles",
+      endpoint: "/arbol",
+      fields: [
+        { name: "id_sector", label: "ID Sector", type: "number" },
+        {
+          name: "id_tipo_variedad_arbol",
+          label: "ID Tipo Variedad",
+          type: "number"
+        },
+        { name: "id_estado", label: "ID Estado", type: "number" },
+        { name: "numero_surco", label: "Número de surco", type: "number" },
+        { name: "descripcion", label: "Descripción", type: "text" }
+      ]
+    },
+    "historial-estados": {
+      title: "Historial de Estados",
+      endpoint: "/historial-estado",
+      fields: [
+        { name: "id_arbol", label: "ID Árbol", type: "number" },
+        { name: "id_estado", label: "ID Estado", type: "number" },
+        { name: "observacion", label: "Observación", type: "text" }
+      ]
+    },
+    "registros-plaga": {
+      title: "Registros de Plaga",
+      endpoint: "/registro-plaga",
+      fields: [
+        { name: "id_arbol", label: "ID Árbol", type: "number" },
+        {
+          name: "id_plaga_enfermedad",
+          label: "ID Plaga/Enfermedad",
+          type: "number"
+        },
+        { name: "observacion", label: "Observación", type: "text" }
+      ]
+    },
+    "registros-tratamiento": {
+      title: "Registros de Tratamiento",
+      endpoint: "/registro-tratamiento",
+      fields: [
+        { name: "id_arbol", label: "ID Árbol", type: "number" },
+        {
+          name: "id_tipo_tratamiento",
+          label: "ID Tipo Tratamiento",
+          type: "number"
+        },
+        {
+          name: "id_tipo_fertilizante",
+          label: "ID Tipo Fertilizante",
+          type: "number"
+        },
+        { name: "observacion", label: "Observación", type: "text" }
+      ]
+    },
+    resiembras: {
+      title: "Resiembras",
+      endpoint: "/resiembra",
+      fields: [
+        { name: "id_arbol", label: "ID Árbol", type: "number" },
+        { name: "observacion", label: "Observación", type: "text" }
+      ]
     }
-  }
+  };
 
-  function handleChange(name, value) {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    const body = resource.fields.reduce((acc, field) => {
-      acc[field.name] = normalizeValue(field, formData[field.name]);
-      return acc;
-    }, {});
-
-    const url = editingId
-      ? `${API_BASE}${resource.endpoint}/${editingId}`
-      : `${API_BASE}${resource.endpoint}`;
-
-    const method = editingId ? 'PUT' : 'POST';
-
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Operación fallida');
-      setMessage(json.message || 'Operación realizada con éxito');
-      setFormData(emptyForm(resource));
-      setEditingId(null);
-      await fetchRows();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  const renderModule = () => {
+    if (activeModule === "movimiento-inventario") {
+      return <MovimientoInventarioModule />;
     }
-  }
 
-  function handleEdit(row) {
-    const next = emptyForm(resource);
-    resource.fields.forEach((field) => {
-      const upper = field.name.toUpperCase();
-      next[field.name] = row[upper] ?? row[field.name] ?? '';
-    });
-    setFormData(next);
-    setEditingId(row[resource.idField]);
-    setMessage('');
-    setError('');
-  }
+    const config = modulesConfig[activeModule];
 
-  async function handleDelete(id) {
-    if (!window.confirm('¿Deseas eliminar este registro?')) return;
-    setLoading(true);
-    setError('');
-    setMessage('');
-    try {
-      const res = await fetch(`${API_BASE}${resource.endpoint}/${id}`, { method: 'DELETE' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'No se pudo eliminar');
-      setMessage(json.message || 'Registro eliminado');
-      if (editingId === id) {
-        setEditingId(null);
-        setFormData(emptyForm(resource));
-      }
-      await fetchRows();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+    return (
+      <GenericCrudModule
+        title={config.title}
+        endpoint={config.endpoint}
+        fields={config.fields}
+      />
+    );
+  };
 
   return (
-    <div className="layout">
-      <Sidebar resources={resources} activeKey={activeKey} onSelect={setActiveKey} />
-      <main className="content">
-        <header className="hero card">
+    <div className="app-layout">
+      <aside className="sidebar">
+        <div className="brand-card">
+          <div className="brand-icon">🌳</div>
           <div>
-            <span className="eyebrow">Panel administrativo</span>
-            <h2>{resource.title}</h2>
-            <p>Gestiona registros de forma simple y comparte cambios con tu equipo usando un backend centralizado.</p>
+            <h2>Gestión de Árboles</h2>
+            <p>CRUD colaborativo</p>
           </div>
-          <div className="hero-badge">🌱 Gestión de árboles</div>
-        </header>
-
-        {message && <div className="alert success">{message}</div>}
-        {error && <div className="alert error">{error}</div>}
-
-        <div className="grid">
-          <EntityForm
-            resource={resource}
-            formData={formData}
-            onChange={handleChange}
-            onSubmit={handleSubmit}
-            onCancel={() => {
-              setEditingId(null);
-              setFormData(emptyForm(resource));
-            }}
-            editing={Boolean(editingId)}
-            loading={loading}
-          />
-          <EntityTable
-            rows={rows}
-            idField={resource.idField}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            loading={loading}
-          />
         </div>
-      </main>
+
+        <nav className="menu">
+          {menuItems.map((item) => (
+            <button
+              key={item.key}
+              className={`menu-item ${activeModule === item.key ? "active" : ""}`}
+              onClick={() => setActiveModule(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      <main className="main-content">{renderModule()}</main>
     </div>
   );
 }
