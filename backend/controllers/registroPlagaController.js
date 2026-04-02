@@ -17,8 +17,8 @@ const insertar = async (req, res) => {
       {
         id_arbol:         id_arbol         ? Number(id_arbol)         : null,
         id_plaga:         id_plaga         ? Number(id_plaga)         : null,
-        fecha_deteccion:  fecha_deteccion  ? new Date(fecha_deteccion): null,
-        fecha_resolucion: fecha_resolucion ? new Date(fecha_resolucion): null,
+        fecha_deteccion:  fecha_deteccion ? fecha_deteccion : null,
+        fecha_resolucion: fecha_deteccion ? fecha_deteccion : null,
         observaciones:    observaciones    || null,
       },
       { autoCommit: true }
@@ -46,8 +46,10 @@ const actualizar = async (req, res) => {
         id_registro:      Number(id_registro),
         id_arbol:         id_arbol         ? Number(id_arbol)          : null,
         id_plaga:         id_plaga         ? Number(id_plaga)          : null,
-        fecha_deteccion:  fecha_deteccion  ? new Date(fecha_deteccion) : null,
-        fecha_resolucion: fecha_resolucion ? new Date(fecha_resolucion): null,
+        fecha_deteccion:  fecha_deteccion ? fecha_deteccion : null,
+        fecha_resolucion: fecha_resolucion && fecha_resolucion !== ''
+        ? fecha_resolucion
+        : null,
         observaciones:    observaciones    || null,
       },
       { autoCommit: true }
