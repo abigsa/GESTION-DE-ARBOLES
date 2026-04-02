@@ -83,6 +83,7 @@ const insertar = async (req, res) => {
       id_tipo_movimiento,
       id_sector_origen,
       id_sector_destino,
+      fecha_movimiento,
       observacion,
       usuario_registro
     } = req.body;
@@ -97,6 +98,7 @@ const insertar = async (req, res) => {
           :id_tipo_movimiento,
           :id_sector_origen,
           :id_sector_destino,
+          :fecha_movimiento,
           :observacion,
           :usuario_registro
         );
@@ -107,8 +109,9 @@ const insertar = async (req, res) => {
         id_tipo_movimiento: Number(id_tipo_movimiento),
         id_sector_origen: id_sector_origen ? Number(id_sector_origen) : null,
         id_sector_destino: id_sector_destino ? Number(id_sector_destino) : null,
-        observacion,
-        usuario_registro
+        fecha_movimiento: fecha_movimiento || null,
+        observacion: observacion || null,
+        usuario_registro: usuario_registro || "ADMIN"
       },
       { autoCommit: true }
     );
@@ -138,6 +141,7 @@ const actualizar = async (req, res) => {
       id_tipo_movimiento,
       id_sector_origen,
       id_sector_destino,
+      fecha_movimiento,
       observacion,
       usuario_registro
     } = req.body;
@@ -153,6 +157,7 @@ const actualizar = async (req, res) => {
           :id_tipo_movimiento,
           :id_sector_origen,
           :id_sector_destino,
+          :fecha_movimiento,
           :observacion,
           :usuario_registro
         );
@@ -164,8 +169,9 @@ const actualizar = async (req, res) => {
         id_tipo_movimiento: Number(id_tipo_movimiento),
         id_sector_origen: id_sector_origen ? Number(id_sector_origen) : null,
         id_sector_destino: id_sector_destino ? Number(id_sector_destino) : null,
-        observacion,
-        usuario_registro
+        fecha_movimiento: fecha_movimiento || null,
+        observacion: observacion || null,
+        usuario_registro: usuario_registro || "ADMIN"
       },
       { autoCommit: true }
     );

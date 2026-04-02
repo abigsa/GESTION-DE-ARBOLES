@@ -379,3 +379,24 @@ tbody tr:hover {
     padding: 12px 14px;
   }
 }
+.module-header {
+  margin-bottom: 20px;
+}
+
+.module-header h1 {
+  margin: 0;
+  font-size: 28px;
+  color: #1f4d2e;
+}
+
+.module-header p {
+  margin-top: 6px;
+  color: #607067;
+}
+
+.module-error {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}

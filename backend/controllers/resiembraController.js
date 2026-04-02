@@ -1,6 +1,3 @@
-// ============================================================
-// controllers/resiembraController.js
-// ============================================================
 const oracledb = require('oracledb');
 const { getConnection, closeConnection } = require('../config/db');
 
@@ -15,9 +12,9 @@ const insertar = async (req, res) => {
     await conn.execute(
       `BEGIN PKG_RESIEMBRA.INSERTAR(:id_arbol_nuevo, :fecha_resiembra, :motivo); END;`,
       {
-        id_arbol_nuevo:  id_arbol_nuevo  ? Number(id_arbol_nuevo)    : null,
-        fecha_resiembra: fecha_resiembra ? new Date(fecha_resiembra) : null,
-        motivo:          motivo          || null,
+        id_arbol_nuevo: Number(id_arbol_nuevo),
+        fecha_resiembra: fecha_resiembra || null,
+        motivo: motivo || null,
       },
       { autoCommit: true }
     );
@@ -41,10 +38,10 @@ const actualizar = async (req, res) => {
     await conn.execute(
       `BEGIN PKG_RESIEMBRA.ACTUALIZAR(:id_resiembra, :id_arbol_nuevo, :fecha_resiembra, :motivo); END;`,
       {
-        id_resiembra:    Number(id_resiembra),
-        id_arbol_nuevo:  id_arbol_nuevo  ? Number(id_arbol_nuevo)    : null,
-        fecha_resiembra: fecha_resiembra ? new Date(fecha_resiembra) : null,
-        motivo:          motivo          || null,
+        id_resiembra: Number(id_resiembra),
+        id_arbol_nuevo: Number(id_arbol_nuevo),
+        fecha_resiembra: fecha_resiembra || null,
+        motivo: motivo || null,
       },
       { autoCommit: true }
     );
@@ -57,7 +54,7 @@ const actualizar = async (req, res) => {
 };
 
 // ----------------------------------------------------------
-// ELIMINAR (DELETE FÍSICO)
+// ELIMINAR
 // ----------------------------------------------------------
 const eliminar = async (req, res) => {
   const { id_resiembra } = req.params;
@@ -89,7 +86,7 @@ const listar = async (req, res) => {
       { cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR } }
     );
     const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows();
+    const rows = await cursor.getRows(1000);
     await cursor.close();
     res.status(200).json({ success: true, data: rows });
   } catch (err) {
@@ -111,15 +108,17 @@ const obtenerPorId = async (req, res) => {
       `BEGIN PKG_RESIEMBRA.OBTENER_POR_ID(:id_resiembra, :cursor); END;`,
       {
         id_resiembra: Number(id_resiembra),
-        cursor:       { dir: oracledb.BIND_OUT, type: oracledb.CURSOR },
+        cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR },
       }
     );
     const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows();
+    const rows = await cursor.getRows(1000);
     await cursor.close();
+
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Resiembra no encontrada.' });
     }
+
     res.status(200).json({ success: true, data: rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

@@ -18,7 +18,7 @@ const insertar = async (req, res) => {
         id_arbol:            Number(id_arbol),
         id_tipo_tratamiento: Number(id_tipo_tratamiento),
         id_fertilizante:     id_fertilizante ? Number(id_fertilizante) : null,
-        fecha_aplicacion:    new Date(fecha_aplicacion),
+        fecha_aplicacion:    fecha_aplicacion || null,
         observaciones:       observaciones || null,
       },
       { autoCommit: true }
@@ -47,7 +47,7 @@ const actualizar = async (req, res) => {
         id_arbol:            Number(id_arbol),
         id_tipo_tratamiento: Number(id_tipo_tratamiento),
         id_fertilizante:     id_fertilizante ? Number(id_fertilizante) : null,
-        fecha_aplicacion:    new Date(fecha_aplicacion),
+        fecha_aplicacion:    fecha_aplicacion || null,
         observaciones:       observaciones || null,
       },
       { autoCommit: true }
