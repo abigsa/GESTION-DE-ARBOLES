@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import "./App.css";
 import GenericCrudModule from "./components/GenericCrudModule";
 import MovimientoInventarioModule from "./components/MovimientoInventarioModule";
+import MapaPlanoModule from "./components/MapaPlanoModule";
 
 const MENU_ITEMS = [
   { key: "tipos-variedad", label: "Tipos de Variedad de Árbol" },
@@ -17,6 +18,7 @@ const MENU_ITEMS = [
   { key: "registros-tratamiento", label: "Registros de Tratamiento" },
   { key: "resiembras", label: "Resiembras" },
   { key: "movimiento-inventario", label: "Movimiento Inventario" },
+  { key: "mapa-plano", label: "Mapa Agrícola" }
 ];
 
 const MODULES_CONFIG = {
@@ -45,172 +47,186 @@ const MODULES_CONFIG = {
   },
 
   "tipos-fertilizante": {
-  title: "Tipos de Fertilizante",
-  endpoint: "/tipo-fertilizante",
-  fields: [
-    {
-      name: "nombre_fertilizante",
-      label: "Nombre del fertilizante",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "tipo_fertilizante",
-      label: "Tipo de fertilizante",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "nutrientes_principales",
-      label: "Nutrientes principales",
-      type: "textarea",
-      required: true,
-    },
-    {
-      name: "metodo_aplicacion",
-      label: "Método de aplicación",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "frecuencia",
-      label: "Frecuencia",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "descripcion",
-      label: "Descripción",
-      type: "textarea",
-    },
-  ],
-},
+    title: "Tipos de Fertilizante",
+    endpoint: "/tipo-fertilizante",
+    fields: [
+      {
+        name: "nombre_fertilizante",
+        label: "Nombre del fertilizante",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "tipo_fertilizante",
+        label: "Tipo de fertilizante",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "nutrientes_principales",
+        label: "Nutrientes principales",
+        type: "textarea",
+        required: true,
+      },
+      {
+        name: "metodo_aplicacion",
+        label: "Método de aplicación",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "frecuencia",
+        label: "Frecuencia",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "descripcion",
+        label: "Descripción",
+        type: "textarea",
+      },
+    ],
+  },
 
   "tipos-tratamiento": {
-  title: "Tipos de Tratamiento",
-  endpoint: "/tipo-tratamiento",
-  fields: [
-    {
-      name: "nombre_tratamiento",
-      label: "Nombre del tratamiento",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "categoria",
-      label: "Categoría",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "metodo_aplicacion",
-      label: "Método de aplicación",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "frecuencia",
-      label: "Frecuencia",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "descripcion",
-      label: "Descripción",
-      type: "textarea",
-    },
-  ],
-},
-
-"estados-arbol": {
-  title: "Estados del Árbol",
-  endpoint: "/estado-arbol",
-  fields: [
-    {
-      name: "nombre_estado",
-      label: "Nombre del estado",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "orden_ciclo",
-      label: "Orden del ciclo",
-      type: "number",
-      required: true,
-      validate: (value) => {
-        if (value !== "" && Number(value) <= 0) {
-          return "Debe ser mayor que 0";
-        }
-        return "";
+    title: "Tipos de Tratamiento",
+    endpoint: "/tipo-tratamiento",
+    fields: [
+      {
+        name: "nombre_tratamiento",
+        label: "Nombre del tratamiento",
+        type: "text",
+        required: true,
       },
-    },
-    {
-      name: "es_productivo",
-      label: "¿Es productivo?",
-      type: "select",
-      required: true,
-      options: [
-        { id: "S", nombre: "Sí" },
-        { id: "N", nombre: "No" },
-      ],
-      optionValue: "id",
-      optionLabel: "nombre",
-    },
-    {
-      name: "descripcion",
-      label: "Descripción",
-      type: "textarea",
-    },
-  ],
-},
+      {
+        name: "categoria",
+        label: "Categoría",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "metodo_aplicacion",
+        label: "Método de aplicación",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "frecuencia",
+        label: "Frecuencia",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "descripcion",
+        label: "Descripción",
+        type: "textarea",
+      },
+    ],
+  },
+
+  "estados-arbol": {
+    title: "Estados del Árbol",
+    endpoint: "/estado-arbol",
+    fields: [
+      {
+        name: "nombre_estado",
+        label: "Nombre del estado",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "orden_ciclo",
+        label: "Orden del ciclo",
+        type: "number",
+        required: true,
+        validate: (value) => {
+          if (value !== "" && Number(value) <= 0) {
+            return "Debe ser mayor que 0";
+          }
+          return "";
+        },
+      },
+      {
+        name: "es_productivo",
+        label: "¿Es productivo?",
+        type: "select",
+        required: true,
+        options: [
+          { id: "S", nombre: "Sí" },
+          { id: "N", nombre: "No" },
+        ],
+        optionValue: "id",
+        optionLabel: "nombre",
+      },
+      {
+        name: "descripcion",
+        label: "Descripción",
+        type: "textarea",
+      },
+    ],
+  },
 
   fincas: {
-  title: "Fincas",
-  endpoint: "/finca",
-  fields: [
-    {
-      name: "nombre_finca",
-      label: "Nombre de la finca",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "ubicacion",
-      label: "Ubicación",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "area_hectareas",
-      label: "Área (hectáreas)",
-      type: "number",
-      required: true,
-      validate: (value) => {
-        if (value !== "" && Number(value) <= 0) {
-          return "Debe ser mayor que 0";
-        }
-        return "";
+    title: "Fincas",
+    endpoint: "/finca",
+    fields: [
+      {
+        name: "nombre_finca",
+        label: "Nombre de la finca",
+        type: "text",
+        required: true,
       },
-    },
-    {
-      name: "propietario",
-      label: "Propietario",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "telefono_contacto",
-      label: "Teléfono de contacto",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "descripcion",
-      label: "Descripción",
-      type: "textarea",
-    },
-  ],
-},
+      {
+        name: "ubicacion",
+        label: "Ubicación",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "area_hectareas",
+        label: "Área (hectáreas)",
+        type: "number",
+        required: true,
+        validate: (value) => {
+          if (value !== "" && Number(value) <= 0) {
+            return "Debe ser mayor que 0";
+          }
+          return "";
+        },
+      },
+      {
+        name: "propietario",
+        label: "Propietario",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "telefono_contacto",
+        label: "Teléfono de contacto",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "descripcion",
+        label: "Descripción",
+        type: "textarea",
+      },
+
+      /* NUEVOS CAMPOS DEL MAPA */
+      {
+        name: "ancho",
+        label: "Ancho del terreno (metros)",
+        type: "number",
+        required: false,
+      },
+      {
+        name: "largo",
+        label: "Largo del terreno (metros)",
+        type: "number",
+        required: false,
+      },
+    ],
+  },
 
   sectores: {
     title: "Sectores",
@@ -223,7 +239,7 @@ const MODULES_CONFIG = {
         required: true,
         optionsEndpoint: "/finca",
         optionValue: "ID_FINCA",
-        optionLabel: "NOMBRE",
+        optionLabel: "NOMBRE_FINCA",
       },
       {
         name: "nombre_sector",
@@ -275,233 +291,235 @@ const MODULES_CONFIG = {
   },
 
   "plagas-enfermedades": {
-  title: "Plagas y Enfermedades",
-  endpoint: "/plaga-enfermedad",
-  fields: [
-    {
-      name: "nombre_plaga",
-      label: "Nombre de la plaga o enfermedad",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "tipo_plaga",
-      label: "Tipo",
-      type: "select",
-      required: true,
-      options: [
-        { id: "PLAGA", nombre: "Plaga" },
-        { id: "ENFERMEDAD", nombre: "Enfermedad" },
-      ],
-      optionValue: "id",
-      optionLabel: "nombre",
-    },
-    {
-      name: "nivel_riesgo",
-      label: "Nivel de riesgo",
-      type: "select",
-      required: true,
-      options: [
-        { id: "BAJO", nombre: "Bajo" },
-        { id: "MEDIO", nombre: "Medio" },
-        { id: "ALTO", nombre: "Alto" },
-      ],
-      optionValue: "id",
-      optionLabel: "nombre",
-    },
-    {
-      name: "descripcion",
-      label: "Descripción",
-      type: "textarea",
-    },
-  ],
-},
+    title: "Plagas y Enfermedades",
+    endpoint: "/plaga-enfermedad",
+    fields: [
+      {
+        name: "nombre_plaga",
+        label: "Nombre de la plaga o enfermedad",
+        type: "text",
+        required: true,
+      },
+      {
+        name: "tipo_plaga",
+        label: "Tipo",
+        type: "select",
+        required: true,
+        options: [
+          { id: "PLAGA", nombre: "Plaga" },
+          { id: "ENFERMEDAD", nombre: "Enfermedad" },
+        ],
+        optionValue: "id",
+        optionLabel: "nombre",
+      },
+      {
+        name: "nivel_riesgo",
+        label: "Nivel de riesgo",
+        type: "select",
+        required: true,
+        options: [
+          { id: "BAJO", nombre: "Bajo" },
+          { id: "MEDIO", nombre: "Medio" },
+          { id: "ALTO", nombre: "Alto" },
+        ],
+        optionValue: "id",
+        optionLabel: "nombre",
+      },
+      {
+        name: "descripcion",
+        label: "Descripción",
+        type: "textarea",
+      },
+    ],
+  },
 
-arboles: {
-  title: "Árboles",
-  endpoint: "/arbol",
-  fields: [
-    {
-      name: "id_sector",
-      label: "Sector",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/sector",
-      optionValue: "ID_SECTOR",
-      optionLabel: "NOMBRE_SECTOR",
-    },
-    {
-      name: "id_tipo_variedad_arbol",
-      label: "Tipo de variedad",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/tipos-variedad",
-      optionValue: "ID_TIPO_VARIEDAD_ARBOL",
-      optionLabel: "NOMBRE_ARBOL",
-    },
-    {
-      name: "id_estado",
-      label: "Estado",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/estado-arbol",
-      optionValue: "ID_ESTADO",
-      optionLabel: "NOMBRE_ESTADO",
-    },
-    {
-      name: "numero_surco",
-      label: "Número de surco",
-      type: "number",
-      required: true,
-    },
-    {
-      name: "descripcion",
-      label: "Descripción",
-      type: "textarea",
-    },
-  ],
-},
+  arboles: {
+    title: "Árboles",
+    endpoint: "/arbol",
+    fields: [
+      {
+        name: "id_sector",
+        label: "Sector",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/sector",
+        optionValue: "ID_SECTOR",
+        optionLabel: "NOMBRE_SECTOR",
+      },
+      {
+        name: "id_tipo_variedad_arbol",
+        label: "Tipo de variedad",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/tipos-variedad",
+        optionValue: "ID_TIPO_VARIEDAD_ARBOL",
+        optionLabel: "NOMBRE_ARBOL",
+      },
+      {
+        name: "id_estado",
+        label: "Estado",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/estado-arbol",
+        optionValue: "ID_ESTADO",
+        optionLabel: "NOMBRE_ESTADO",
+      },
+      {
+        name: "numero_surco",
+        label: "Número de surco",
+        type: "number",
+        required: true,
+      },
+      {
+        name: "descripcion",
+        label: "Descripción",
+        type: "textarea",
+      },
+    ],
+  },
 
-"historial-estados": {
-  title: "Historial de Estados",
-  endpoint: "/historial-estado",
-  fields: [
-    {
-      name: "id_arbol",
-      label: "Árbol",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/arbol",
-      optionValue: "ID_ARBOL",
-      optionLabel: "NOMBRE_ARBOL",
-    },
-    {
-      name: "id_estado_nuevo",
-      label: "Nuevo estado",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/estado-arbol",
-      optionValue: "ID_ESTADO",
-      optionLabel: "NOMBRE_ESTADO",
-    },
-    {
-      name: "observaciones",
-      label: "Observaciones",
-      type: "textarea",
-    },
-  ],
-},
+  "historial-estados": {
+    title: "Historial de Estados",
+    endpoint: "/historial-estado",
+    fields: [
+      {
+        name: "id_arbol",
+        label: "Árbol",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/arbol",
+        optionValue: "ID_ARBOL",
+        optionLabel: "NOMBRE_ARBOL",
+      },
+      {
+        name: "id_estado_nuevo",
+        label: "Nuevo estado",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/estado-arbol",
+        optionValue: "ID_ESTADO",
+        optionLabel: "NOMBRE_ESTADO",
+      },
+      {
+        name: "observaciones",
+        label: "Observaciones",
+        type: "textarea",
+      },
+    ],
+  },
 
   "registros-plaga": {
-  title: "Registros de Plaga",
-  endpoint: "/registro-plaga",
-  fields: [
-    {
-      name: "id_arbol",
-      label: "Árbol",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/arbol",
-      optionValue: "ID_ARBOL",
-      optionLabel: "NOMBRE_ARBOL",
-    },
-    {
-      name: "id_plaga",
-      label: "Plaga / Enfermedad",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/plaga-enfermedad",
-      optionValue: "ID_PLAGA",
-      optionLabel: "NOMBRE_PLAGA",
-    },
-    {
-      name: "fecha_deteccion",
-      label: "Fecha de detección",
-      type: "date",
-      required: true,
-    },
-    {
-      name: "fecha_resolucion",
-      label: "Fecha de resolución",
-      type: "date",
-    },
-    {
-      name: "observaciones",
-      label: "Observaciones",
-      type: "textarea",
-    },
-  ],
-},
+    title: "Registros de Plaga",
+    endpoint: "/registro-plaga",
+    fields: [
+      {
+        name: "id_arbol",
+        label: "Árbol",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/arbol",
+        optionValue: "ID_ARBOL",
+        optionLabel: "NOMBRE_ARBOL",
+      },
+      {
+        name: "id_plaga",
+        label: "Plaga / Enfermedad",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/plaga-enfermedad",
+        optionValue: "ID_PLAGA",
+        optionLabel: "NOMBRE_PLAGA",
+      },
+      {
+        name: "fecha_deteccion",
+        label: "Fecha de detección",
+        type: "date",
+        required: true,
+      },
+      {
+        name: "fecha_resolucion",
+        label: "Fecha de resolución",
+        type: "date",
+      },
+      {
+        name: "observaciones",
+        label: "Observaciones",
+        type: "textarea",
+      },
+    ],
+  },
+
   "registros-tratamiento": {
-  title: "Registros de Tratamiento",
-  endpoint: "/registro-tratamiento",
-  fields: [
-    {
-      name: "id_arbol",
-      label: "Árbol",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/arbol",
-      optionValue: "ID_ARBOL",
-      optionLabel: "NOMBRE_ARBOL",
-    },
-    {
-      name: "id_tipo_tratamiento",
-      label: "Tipo de tratamiento",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/tipo-tratamiento",
-      optionValue: "ID_TIPO_TRATAMIENTO",
-      optionLabel: "NOMBRE_TRATAMIENTO",
-    },
-    {
-      name: "id_fertilizante",
-      label: "Tipo de fertilizante",
-      type: "select",
-      optionsEndpoint: "/tipo-fertilizante",
-      optionValue: "ID_FERTILIZANTE",
-      optionLabel: "NOMBRE_FERTILIZANTE",
-    },
-    {
-      name: "fecha_aplicacion",
-      label: "Fecha de aplicación",
-      type: "date",
-      required: true,
-    },
-    {
-      name: "observaciones",
-      label: "Observaciones",
-      type: "textarea",
-    },
-  ],
-},
+    title: "Registros de Tratamiento",
+    endpoint: "/registro-tratamiento",
+    fields: [
+      {
+        name: "id_arbol",
+        label: "Árbol",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/arbol",
+        optionValue: "ID_ARBOL",
+        optionLabel: "NOMBRE_ARBOL",
+      },
+      {
+        name: "id_tipo_tratamiento",
+        label: "Tipo de tratamiento",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/tipo-tratamiento",
+        optionValue: "ID_TIPO_TRATAMIENTO",
+        optionLabel: "NOMBRE_TRATAMIENTO",
+      },
+      {
+        name: "id_fertilizante",
+        label: "Tipo de fertilizante",
+        type: "select",
+        optionsEndpoint: "/tipo-fertilizante",
+        optionValue: "ID_FERTILIZANTE",
+        optionLabel: "NOMBRE_FERTILIZANTE",
+      },
+      {
+        name: "fecha_aplicacion",
+        label: "Fecha de aplicación",
+        type: "date",
+        required: true,
+      },
+      {
+        name: "observaciones",
+        label: "Observaciones",
+        type: "textarea",
+      },
+    ],
+  },
+
   resiembras: {
-  title: "Resiembras",
-  endpoint: "/resiembra",
-  fields: [
-    {
-      name: "id_arbol_nuevo",
-      label: "Árbol",
-      type: "select",
-      required: true,
-      optionsEndpoint: "/arbol",
-      optionValue: "ID_ARBOL",
-      optionLabel: "NOMBRE_ARBOL",
-    },
-    {
-      name: "fecha_resiembra",
-      label: "Fecha de resiembra",
-      type: "date",
-      required: true,
-    },
-    {
-      name: "motivo",
-      label: "Motivo",
-      type: "textarea",
-      required: true,
-    },
-  ],
-},
+    title: "Resiembras",
+    endpoint: "/resiembra",
+    fields: [
+      {
+        name: "id_arbol_nuevo",
+        label: "Árbol",
+        type: "select",
+        required: true,
+        optionsEndpoint: "/arbol",
+        optionValue: "ID_ARBOL",
+        optionLabel: "NOMBRE_ARBOL",
+      },
+      {
+        name: "fecha_resiembra",
+        label: "Fecha de resiembra",
+        type: "date",
+        required: true,
+      },
+      {
+        name: "motivo",
+        label: "Motivo",
+        type: "textarea",
+        required: true,
+      },
+    ],
+  },
 };
 
 function App() {
@@ -515,6 +533,10 @@ function App() {
   const renderModule = () => {
     if (activeModule === "movimiento-inventario") {
       return <MovimientoInventarioModule />;
+    }
+
+    if (activeModule === "mapa-plano") {
+      return <MapaPlanoModule />;
     }
 
     if (!activeConfig) {
