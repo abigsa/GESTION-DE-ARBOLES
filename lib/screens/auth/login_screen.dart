@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _verPassword = false;
+  final _passFocus  = FocusNode();
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
@@ -36,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen>
     _animCtrl.dispose();
     _userCtrl.dispose();
     _passCtrl.dispose();
+    _passFocus.dispose();
     super.dispose();
   }
 
@@ -234,6 +236,8 @@ class _LoginScreenState extends State<LoginScreen>
                               controller: _userCtrl,
                               label: 'Usuario',
                               icon: Icons.person_outline_rounded,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_passFocus),
                               validator: (v) => (v == null || v.isEmpty)
                                   ? 'Ingresa tu usuario' : null,
                             ),
@@ -245,6 +249,9 @@ class _LoginScreenState extends State<LoginScreen>
                               label: 'Contraseña',
                               icon: Icons.lock_outline_rounded,
                               obscure: !_verPassword,
+                              focusNode: _passFocus,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => auth.loading ? null : _login(),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _verPassword
@@ -364,11 +371,17 @@ class _LoginScreenState extends State<LoginScreen>
     required IconData icon,
     bool obscure = false,
     Widget? suffixIcon,
+    FocusNode? focusNode,
+    TextInputAction? textInputAction,
+    void Function(String)? onFieldSubmitted,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
+      focusNode: focusNode,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       style: const TextStyle(
           fontSize: 13,
           color: ArbolColors.verdeProfundo,

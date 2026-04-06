@@ -1050,14 +1050,28 @@ class _HoverModuleTileState extends State<_HoverModuleTile> {
           ),
           child: Stack(
             children: [
-              // Línea dorada superior
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                height: active ? 3 : 0,
-                decoration: BoxDecoration(
-                  color: ArbolColors.oroForestal,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(11)),
+              // Línea dorada superior difuminada en orillas
+              Positioned(
+                top: 0, left: 0, right: 0,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  opacity: active ? 1.0 : 0.0,
+                  child: Container(
+                    height: 3,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          ArbolColors.oroForestal,
+                          ArbolColors.oroForestal,
+                          Colors.transparent,
+                        ],
+                        stops: [0.0, 0.2, 0.8, 1.0],
+                      ),
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(11)),
+                    ),
+                  ),
                 ),
               ),
               // Contenido
