@@ -4,7 +4,7 @@
 
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Segoe UI", Arial, Helvetica, sans-serif;
   background: #eef3ea;
   color: #172217;
 }
@@ -18,7 +18,9 @@ body {
   min-height: 100vh;
 }
 
-/* SIDEBAR */
+/* =========================
+   SIDEBAR GENERAL
+========================= */
 .sidebar {
   width: 295px;
   background: linear-gradient(180deg, #0d3516, #0f4515);
@@ -83,7 +85,9 @@ body {
   background: rgba(255, 255, 255, 0.14);
 }
 
-/* MAIN */
+/* =========================
+   MAIN GENERAL
+========================= */
 .main-content {
   flex: 1;
   padding: 28px;
@@ -94,7 +98,24 @@ body {
   width: 100%;
 }
 
-/* HERO */
+.module-header {
+  margin-bottom: 20px;
+}
+
+.module-header h1 {
+  margin: 0;
+  font-size: 28px;
+  color: #1f4d2e;
+}
+
+.module-header p {
+  margin-top: 6px;
+  color: #607067;
+}
+
+/* =========================
+   HERO / CABECERA MÓDULOS
+========================= */
 .module-hero {
   display: flex;
   justify-content: space-between;
@@ -137,7 +158,9 @@ body {
   white-space: nowrap;
 }
 
-/* ALERTS */
+/* =========================
+   ALERTAS
+========================= */
 .alert {
   padding: 16px 18px;
   border-radius: 16px;
@@ -157,7 +180,16 @@ body {
   border: 1px solid #efc6c6;
 }
 
-/* GRID */
+.module-error {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* =========================
+   GRID GENERAL CRUD
+========================= */
 .module-grid {
   display: grid;
   grid-template-columns: 420px 1fr;
@@ -165,7 +197,9 @@ body {
   align-items: start;
 }
 
-/* CARD */
+/* =========================
+   CARD GENERAL
+========================= */
 .card {
   background: #fbfbf9;
   border: 1px solid #d6dfcf;
@@ -184,7 +218,9 @@ body {
   color: #6a7768;
 }
 
-/* FORM */
+/* =========================
+   FORMULARIOS
+========================= */
 .form-card form {
   display: flex;
   flex-direction: column;
@@ -223,7 +259,9 @@ body {
   box-shadow: 0 0 0 3px rgba(78, 147, 70, 0.12);
 }
 
-/* BUTTONS */
+/* =========================
+   BOTONES GENERALES
+========================= */
 .form-actions {
   display: flex;
   gap: 10px;
@@ -274,7 +312,9 @@ body {
   padding: 8px 14px;
 }
 
-/* TABLE */
+/* =========================
+   TABLAS GENERALES
+========================= */
 .table-card p {
   margin-bottom: 16px;
 }
@@ -319,7 +359,6 @@ tbody tr:hover {
   flex-wrap: wrap;
 }
 
-/* EMPTY */
 .empty-state {
   padding: 28px;
   text-align: center;
@@ -329,7 +368,506 @@ tbody tr:hover {
   background: #fcfcfa;
 }
 
-/* RESPONSIVE */
+/* =========================================================
+   ESTILO EMPRESARIAL - MAPA AGRÍCOLA ENCA (VERSIÓN VERDE)
+========================================================= */
+
+.enca-page {
+  min-height: 100vh;
+  background: #eef2ed;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+}
+
+/* TOPBAR */
+.enca-topbar {
+  background: linear-gradient(90deg, #1f5f38, #2f7d4d);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.enca-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.enca-logo span {
+  font-size: 1.75rem;
+}
+
+.enca-user {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* SUBNAV */
+.enca-subnav {
+  background: #f7faf7;
+  border-bottom: 1px solid #d8e3d8;
+  display: flex;
+  gap: 12px;
+  padding: 10px 28px;
+}
+
+.enca-subnav-item {
+  background: transparent;
+  border: none;
+  padding: 12px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3f5b47;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.enca-subnav-item.active {
+  color: #1f5f38;
+  border-bottom: 3px solid #1f5f38;
+}
+
+/* LAYOUT */
+.enca-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr 300px;
+  gap: 22px;
+  padding: 24px;
+}
+
+.enca-sidebar,
+.enca-main,
+.enca-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* CARDS */
+.enca-card,
+.enca-map-card,
+.enca-table-card {
+  background: #ffffff;
+  border: 1px solid #d9e5da;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(30, 58, 40, 0.06);
+}
+
+.enca-card {
+  padding: 22px;
+}
+
+.enca-card h3,
+.enca-map-card h2,
+.enca-table-card h2 {
+  margin: 0 0 18px;
+  color: #1f5f38;
+  font-weight: 700;
+}
+
+/* DIAGNÓSTICO */
+.diag-item {
+  background: #f9fbf9;
+  border: 1px solid #dde8de;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.diag-item strong {
+  font-size: 1.8rem;
+  color: #1f5f38;
+}
+
+.diag-item.success strong {
+  color: #2e7d32;
+}
+
+.diag-item.warning strong {
+  color: #d68b00;
+}
+
+.diag-item.danger strong {
+  color: #d32f2f;
+}
+
+.diag-item.dark strong {
+  color: #374151;
+}
+
+/* CAMPOS */
+.enca-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.enca-field label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+.enca-field select,
+.enca-field input {
+  height: 44px;
+  border: 1px solid #cfdccf;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 0.96rem;
+  background: white;
+}
+
+/* BOTONES ENCA */
+.enca-btn-primary,
+.enca-btn-green,
+.enca-btn-blue {
+  height: 46px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.enca-btn-primary {
+  width: 100%;
+  background: linear-gradient(180deg, #2f8f4e, #1f6b39);
+  color: white;
+}
+
+.enca-btn-green {
+  background: linear-gradient(180deg, #42b853, #2f8f4e);
+  color: white;
+  padding: 0 20px;
+}
+
+.enca-btn-blue {
+  background: linear-gradient(180deg, #3f9d5c, #2f7d4d);
+  color: white;
+  padding: 0 20px;
+}
+
+.enca-btn-primary:hover,
+.enca-btn-green:hover,
+.enca-btn-blue:hover {
+  transform: translateY(-1px);
+  opacity: 0.96;
+}
+
+/* MAPA CARD */
+.enca-map-card {
+  overflow: hidden;
+}
+
+.enca-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid #e2ebe2;
+}
+
+.enca-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.enca-map-body {
+  padding: 20px 24px 24px;
+}
+
+.enca-map-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  color: #334155;
+}
+
+.enca-map-title strong {
+  font-size: 1.1rem;
+  color: #1f5f38;
+}
+
+/* MAPA REAL */
+.enca-map-real {
+  position: relative;
+  width: 100%;
+  height: 440px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #c7d8c8;
+  background: #d8e6cf;
+}
+
+/* FONDO AGRÍCOLA */
+.enca-map-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(20, 20, 20, 0.06), rgba(20, 20, 20, 0.06)),
+    repeating-linear-gradient(
+      90deg,
+      #6f8d4f 0px,
+      #6f8d4f 6px,
+      #688248 6px,
+      #688248 12px,
+      #7d9759 12px,
+      #7d9759 18px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(130, 100, 65, 0.18) 0px,
+      rgba(130, 100, 65, 0.18) 3px,
+      transparent 3px,
+      transparent 34px
+    );
+  background-size: cover;
+  filter: saturate(0.95) contrast(1.02);
+}
+
+/* CAMINOS */
+.enca-map-real::before,
+.enca-map-real::after {
+  content: "";
+  position: absolute;
+  background: rgba(190, 168, 133, 0.82);
+  z-index: 1;
+}
+
+.enca-map-real::before {
+  width: 100%;
+  height: 10px;
+  top: 48%;
+  left: 0;
+}
+
+.enca-map-real::after {
+  width: 10px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+}
+
+/* SECTORES */
+.enca-sectores-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.enca-sector-box {
+  position: absolute;
+  width: 220px;
+  height: 120px;
+  border: 2px dashed rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  backdrop-filter: blur(1px);
+}
+
+.enca-sector-box.selected {
+  border-color: #2f8f4e;
+  background: rgba(47, 143, 78, 0.12);
+  box-shadow: 0 0 0 2px rgba(47, 143, 78, 0.15);
+}
+
+.enca-sector-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #1f2937;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* MARCADORES ÁRBOLES */
+.enca-tree-marker {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 3px solid #4CAF50;
+  background: #ffffff;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 5;
+  transition: 0.2s ease;
+}
+
+.enca-tree-marker:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.enca-tree-marker.active {
+  transform: translate(-50%, -50%) scale(1.22);
+}
+
+.tree-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: block;
+  margin: auto;
+}
+
+/* LEYENDA */
+.enca-legend {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  color: #334155;
+  font-weight: 600;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.legend-dot.green {
+  background: #4CAF50;
+}
+
+.legend-dot.yellow {
+  background: #F4B400;
+}
+
+.legend-dot.red {
+  background: #E53935;
+}
+
+.legend-dot.gray {
+  background: #5F6B7A;
+}
+
+/* TABLA DEL MAPA */
+.enca-table-card {
+  padding: 20px 24px 24px;
+}
+
+.enca-table-wrapper {
+  overflow-x: auto;
+}
+
+.enca-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.enca-table th {
+  background: #f4f8f4;
+  color: #334155;
+  font-weight: 700;
+  padding: 14px 16px;
+  text-align: left;
+  border: 1px solid #e2e8e2;
+}
+
+.enca-table td {
+  padding: 14px 16px;
+  border: 1px solid #e2e8e2;
+  color: #334155;
+}
+
+.enca-table tbody tr:hover {
+  background: #f9fbf9;
+}
+
+/* ESTADO / ACCIONES */
+.estado-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.table-action {
+  color: #2f8f4e;
+  font-weight: 700;
+}
+
+.table-action.alert {
+  color: #d97706;
+}
+
+/* RESUMEN / DETALLE */
+.summary-row,
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf2f7;
+  gap: 12px;
+}
+
+.detail-block {
+  flex-direction: column;
+}
+
+.detail-block p {
+  margin: 6px 0 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.empty-detail {
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.enca-loading {
+  height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1300px) {
+  .enca-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .enca-sidebar,
+  .enca-detail {
+    order: 2;
+  }
+
+  .enca-main {
+    order: 1;
+  }
+}
+
 @media (max-width: 1100px) {
   .module-grid {
     grid-template-columns: 1fr;
@@ -365,6 +903,38 @@ tbody tr:hover {
   }
 }
 
+@media (max-width: 768px) {
+  .enca-topbar,
+  .enca-subnav {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .enca-layout {
+    padding: 16px;
+  }
+
+  .enca-map-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .enca-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .enca-btn-blue,
+  .enca-btn-green {
+    width: 100%;
+  }
+
+  .enca-map-real {
+    height: 320px;
+  }
+}
+
 @media (max-width: 600px) {
   .module-hero h1 {
     font-size: 22px;
@@ -378,25 +948,4 @@ tbody tr:hover {
     font-size: 14px;
     padding: 12px 14px;
   }
-}
-.module-header {
-  margin-bottom: 20px;
-}
-
-.module-header h1 {
-  margin: 0;
-  font-size: 28px;
-  color: #1f4d2e;
-}
-
-.module-header p {
-  margin-top: 6px;
-  color: #607067;
-}
-
-.module-error {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
