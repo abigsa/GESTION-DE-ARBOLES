@@ -1,43 +1,39 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import '../App.css';
 
 const API = "http://localhost:3000/api";
 
 const estadoConfig = {
   1: { label: "Creciendo", color: "#4CAF50", icon: "🟢" },
   2: { label: "Producción", color: "#F4B400", icon: "🟡" },
-  3: { label: "Enfermo", color: "#E53935", icon: "🔴" },
-  4: { label: "Muerto", color: "#5F6B7A", icon: "⚫" },
+  3: { label: "Enfermo",   color: "#E53935", icon: "🔴" },
+  4: { label: "Muerto",    color: "#5F6B7A", icon: "⚫" },
 };
 
 function MapaPlanoModule() {
-  const [fincas, setFincas] = useState([]);
+  const [fincas,            setFincas]            = useState([]);
   const [fincaSeleccionada, setFincaSeleccionada] = useState("");
-  const [sectorFiltro, setSectorFiltro] = useState("");
-  const [estadoFiltro, setEstadoFiltro] = useState("");
-  const [datosPlano, setDatosPlano] = useState(null);
+  const [sectorFiltro,      setSectorFiltro]      = useState("");
+  const [estadoFiltro,      setEstadoFiltro]      = useState("");
+  const [datosPlano,        setDatosPlano]        = useState(null);
   const [arbolSeleccionado, setArbolSeleccionado] = useState(null);
-  const [cargando, setCargando] = useState(false);
+  const [cargando,          setCargando]          = useState(false);
+
+  useEffect(() => { cargarFincas(); }, []);
 
   useEffect(() => {
-    cargarFincas();
-  }, []);
-
-  useEffect(() => {
-    if (fincaSeleccionada) {
-      cargarPlano(fincaSeleccionada);
-    }
+    if (fincaSeleccionada) cargarPlano(fincaSeleccionada);
   }, [fincaSeleccionada]);
 
   const cargarFincas = async () => {
     try {
-      const res = await axios.get(`${API}/finca`);
-      const lista = Array.isArray(res.data) ? res.data : res.data.data || res.data.rows || [];
+      const res   = await axios.get(`${API}/finca`);
+      const lista = Array.isArray(res.data)
+        ? res.data
+        : res.data.data || res.data.rows || [];
       setFincas(lista);
-
-      if (lista.length > 0) {
-        setFincaSeleccionada(lista[0].ID_FINCA);
-      }
+      if (lista.length > 0) setFincaSeleccionada(lista[0].ID_FINCA);
     } catch (error) {
       console.error("❌ Error cargando fincas:", error);
       setFincas([]);
@@ -58,44 +54,30 @@ function MapaPlanoModule() {
   };
 
   const sectores = datosPlano?.sectores || [];
-  const arboles = datosPlano?.arboles || [];
-  const finca = datosPlano?.finca || null;
+  const arboles  = datosPlano?.arboles  || [];
+  const finca    = datosPlano?.finca    || null;
 
   const arbolesFiltrados = useMemo(() => {
     return arboles.filter((a) => {
-      const cumpleSector = sectorFiltro
-        ? String(a.ID_SECTOR) === String(sectorFiltro)
-        : true;
-
-      const cumpleEstado = estadoFiltro
-        ? String(a.ID_ESTADO) === String(estadoFiltro)
-        : true;
-
+      const cumpleSector = sectorFiltro ? String(a.ID_SECTOR) === String(sectorFiltro) : true;
+      const cumpleEstado = estadoFiltro ? String(a.ID_ESTADO) === String(estadoFiltro) : true;
       return cumpleSector && cumpleEstado;
     });
   }, [arboles, sectorFiltro, estadoFiltro]);
 
-  const totalAlertas = arboles.filter(
-    (a) => Number(a.ID_ESTADO) === 3 || Number(a.ID_ESTADO) === 4
-  ).length;
-
-  const totalCreciendo = arboles.filter((a) => Number(a.ID_ESTADO) === 1).length;
+  const totalAlertas    = arboles.filter((a) => Number(a.ID_ESTADO) === 3 || Number(a.ID_ESTADO) === 4).length;
+  const totalCreciendo  = arboles.filter((a) => Number(a.ID_ESTADO) === 1).length;
   const totalProduccion = arboles.filter((a) => Number(a.ID_ESTADO) === 2).length;
-  const totalEnfermos = arboles.filter((a) => Number(a.ID_ESTADO) === 3).length;
-  const totalMuertos = arboles.filter((a) => Number(a.ID_ESTADO) === 4).length;
+  const totalEnfermos   = arboles.filter((a) => Number(a.ID_ESTADO) === 3).length;
+  const totalMuertos    = arboles.filter((a) => Number(a.ID_ESTADO) === 4).length;
 
   const obtenerNombreSector = (idSector) => {
     const s = sectores.find((x) => String(x.ID_SECTOR) === String(idSector));
     return s?.NOMBRE_SECTOR || "Sin sector";
   };
 
-  const obtenerInfoEstado = (idEstado) => {
-    return estadoConfig[idEstado] || {
-      label: "Otro",
-      color: "#4B5563",
-      icon: "⚪",
-    };
-  };
+  const obtenerInfoEstado = (idEstado) =>
+    estadoConfig[idEstado] || { label: "Otro", color: "#4B5563", icon: "⚪" };
 
   const getPosicionPorcentaje = (valor, max) => {
     if (!max || Number(max) === 0) return 5;
@@ -104,15 +86,16 @@ function MapaPlanoModule() {
 
   return (
     <div className="enca-page">
+
       {/* HEADER */}
       <div className="enca-topbar">
         <div className="enca-logo">
           🌳 <span>Sistema de Gestión de Árboles</span>
         </div>
-        <div className="enca-user">Bienvenido,Ingeniero</div>
+        <div className="enca-user">Bienvenido, Ingeniero</div>
       </div>
 
-      {/* MENU HORIZONTAL */}
+      {/* MENÚ HORIZONTAL */}
       <div className="enca-subnav">
         <button className="enca-subnav-item active">Inicio</button>
         <button className="enca-subnav-item">Registrar Árbol</button>
@@ -122,31 +105,27 @@ function MapaPlanoModule() {
 
       {/* CONTENIDO */}
       <div className="enca-layout">
+
         {/* SIDEBAR IZQUIERDA */}
         <aside className="enca-sidebar">
           <div className="enca-card">
             <h3>Diagnóstico General</h3>
-
             <div className="diag-item">
               <span>Árboles Totales</span>
               <strong>{arboles.length}</strong>
             </div>
-
             <div className="diag-item success">
               <span>🌱 En Crecimiento</span>
               <strong>{totalCreciendo}</strong>
             </div>
-
             <div className="diag-item warning">
               <span>🍊 En Producción</span>
               <strong>{totalProduccion}</strong>
             </div>
-
             <div className="diag-item danger">
               <span>✚ Enfermos</span>
               <strong>{totalEnfermos}</strong>
             </div>
-
             <div className="diag-item dark">
               <span>☠ Muertos</span>
               <strong>{totalMuertos}</strong>
@@ -155,7 +134,6 @@ function MapaPlanoModule() {
 
           <div className="enca-card">
             <h3>Filtros de Búsqueda</h3>
-
             <div className="enca-field">
               <label>Finca:</label>
               <select
@@ -178,10 +156,7 @@ function MapaPlanoModule() {
 
             <div className="enca-field">
               <label>Sección:</label>
-              <select
-                value={sectorFiltro}
-                onChange={(e) => setSectorFiltro(e.target.value)}
-              >
+              <select value={sectorFiltro} onChange={(e) => setSectorFiltro(e.target.value)}>
                 <option value="">Todos</option>
                 {sectores.map((s) => (
                   <option key={s.ID_SECTOR} value={s.ID_SECTOR}>
@@ -193,10 +168,7 @@ function MapaPlanoModule() {
 
             <div className="enca-field">
               <label>Estado:</label>
-              <select
-                value={estadoFiltro}
-                onChange={(e) => setEstadoFiltro(e.target.value)}
-              >
+              <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value)}>
                 <option value="">Todos</option>
                 <option value="1">Creciendo</option>
                 <option value="2">Producción</option>
@@ -214,7 +186,6 @@ function MapaPlanoModule() {
           <div className="enca-map-card">
             <div className="enca-map-header">
               <h2>Mapa de Árboles</h2>
-
               <div className="enca-actions">
                 <button className="enca-btn-green">＋ Nuevo Árbol</button>
                 <button className="enca-btn-blue">🔍 Buscar Árbol</button>
@@ -230,13 +201,10 @@ function MapaPlanoModule() {
                 <>
                   <div className="enca-map-title">
                     <strong>{finca?.NOMBRE_FINCA}</strong>
-                    <span>
-                      {finca?.ANCHO || 100}m x {finca?.LARGO || 200}m
-                    </span>
+                    <span>{finca?.ANCHO || 100}m x {finca?.LARGO || 200}m</span>
                   </div>
 
                   <div className="enca-map-real">
-                    {/* FONDO SATELITAL / AGRÍCOLA SIMULADO */}
                     <div className="enca-map-bg"></div>
 
                     {/* SECTORES */}
@@ -245,13 +213,11 @@ function MapaPlanoModule() {
                         <div
                           key={sector.ID_SECTOR}
                           className={`enca-sector-box ${
-                            String(sectorFiltro) === String(sector.ID_SECTOR)
-                              ? "selected"
-                              : ""
+                            String(sectorFiltro) === String(sector.ID_SECTOR) ? "selected" : ""
                           }`}
                           style={{
                             left: `${8 + index * 44}%`,
-                            top: `${12 + (index % 2) * 28}%`,
+                            top:  `${12 + (index % 2) * 28}%`,
                           }}
                         >
                           <div className="enca-sector-label">
@@ -262,33 +228,22 @@ function MapaPlanoModule() {
                       ))}
                     </div>
 
-                    {/* ARBOLES */}
+                    {/* ÁRBOLES */}
                     {arbolesFiltrados.map((arbol) => {
                       const estado = obtenerInfoEstado(arbol.ID_ESTADO);
-
-                      const left = getPosicionPorcentaje(
-                        arbol.POSICION_X || 10,
-                        finca?.ANCHO || 100
-                      );
-
-                      const top = getPosicionPorcentaje(
-                        arbol.POSICION_Y || 10,
-                        finca?.LARGO || 200
-                      );
-
+                      const left   = getPosicionPorcentaje(arbol.POSICION_X || 10, finca?.ANCHO || 100);
+                      const top    = getPosicionPorcentaje(arbol.POSICION_Y || 10, finca?.LARGO || 200);
                       return (
                         <button
                           key={arbol.ID_ARBOL}
                           className={`enca-tree-marker ${
-                            arbolSeleccionado?.ID_ARBOL === arbol.ID_ARBOL
-                              ? "active"
-                              : ""
+                            arbolSeleccionado?.ID_ARBOL === arbol.ID_ARBOL ? "active" : ""
                           }`}
                           style={{
                             left: `${left}%`,
-                            top: `${top}%`,
+                            top:  `${top}%`,
                             borderColor: estado.color,
-                            boxShadow: `0 0 0 3px ${estado.color}25`,
+                            boxShadow:   `0 0 0 3px ${estado.color}25`,
                           }}
                           onClick={() => setArbolSeleccionado(arbol)}
                           title={`${arbol.NOMBRE_ARBOL} - ${estado.label}`}
@@ -314,7 +269,6 @@ function MapaPlanoModule() {
           {/* TABLA */}
           <div className="enca-table-card">
             <h2>Listado de Árboles</h2>
-
             <div className="enca-table-wrapper">
               <table className="enca-table">
                 <thead>
@@ -344,7 +298,8 @@ function MapaPlanoModule() {
                         >
                           <td>A-{a.ID_ARBOL}</td>
                           <td>
-                            {finca?.NOMBRE_FINCA}, {obtenerNombreSector(a.ID_SECTOR)}, Surco{" "}
+                            {finca?.NOMBRE_FINCA},{" "}
+                            {obtenerNombreSector(a.ID_SECTOR)}, Surco{" "}
                             {a.NUMERO_SURCO || "-"}
                           </td>
                           <td>
@@ -352,8 +307,8 @@ function MapaPlanoModule() {
                               className="estado-pill"
                               style={{
                                 backgroundColor: `${estado.color}15`,
-                                color: estado.color,
-                                border: `1px solid ${estado.color}40`,
+                                color:            estado.color,
+                                border:           `1px solid ${estado.color}40`,
                               }}
                             >
                               {estado.icon} {estado.label}
@@ -385,9 +340,7 @@ function MapaPlanoModule() {
             </div>
             <div className="summary-row">
               <span>Dimensiones:</span>
-              <strong>
-                {finca?.ANCHO || 0}m x {finca?.LARGO || 0}m
-              </strong>
+              <strong>{finca?.ANCHO || 0}m x {finca?.LARGO || 0}m</strong>
             </div>
             <div className="summary-row">
               <span>Sectores:</span>
@@ -405,7 +358,6 @@ function MapaPlanoModule() {
 
           <div className="enca-card">
             <h3>Detalle del Árbol</h3>
-
             {!arbolSeleccionado ? (
               <p className="empty-detail">
                 Haz clic en un árbol del mapa para ver su información.
@@ -416,37 +368,30 @@ function MapaPlanoModule() {
                   <span>ID:</span>
                   <strong>A-{arbolSeleccionado.ID_ARBOL}</strong>
                 </div>
-
                 <div className="detail-row">
                   <span>Nombre:</span>
                   <strong>{arbolSeleccionado.NOMBRE_ARBOL || "Árbol"}</strong>
                 </div>
-
                 <div className="detail-row">
                   <span>Sector:</span>
                   <strong>{arbolSeleccionado.NOMBRE_SECTOR}</strong>
                 </div>
-
                 <div className="detail-row">
                   <span>Surco:</span>
                   <strong>{arbolSeleccionado.NUMERO_SURCO || "-"}</strong>
                 </div>
-
                 <div className="detail-row">
                   <span>Estado:</span>
                   <strong>{obtenerInfoEstado(arbolSeleccionado.ID_ESTADO).label}</strong>
                 </div>
-
                 <div className="detail-row">
                   <span>Posición X:</span>
                   <strong>{arbolSeleccionado.POSICION_X ?? "-"}</strong>
                 </div>
-
                 <div className="detail-row">
                   <span>Posición Y:</span>
                   <strong>{arbolSeleccionado.POSICION_Y ?? "-"}</strong>
                 </div>
-
                 <div className="detail-row detail-block">
                   <span>Descripción:</span>
                   <p>{arbolSeleccionado.DESCRIPCION || "Sin descripción"}</p>
