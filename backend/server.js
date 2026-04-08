@@ -19,6 +19,7 @@ const tipoVariedadArbolRoutes = require("./routes/tipoVariedadArbolRoutes");
 const movimientoInventarioArbolRoutes = require("./routes/movimientoInventarioArbolRoutes");
 const tipoMovimientoInventarioRoutes = require("./routes/tipoMovimientoInventarioRoutes");
 const mapaplanoRoutes = require("./routes/mapaplanoRoutes");
+const usuarioRoutes = require('./routes/usuarioRoutes');
 
 const app = express();
 
@@ -44,8 +45,10 @@ app.use("/api/tipos-variedad", tipoVariedadArbolRoutes);
 app.use("/api/movimiento-inventario", movimientoInventarioArbolRoutes);
 app.use("/api/tipo-movimiento", tipoMovimientoInventarioRoutes);
 app.use("/api/mapa-plano", mapaplanoRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
-const PORT = process.env.PORT || 3000;
+
+const PORT = process.env.PORT ||   3000;
 
 async function startServer() {
   try {

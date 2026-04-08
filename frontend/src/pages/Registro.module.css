@@ -1,0 +1,23 @@
+.root { min-height:100vh; background:var(--fondo-claro); display:flex; align-items:center; justify-content:center; padding:24px; }
+.card { background:#fff; border-radius:var(--radius-xl); padding:32px 28px; width:100%; max-width:520px; box-shadow:var(--shadow-lg); }
+.header { display:flex; align-items:center; gap:14px; background:linear-gradient(135deg,var(--verde-profundo),var(--verde-medio)); border-radius:var(--radius-lg); padding:16px 20px; margin-bottom:24px; }
+.logo { width:44px; height:44px; background:var(--oro-forestal); border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.logo .material-icons { color:var(--verde-profundo); font-size:24px; }
+.header h2 { color:#fff; font-size:16px; font-weight:700; }
+.header p  { color:rgba(76,185,104,.9); font-size:11px; }
+.secTitle { display:flex; align-items:center; gap:8px; color:var(--verde-profundo); font-weight:700; font-size:13px; margin-bottom:12px; }
+.secTitle .material-icons { font-size:16px; color:var(--verde-medio); }
+.eye { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--tierra-calida); display:flex; align-items:center; }
+.eye .material-icons { font-size:18px; }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.error { color:var(--rojo-alerta); font-size:12px; background:rgba(139,46,46,.06); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid rgba(139,46,46,.18); margin-bottom:12px; }
+.exito { color:var(--exito); font-size:12px; background:rgba(46,125,50,.07); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid rgba(46,125,50,.2); margin-bottom:12px; }
+.btn { width:100%; height:48px; background:var(--verde-profundo); color:#fff; border-radius:12px; font-size:13px; font-weight:700; letter-spacing:1.5px; margin-top:8px; margin-bottom:16px; display:flex; align-items:center; justify-content:center; transition:background var(--transition); }
+.btn:hover:not(:disabled) { background:var(--verde-medio); }
+.btn:disabled { opacity:.6; cursor:not-allowed; }
+.spinner { width:18px; height:18px; border:2.5px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loginRow { text-align:center; font-size:12px; color:var(--tierra-calida); }
+.loginRow button { color:var(--verde-profundo); font-weight:700; margin-left:4px; }
+.loginRow button:hover { text-decoration:underline; }
+@media (max-width:480px) { .row2 { grid-template-columns:1fr; } }
