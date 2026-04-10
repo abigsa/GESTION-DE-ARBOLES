@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/Login';
-import Registro from './pages/Registro';
-import SidebarNuevo from './components/SidebarNuevo';
+import Login          from './pages/Login';
+import Registro       from './pages/Registro';
+import PerfilUsuario  from './pages/PerfilUsuario';
+import SidebarNuevo   from './components/SidebarNuevo';
 import DashboardNuevo from './components/DashboardNuevo';
-import CrudPageNuevo from './components/CrudPageNuevo';
+import CrudPageNuevo  from './components/CrudPageNuevo';
 import MapaPlanoModule from './components/MapaPlanoModule';
 
 export default function AppNuevo() {
@@ -15,6 +16,7 @@ export default function AppNuevo() {
   );
 }
 
+// ── Router principal ──────────────────────────────
 function Router() {
   const { isLoggedIn, iniciando } = useAuth();
   const [page, setPage] = useState('login');
@@ -24,15 +26,16 @@ function Router() {
   if (!isLoggedIn) {
     return page === 'registro'
       ? <Registro onLogin={() => setPage('login')} />
-      : <Login onRegistro={() => setPage('registro')} />;
+      : <Login   onRegistro={() => setPage('registro')} />;
   }
 
   return <MainLayout />;
 }
 
+// ── Layout autenticado ────────────────────────────
 function MainLayout() {
-  const [activeKey, setActiveKey] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeKey,   setActiveKey]   = useState('');
+  const [drawerOpen,  setDrawerOpen]  = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
@@ -42,8 +45,8 @@ function MainLayout() {
   }, []);
 
   const isDesktop = windowWidth >= 900;
-  const isTablet = windowWidth >= 600 && windowWidth < 900;
-  const isMobile = windowWidth < 600;
+  const isTablet  = windowWidth >= 600 && windowWidth < 900;
+  const isMobile  = windowWidth < 600;
 
   const handleSelect = key => {
     setActiveKey(key);
@@ -55,17 +58,12 @@ function MainLayout() {
       {isDesktop && (
         <SidebarNuevo activeKey={activeKey} onSelect={handleSelect} mode="full" />
       )}
-
       {isTablet && (
         <SidebarNuevo activeKey={activeKey} onSelect={handleSelect} mode="rail" />
       )}
-
       {isMobile && drawerOpen && (
         <>
-          <div
-            className="mobileOverlay"
-            onClick={() => setDrawerOpen(false)}
-          />
+          <div className="mobileOverlay" onClick={() => setDrawerOpen(false)} />
           <div className="mobileDrawer">
             <SidebarNuevo activeKey={activeKey} onSelect={handleSelect} mode="full" />
           </div>
@@ -82,7 +80,6 @@ function MainLayout() {
             >
               <span className="material-icons">menu</span>
             </button>
-
             <div className="mobileBrand">
               <div className="mobileBrandIcon">
                 <span className="material-icons">park</span>
@@ -103,11 +100,20 @@ function MainLayout() {
   );
 }
 
+// ── Página activa ─────────────────────────────────
 function ActivePage({ activeKey, onSelect }) {
+
+  // Dashboard
   if (!activeKey) {
     return <DashboardNuevo onSelect={onSelect} />;
   }
 
+  // Perfil de usuario
+  if (activeKey === 'perfil') {
+    return <PerfilUsuario onBack={() => onSelect('')} />;
+  }
+
+  // Mapa
   if (activeKey === 'mapa-plano') {
     return (
       <div className="mapPage">
@@ -120,11 +126,9 @@ function ActivePage({ activeKey, onSelect }) {
             <span className="material-icons">arrow_back_ios</span>
             Inicio
           </button>
-
           <span className="breadcrumbSep">/</span>
           <span className="breadcrumbCurrent">Mapa de árboles</span>
         </div>
-
         <div className="mapWrapper">
           <MapaPlanoModule />
         </div>
@@ -132,9 +136,11 @@ function ActivePage({ activeKey, onSelect }) {
     );
   }
 
+  // CRUD módulos
   return <CrudPageNuevo moduleKey={activeKey} onBack={() => onSelect('')} />;
 }
 
+// ── Splash de carga ───────────────────────────────
 function Splash() {
   return (
     <div className="splashScreen">

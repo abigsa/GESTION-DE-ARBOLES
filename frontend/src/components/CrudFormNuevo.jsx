@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { API } from '../context/AuthContext';
+
 import s from './CrudFormNuevo.module.css';
+
+const API = 'http://localhost:3000/api';
 
 export default function CrudFormNuevo({ config, editItem, editId, onClose, onSaved }) {
   const { fields, endpoint, title = 'Módulo' } = config;
@@ -120,7 +122,7 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
           try {
             const res = await fetch(`${API}${field.optionSource}`);
             const json = await res.json();
-            const rows = Array.isArray(json?.data) ? json.data : [];
+            const rows = Array.isArray(json?.data) ? json.data : (Array.isArray(json?.rows) ? json.rows : []);
 
             let options = rows.map((item, index) => normalizeOption(field, item, index));
 
@@ -257,10 +259,10 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
 
       const json = await res.json();
 
-      if (json.ok || json.success) {
+      if (json.ok === true || json.success === true) {
         onSaved();
       } else {
-        setError(json.mensaje || 'Error al guardar');
+        setError(json.mensaje ?? json.message ?? 'Error al guardar');
       }
     } catch {
       setError('Error de conexión');
