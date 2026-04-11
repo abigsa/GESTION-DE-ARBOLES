@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { API, useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { NAV_SECTIONS } from '../config/modulesNuevo';
 import s from './DashboardNuevo.module.css';
+
+const API = 'http://localhost:3000/api';
 
 const KPIS = [
   { label: 'Total árboles', icon: 'park', color: '#2D7A3E', ep: '/arbol' },
@@ -44,7 +46,9 @@ export default function DashboardNuevo({ onSelect }) {
           try {
             const res = await fetch(`${API}${ep}`);
             const data = await res.json();
-            return [label, data.ok ? data.data?.length ?? 0 : 0];
+            const ok = data.ok === true || data.success === true;
+            const rows = data.data ?? data.rows ?? [];
+            return [label, ok ? (Array.isArray(rows) ? rows.length : 0) : 0];
           } catch {
             return [label, 0];
           }

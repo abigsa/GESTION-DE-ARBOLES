@@ -444,3 +444,19 @@ export const NAV_SECTIONS = [
     ],
   },
 ];
+// ── PK por módulo — para identificar el ID correcto al editar/eliminar ──
+export const MODULE_PK = {
+  'fincas':                  'ID_FINCA',
+  'sectores':                'ID_SECTOR',
+  'arboles':                 'ID_ARBOL',
+  'tipos-variedad':          'ID_TIPO_ARBOL',
+  'tipos-fertilizante':      'ID_FERTILIZANTE',
+  'tipos-tratamiento':       'ID_TIPO_TRATAMIENTO',
+  'estados-arbol':           'ID_ESTADO',
+  'plagas-enfermedades':     'ID_PLAGA',
+  'historial-estados':       'ID_HISTORIAL',
+  'registros-plaga':         'ID_REGISTRO',
+  'registros-tratamiento':   'ID_REGISTRO',
+  'resiembras':              'ID_RESIEMBRA',
+  'movimiento-inventario':   'ID',
+};

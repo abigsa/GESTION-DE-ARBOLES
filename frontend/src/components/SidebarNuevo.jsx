@@ -112,18 +112,20 @@ export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
               </button>
 
               <div className={`${s.groupBody} ${isOpen ? s.groupBodyOpen : ''}`}>
-                {section.entries.map(entry => (
-                  <button
-                    key={entry.key}
-                    className={`${s.navItem} ${activeKey === entry.key ? s.navActive : ''}`}
-                    onClick={() => onSelect(entry.key)}
-                    type="button"
-                  >
-                    <span className={`material-icons ${s.navIcon}`}>{entry.icon}</span>
-                    <span className={s.navText}>{entry.label}</span>
-                    <span className={`material-icons ${s.navArrow}`}>chevron_right</span>
-                  </button>
-                ))}
+                <div className={s.groupBodyInner}>
+                  {section.entries.map(entry => (
+                    <button
+                      key={entry.key}
+                      className={`${s.navItem} ${activeKey === entry.key ? s.navActive : ''}`}
+                      onClick={() => onSelect(entry.key)}
+                      type="button"
+                    >
+                      <span className={`material-icons ${s.navIcon}`}>{entry.icon}</span>
+                      <span className={s.navText}>{entry.label}</span>
+                      <span className={`material-icons ${s.navArrow}`}>chevron_right</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           );
@@ -131,13 +133,18 @@ export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
       </div>
 
       <div className={s.footer}>
-        <div className={s.userCard}>
+        <button
+          className={`${s.profileBtn} ${activeKey === 'perfil' ? s.profileBtnActive : ''}`}
+          onClick={() => onSelect('perfil')}
+          type="button"
+        >
           <div className={s.avatar}>{displayName?.[0]?.toUpperCase() || 'U'}</div>
           <div className={s.userMeta}>
             <p className={s.userName}>{displayName}</p>
             <p className={s.userRole}>{rolLabel}</p>
           </div>
-        </div>
+          <span className={`material-icons ${s.profileArrow}`}>manage_accounts</span>
+        </button>
 
         <button className={s.logoutBtn} onClick={logout} type="button">
           <span className="material-icons">logout</span>

@@ -119,6 +119,17 @@ export default function Login({ onRegistro }) {
             ¿No tienes cuenta?{' '}
             <button type="button" onClick={onRegistro}>Regístrate</button>
           </p>
+
+          {/* Links footer */}
+          <div className={s.cardFooterLinks}>
+            <a href="mailto:soporte@gestionforestal.com">
+              Atención y soporte
+            </a>
+            <div className={s.cardFooterSep} />
+            <a href="/privacidad.html" target="_blank" rel="noopener noreferrer">
+              Privacidad
+            </a>
+          </div>
         </div>
       </div>
 

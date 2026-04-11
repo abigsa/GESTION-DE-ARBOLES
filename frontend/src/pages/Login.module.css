@@ -122,3 +122,18 @@
   .branding h1 { font-size:26px; }
   .right { flex:none; min-height:calc(100vh - 200px); padding:24px; }
 }
+
+/* ── Footer links dentro del card ───────────────── */
+.cardFooterLinks {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding-top: 14px; border-top: 1px solid var(--pergamino-verde);
+  margin-top: 2px;
+}
+.cardFooterLinks a {
+  font-size: 11px; color: var(--tierra-calida); text-decoration: none;
+  transition: color 150ms ease;
+}
+.cardFooterLinks a:hover { color: var(--verde-profundo); text-decoration: underline; }
+.cardFooterSep {
+  width: 3px; height: 3px; background: var(--pergamino-verde); border-radius: 50%;
+}

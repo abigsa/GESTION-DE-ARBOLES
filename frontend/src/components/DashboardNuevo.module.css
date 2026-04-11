@@ -370,3 +370,17 @@
     padding: 14px;
   }
 }
+/* Skeleton KPI mientras carga */
+.kpiSkeleton {
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  background: linear-gradient(90deg, var(--pergamino-verde) 25%, var(--verde-menta) 50%, var(--pergamino-verde) 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

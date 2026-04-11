@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { MODULES, colLabel, HIDDEN_COLS } from '../config/modulesNuevo';
+import { MODULES, MODULE_PK, colLabel, HIDDEN_COLS } from '../config/modulesNuevo';
 import CrudFormNuevo from './CrudFormNuevo';
 import s from './CrudPageNuevo.module.css';
 
@@ -29,10 +29,10 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
 
       const json = await res.json();
 
-      if (json.ok || json.success) {
-        setData(json.data ?? []);
+      if (json.ok === true || json.success === true) {
+        setData(Array.isArray(json.data) ? json.data : []);
       } else {
-        setError(json.mensaje || 'Error al cargar los datos');
+        setError(json.mensaje ?? json.message ?? 'Error al cargar los datos');
       }
     } catch (e) {
       setError(
@@ -53,9 +53,14 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
       : [];
 
   const pkVal = row => {
+    // Buscar PK exacta según config del módulo
+    const pkField = MODULE_PK[moduleKey];
+    if (pkField && row[pkField] !== undefined) return row[pkField];
+    // Fallback: buscar campo id exacto
     for (const k of Object.keys(row)) {
       if (k.toLowerCase() === 'id') return row[k];
     }
+    // Fallback: primer campo que empiece con id_
     for (const k of Object.keys(row)) {
       if (k.toLowerCase().startsWith('id_') || k.toLowerCase().endsWith('_id')) {
         return row[k];
@@ -88,10 +93,10 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
       const res = await fetch(`${API}${endpoint}/${id}`, { method: 'DELETE' });
       const json = await res.json();
 
-      if (json.ok || json.success) {
+      if (json.ok === true || json.success === true) {
         fetchData();
       } else {
-        alert(json.mensaje || 'Error al eliminar');
+        alert(json.mensaje ?? json.message ?? 'Error al eliminar');
       }
     } catch {
       alert('Error de conexión al eliminar');
