@@ -11,9 +11,17 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   const initForm = () => {
     const f = {};
     fields.forEach(field => {
-      const val = editItem?.[field.name] ?? editItem?.[field.name?.toUpperCase()] ?? '';
-      f[field.name] = val;
-    });
+  let val = editItem?.[field.name] ?? editItem?.[field.name?.toUpperCase()] ?? '';
+
+  if (field.type === 'date' && val) {
+    const d = new Date(val);
+    if (!isNaN(d)) {
+      val = d.toISOString().slice(0, 10);
+    }
+  }
+
+  f[field.name] = val;
+});
     return f;
   };
 
@@ -66,32 +74,64 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
         item?.[field.name?.toUpperCase()] ??
         index + 1;
 
-      const candidateLabel =
-        item?.[field.optionLabel] ??
-        item?.[field.optionLabel?.toUpperCase()] ??
-        item?.nombre ??
-        item?.NOMBRE ??
-        item?.descripcion ??
-        item?.DESCRIPCION ??
-        item?.nombre_finca ??
-        item?.NOMBRE_FINCA ??
-        item?.nombre_sector ??
-        item?.NOMBRE_SECTOR ??
-        item?.nombre_estado ??
-        item?.NOMBRE_ESTADO ??
-        item?.nombre_plaga ??
-        item?.NOMBRE_PLAGA ??
-        item?.nombre_tratamiento ??
-        item?.NOMBRE_TRATAMIENTO ??
-        item?.nombre_fertilizante ??
-        item?.NOMBRE_FERTILIZANTE ??
-        item?.nombre_arbol ??
-        item?.NOMBRE_ARBOL;
+      const getFieldValue = (obj, key) => {
+  if (!key) return null;
+  return obj?.[key] ?? obj?.[key?.toUpperCase()] ?? null;
+};
 
-      const label =
-        candidateLabel && String(candidateLabel).trim()
-          ? String(candidateLabel)
-          : `Registro #${value}`;
+const formatTemplateValue = (key, rawValue) => {
+  if (rawValue === null || rawValue === undefined || rawValue === '') return null;
+
+  if (key === 'numero_surco') {
+    return `Surco ${rawValue}`;
+  }
+
+  if (key === 'id_arbol') {
+    return `ID ${rawValue}`;
+  }
+
+  return String(rawValue);
+};
+
+let label = null;
+
+if (Array.isArray(field.labelTemplate) && field.labelTemplate.length > 0) {
+  const parts = field.labelTemplate
+    .map(key => formatTemplateValue(key, getFieldValue(item, key)))
+    .filter(Boolean);
+
+  if (parts.length > 0) {
+    label = parts.join(' · ');
+  }
+}
+
+if (!label) {
+  const candidateLabel =
+    getFieldValue(item, field.optionLabel) ??
+    item?.nombre ??
+    item?.NOMBRE ??
+    item?.descripcion ??
+    item?.DESCRIPCION ??
+    item?.nombre_finca ??
+    item?.NOMBRE_FINCA ??
+    item?.nombre_sector ??
+    item?.NOMBRE_SECTOR ??
+    item?.nombre_estado ??
+    item?.NOMBRE_ESTADO ??
+    item?.nombre_plaga ??
+    item?.NOMBRE_PLAGA ??
+    item?.nombre_tratamiento ??
+    item?.NOMBRE_TRATAMIENTO ??
+    item?.nombre_fertilizante ??
+    item?.NOMBRE_FERTILIZANTE ??
+    item?.nombre_arbol ??
+    item?.NOMBRE_ARBOL;
+
+  label =
+    candidateLabel && String(candidateLabel).trim()
+      ? String(candidateLabel)
+      : `Registro #${value}`;
+}
 
       return {
         value: String(value),

@@ -3,7 +3,6 @@ import axios from "axios";
 
 const API = "http://localhost:3000/api";
 
-// ── Estilos por NOMBRE_ESTADO ─────────────────────
 const ESTADO_ESTILOS = {
   CRECIMIENTO: { color: "#2E7D32", bg: "#E8F5E9", icon: "🌱", desc: "En desarrollo" },
   PRODUCCION: { color: "#1565C0", bg: "#E3F2FD", icon: "🍊", desc: "Produciendo" },
@@ -28,8 +27,48 @@ const getEstilo = (nombreEstado) => {
   );
 };
 
+const getResiembraVisual = (nombreEstado) => {
+  const estado = String(nombreEstado || "").toUpperCase().trim();
+
+  if (estado === "MUERTO") {
+    return {
+      bg: "#FFEBEE",
+      border: "#F4C7CC",
+      text: "#B71C1C",
+      soft: "#7F1D1D",
+      buttonBg: "#B71C1C",
+      buttonText: "#FFFFFF",
+      rowBg: "#FFF7F8",
+    };
+  }
+
+  if (estado === "RESIEMBRA") {
+    return {
+      bg: "#F3E5F5",
+      border: "#DEC4E8",
+      text: "#6A1B9A",
+      soft: "#7B1FA2",
+      buttonBg: "#6A1B9A",
+      buttonText: "#FFFFFF",
+      rowBg: "#FCF8FD",
+    };
+  }
+
+  return {
+    bg: "#F7FBF8",
+    border: "#DCEBDD",
+    text: "#1B4D2A",
+    soft: "#4B6352",
+    buttonBg: "#1B4D2A",
+    buttonText: "#FFFFFF",
+    rowBg: "#FFFFFF",
+  };
+};
+
 const RIESGO_COLOR = { ALTO: "#B71C1C", MEDIO: "#E65100", BAJO: "#F57F17" };
 const VISTA = { MAPA: "mapa", ALERTAS: "alertas", RESIEMBRA: "resiembra" };
+
+const HOY = () => new Date().toISOString().slice(0, 10);
 
 export default function MapaPlanoModule() {
   const [fincas, setFincas] = useState([]);
@@ -44,8 +83,49 @@ export default function MapaPlanoModule() {
   const [zoom, setZoom] = useState(1);
   const [errorMsg, setErrorMsg] = useState(null);
 
+  const [catalogos, setCatalogos] = useState({
+    estados: [],
+    variedades: [],
+    plagas: [],
+    sectores: [],
+  });
+
+  const [modal, setModal] = useState({
+    tipo: null,
+    loading: false,
+    error: "",
+  });
+
+  const [nuevoArbolForm, setNuevoArbolForm] = useState({
+    id_sector: "",
+    id_tipo_variedad_arbol: "",
+    id_estado: "",
+    numero_surco: "",
+    descripcion: "",
+    posicion: "",
+  });
+
+  const [estadoForm, setEstadoForm] = useState({
+    id_estado_nuevo: "",
+    fecha_cambio: HOY(),
+    observaciones: "",
+  });
+
+  const [alertaForm, setAlertaForm] = useState({
+    id_plaga: "",
+    fecha_deteccion: HOY(),
+    fecha_resolucion: "",
+    observaciones: "",
+  });
+
+  const [resiembraForm, setResiembraForm] = useState({
+    fecha_resiembra: HOY(),
+    motivo: "",
+  });
+
   useEffect(() => {
     cargarFincas();
+    cargarCatalogos();
   }, []);
 
   useEffect(() => {
@@ -65,10 +145,30 @@ export default function MapaPlanoModule() {
       setFincas(lista);
 
       if (lista.length > 0) {
-        setFincaSeleccionada(lista[0].ID_FINCA);
+        setFincaSeleccionada(String(lista[0].ID_FINCA));
       }
     } catch (e) {
       console.error("Error fincas:", e);
+    }
+  };
+
+  const cargarCatalogos = async () => {
+    try {
+      const [estadosRes, variedadesRes, plagasRes, sectoresRes] = await Promise.all([
+        axios.get(`${API}/estado-arbol`),
+        axios.get(`${API}/tipos-variedad`),
+        axios.get(`${API}/plaga-enfermedad`),
+        axios.get(`${API}/sector`),
+      ]);
+
+      setCatalogos({
+        estados: estadosRes.data?.data || [],
+        variedades: variedadesRes.data?.data || [],
+        plagas: plagasRes.data?.data || [],
+        sectores: sectoresRes.data?.data || [],
+      });
+    } catch (e) {
+      console.error("Error catálogos:", e);
     }
   };
 
@@ -92,9 +192,19 @@ export default function MapaPlanoModule() {
     }
   };
 
+  const refrescarTodo = async () => {
+    await Promise.all([cargarPlano(fincaSeleccionada), cargarCatalogos()]);
+  };
+
   const finca = datosPlano?.finca || null;
-  const sectores = datosPlano?.sectores || [];
-  const arboles = datosPlano?.arboles || [];
+
+  const sectores = useMemo(() => {
+    return Array.isArray(datosPlano?.sectores) ? datosPlano.sectores : [];
+  }, [datosPlano?.sectores]);
+
+  const arboles = useMemo(() => {
+    return Array.isArray(datosPlano?.arboles) ? datosPlano.arboles : [];
+  }, [datosPlano?.arboles]);
 
   const anchoFinca = Number(finca?.ANCHO || 100);
   const largoFinca = Number(finca?.LARGO || 200);
@@ -147,12 +257,25 @@ export default function MapaPlanoModule() {
     [arboles]
   );
 
-  const arbolesResiembra = useMemo(
+  const arbolesMuertosParaResiembra = useMemo(
     () =>
       arboles.filter(
         (a) => String(a.NOMBRE_ESTADO || "").toUpperCase().trim() === "MUERTO"
       ),
     [arboles]
+  );
+
+  const arbolesYaResiembrados = useMemo(
+    () =>
+      arboles.filter(
+        (a) => String(a.NOMBRE_ESTADO || "").toUpperCase().trim() === "RESIEMBRA"
+      ),
+    [arboles]
+  );
+
+  const arbolesResiembra = useMemo(
+    () => [...arbolesMuertosParaResiembra, ...arbolesYaResiembrados],
+    [arbolesMuertosParaResiembra, arbolesYaResiembrados]
   );
 
   const getNumeroPosicionArbol = (arbol) => {
@@ -165,7 +288,6 @@ export default function MapaPlanoModule() {
     return isNaN(d) ? String(f) : d.toLocaleDateString("es-GT");
   };
 
-  // ── Distribución general y ordenada de sectores ─────────────────
   const getSectorBox = (_sector, idx, total) => {
     const count = Math.max(Number(total || 1), 1);
 
@@ -214,9 +336,6 @@ export default function MapaPlanoModule() {
     };
   };
 
-  // ── Posición lógica del árbol en matriz ─────────────────────────
-  // X = posición dentro del surco
-  // Y = surco
   const getArbolPositionByMatriz = (arbol) => {
     const idxSector = sectores.findIndex(
       (s) => String(s.ID_SECTOR) === String(arbol.ID_SECTOR)
@@ -248,6 +367,157 @@ export default function MapaPlanoModule() {
     return { left, top };
   };
 
+  const openModal = (tipo) => {
+    setModal({ tipo, loading: false, error: "" });
+
+    if (tipo === "nuevo_arbol") {
+      setNuevoArbolForm({
+        id_sector: sectorFiltro || "",
+        id_tipo_variedad_arbol: "",
+        id_estado: "",
+        numero_surco: "",
+        descripcion: "",
+        posicion: "",
+      });
+    }
+
+    if (tipo === "actualizar_estado" && arbolSeleccionado) {
+      setEstadoForm({
+        id_estado_nuevo: "",
+        fecha_cambio: HOY(),
+        observaciones: "",
+      });
+    }
+
+    if (tipo === "registrar_alerta" && arbolSeleccionado) {
+      setAlertaForm({
+        id_plaga: "",
+        fecha_deteccion: HOY(),
+        fecha_resolucion: "",
+        observaciones: "",
+      });
+    }
+
+    if (tipo === "resiembra" && arbolSeleccionado) {
+      setResiembraForm({
+        fecha_resiembra: HOY(),
+        motivo: "",
+      });
+    }
+  };
+
+  const closeModal = () => {
+    setModal({ tipo: null, loading: false, error: "" });
+  };
+
+  const submitNuevoArbol = async (e) => {
+    e.preventDefault();
+    try {
+      setModal((m) => ({ ...m, loading: true, error: "" }));
+
+      await axios.post(`${API}/arbol`, {
+        id_sector: Number(nuevoArbolForm.id_sector),
+        id_tipo_variedad_arbol: Number(nuevoArbolForm.id_tipo_variedad_arbol),
+        id_estado: Number(nuevoArbolForm.id_estado),
+        numero_surco: nuevoArbolForm.numero_surco ? Number(nuevoArbolForm.numero_surco) : null,
+        posicion_x: nuevoArbolForm.posicion ? Number(nuevoArbolForm.posicion) : null,
+        descripcion: nuevoArbolForm.descripcion || null,
+      });
+
+      await refrescarTodo();
+      closeModal();
+    } catch (err) {
+      setModal((m) => ({
+        ...m,
+        loading: false,
+        error: err.response?.data?.message || "No se pudo crear el árbol.",
+      }));
+    }
+  };
+
+  const submitActualizarEstado = async (e) => {
+    e.preventDefault();
+    if (!arbolSeleccionado) return;
+
+    try {
+      setModal((m) => ({ ...m, loading: true, error: "" }));
+
+      await axios.post(`${API}/historial-estado`, {
+        id_arbol: Number(arbolSeleccionado.ID_ARBOL),
+        id_estado_nuevo: Number(estadoForm.id_estado_nuevo),
+        fecha_cambio: estadoForm.fecha_cambio,
+        observaciones: estadoForm.observaciones || null,
+      });
+
+      await refrescarTodo();
+      closeModal();
+    } catch (err) {
+      setModal((m) => ({
+        ...m,
+        loading: false,
+        error: err.response?.data?.message || "No se pudo actualizar el estado.",
+      }));
+    }
+  };
+
+  const submitRegistrarAlerta = async (e) => {
+    e.preventDefault();
+    if (!arbolSeleccionado) return;
+
+    try {
+      setModal((m) => ({ ...m, loading: true, error: "" }));
+
+      await axios.post(`${API}/registro-plaga`, {
+        id_arbol: Number(arbolSeleccionado.ID_ARBOL),
+        id_plaga: Number(alertaForm.id_plaga),
+        fecha_deteccion: alertaForm.fecha_deteccion,
+        fecha_resolucion: alertaForm.fecha_resolucion || null,
+        observaciones: alertaForm.observaciones || null,
+      });
+
+      await refrescarTodo();
+      closeModal();
+    } catch (err) {
+      setModal((m) => ({
+        ...m,
+        loading: false,
+        error: err.response?.data?.message || "No se pudo registrar la alerta.",
+      }));
+    }
+  };
+
+  const submitResiembra = async (e) => {
+    e.preventDefault();
+    if (!arbolSeleccionado) return;
+
+    try {
+      setModal((m) => ({ ...m, loading: true, error: "" }));
+
+      await axios.post(`${API}/resiembra`, {
+        id_arbol_nuevo: Number(arbolSeleccionado.ID_ARBOL),
+        fecha_resiembra: resiembraForm.fecha_resiembra,
+        motivo: resiembraForm.motivo || null,
+      });
+
+      await refrescarTodo();
+      closeModal();
+    } catch (err) {
+      setModal((m) => ({
+        ...m,
+        loading: false,
+        error: err.response?.data?.message || "No se pudo registrar la resiembra.",
+      }));
+    }
+  };
+
+  const sectoresDeLaFinca = useMemo(() => {
+    if (!fincaSeleccionada) return catalogos.sectores;
+
+    return (catalogos.sectores || []).filter(
+      (s) => String(s.ID_FINCA) === String(fincaSeleccionada)
+    );
+  }, [catalogos.sectores, fincaSeleccionada]);
+
   return (
     <div style={s.root}>
       <div style={s.topBar}>
@@ -269,7 +539,7 @@ export default function MapaPlanoModule() {
           {[
             { id: VISTA.MAPA, ic: "🗺", tx: "Mapa" },
             { id: VISTA.ALERTAS, ic: "⚠️", tx: `Alertas (${stats.alertas})` },
-            { id: VISTA.RESIEMBRA, ic: "🌿", tx: `Resiembra (${stats.muertos})` },
+            { id: VISTA.RESIEMBRA, ic: "🌿", tx: `Gestión resiembra (${arbolesResiembra.length})` },
           ].map((t) => (
             <button
               key={t.id}
@@ -455,7 +725,9 @@ export default function MapaPlanoModule() {
                   <button style={s.btnZoom} onClick={() => setZoom(1)}>
                     ↺
                   </button>
-                  <button style={s.btnPrimary}>＋ Nuevo Árbol</button>
+                  <button style={s.btnPrimary} onClick={() => openModal("nuevo_arbol")}>
+                    ＋ Nuevo Árbol
+                  </button>
                 </div>
               </div>
 
@@ -627,18 +899,6 @@ export default function MapaPlanoModule() {
                             <div style={{ fontSize: 10, color: "#9CA3AF" }}>
                               Surco {tooltip.NUMERO_SURCO || "—"} · Posición {getNumeroPosicionArbol(tooltip)}
                             </div>
-                            {tooltip.NOMBRE_TRATAMIENTO && (
-                              <div style={{ fontSize: 10, color: "#1565C0", marginTop: 3 }}>
-                                💊 {tooltip.NOMBRE_TRATAMIENTO}
-                                {tooltip.NOMBRE_FERTILIZANTE &&
-                                  ` + ${tooltip.NOMBRE_FERTILIZANTE}`}
-                              </div>
-                            )}
-                            {tooltip.PLAGAS?.length > 0 && (
-                              <div style={{ fontSize: 10, color: "#E65100", marginTop: 2 }}>
-                                🦠 {tooltip.PLAGAS.length} plaga(s) activa(s)
-                              </div>
-                            )}
                           </div>
                         );
                       })()}
@@ -765,43 +1025,15 @@ export default function MapaPlanoModule() {
                           Posición {getNumeroPosicionArbol(arbol)}
                         </div>
 
-                        {arbol.NOMBRE_TRATAMIENTO ? (
-                          <div style={{ fontSize: 10, color: "#1565C0", marginTop: 5 }}>
-                            💊 {arbol.NOMBRE_TRATAMIENTO}
-                            {arbol.NOMBRE_FERTILIZANTE && ` + ${arbol.NOMBRE_FERTILIZANTE}`}
-                            <br />
-                            <span style={{ color: "#9CA3AF" }}>{formatFecha(arbol.FECHA_APLICACION)}</span>
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: 10, color: "#F57C00", marginTop: 5 }}>
-                            ⚠ Sin tratamiento registrado
-                          </div>
-                        )}
-
-                        {arbol.PLAGAS?.length > 0 && (
-                          <div style={{ marginTop: 5 }}>
-                            {arbol.PLAGAS.map((p, i) => (
-                              <span
-                                key={i}
-                                style={{
-                                  display: "inline-block",
-                                  marginRight: 3,
-                                  marginBottom: 3,
-                                  fontSize: 10,
-                                  padding: "1px 7px",
-                                  borderRadius: 20,
-                                  background: RIESGO_COLOR[p.NIVEL_RIESGO] || "#6B7280",
-                                  color: "#fff",
-                                }}
-                              >
-                                🦠 {p.NOMBRE_PLAGA} ({p.NIVEL_RIESGO || "—"})
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
                         <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                          <button style={{ ...s.btnSmall, background: est.color, color: "#fff" }}>
+                          <button
+                            style={{ ...s.btnSmall, background: est.color, color: "#fff" }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setArbolSeleccionado(arbol);
+                              openModal("actualizar_estado");
+                            }}
+                          >
                             Actualizar estado
                           </button>
                           <button
@@ -810,6 +1042,11 @@ export default function MapaPlanoModule() {
                               border: `1px solid ${est.color}`,
                               color: est.color,
                               background: "transparent",
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setArbolSeleccionado(arbol);
+                              openModal("registrar_alerta");
                             }}
                           >
                             Seguimiento
@@ -826,15 +1063,83 @@ export default function MapaPlanoModule() {
           {vista === VISTA.RESIEMBRA && (
             <div style={s.card}>
               <p style={s.cardTitle}>
-                🌿 Oportunidades de Resiembra
+                🌿 Gestión de Resiembra
                 <span style={{ fontSize: 11, fontWeight: 400, color: "#6B7280", marginLeft: 8 }}>
-                  {arbolesResiembra.length} espacio(s) disponibles
+                  {arbolesResiembra.length} registro(s)
                 </span>
               </p>
+
               <p style={{ fontSize: 12, color: "#6B7280", marginBottom: 14, lineHeight: 1.6 }}>
-                Árboles con estado <strong>MUERTO</strong> — cada uno es un espacio libre para resembrar.
-                La ubicación se interpreta por <strong>sector, surco y posición</strong>.
+                Aquí se muestran tanto los árboles con oportunidad de resiembra
+                (<strong>MUERTO</strong>) como los árboles ya marcados o actualizados
+                en estado <strong>RESIEMBRA</strong>.
               </p>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 10,
+                  marginBottom: 16,
+                }}
+              >
+                <div
+                  style={{
+                    background: "#FFEBEE",
+                    border: "1px solid #F4C7CC",
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                  }}
+                >
+                  <div style={{ fontSize: 11, color: "#B71C1C", fontWeight: 700 }}>
+                    Oportunidades pendientes
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#B71C1C", marginTop: 4 }}>
+                    {arbolesMuertosParaResiembra.length}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#7F1D1D" }}>
+                    Árboles en estado MUERTO
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "#F3E5F5",
+                    border: "1px solid #DEC4E8",
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                  }}
+                >
+                  <div style={{ fontSize: 11, color: "#6A1B9A", fontWeight: 700 }}>
+                    Ya en resiembra
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#6A1B9A", marginTop: 4 }}>
+                    {arbolesYaResiembrados.length}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#7B1FA2" }}>
+                    Árboles con estado RESIEMBRA
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "#EEF7EF",
+                    border: "1px solid #CFE6D0",
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                  }}
+                >
+                  <div style={{ fontSize: 11, color: "#1B4D2A", fontWeight: 700 }}>
+                    Total en seguimiento
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#1B4D2A", marginTop: 4 }}>
+                    {arbolesResiembra.length}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#3D5F48" }}>
+                    Muertos + Resiembra
+                  </div>
+                </div>
+              </div>
 
               <div
                 style={{
@@ -845,31 +1150,39 @@ export default function MapaPlanoModule() {
                 }}
               >
                 {sectores.map((sec) => {
-                  const muertos = arbolesResiembra.filter(
+                  const registrosSector = arbolesResiembra.filter(
                     (a) => String(a.ID_SECTOR) === String(sec.ID_SECTOR)
                   );
-                  if (!muertos.length) return null;
+                  if (!registrosSector.length) return null;
 
-                  const surcos = [...new Set(muertos.map((a) => a.NUMERO_SURCO).filter(Boolean))];
+                  const surcos = [...new Set(registrosSector.map((a) => a.NUMERO_SURCO).filter(Boolean))];
+
+                  const tieneMuerto = registrosSector.some(
+                    (a) => String(a.NOMBRE_ESTADO || "").toUpperCase().trim() === "MUERTO"
+                  );
+
+                  const visual = getResiembraVisual(tieneMuerto ? "MUERTO" : "RESIEMBRA");
 
                   return (
                     <div
                       key={sec.ID_SECTOR}
                       style={{
-                        background: "#F3E5F5",
+                        background: visual.bg,
                         borderRadius: 10,
-                        border: "1px solid #CE93D840",
+                        border: `1px solid ${visual.border}`,
                         padding: "10px 14px",
                       }}
                     >
-                      <div style={{ fontWeight: 700, fontSize: 13, color: "#4A148C" }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: visual.text }}>
                         {sec.NOMBRE_SECTOR}
                       </div>
-                      <div style={{ fontSize: 26, fontWeight: 700, color: "#6A1B9A", margin: "2px 0" }}>
-                        {muertos.length}
+                      <div style={{ fontSize: 26, fontWeight: 700, color: visual.text, margin: "2px 0" }}>
+                        {registrosSector.length}
                       </div>
-                      <div style={{ fontSize: 11, color: "#7B1FA2" }}>espacios</div>
-                      <div style={{ fontSize: 10, color: "#9C27B0", marginTop: 4 }}>
+                      <div style={{ fontSize: 11, color: visual.soft }}>
+                        {tieneMuerto ? "oportunidades" : "registros"}
+                      </div>
+                      <div style={{ fontSize: 10, color: visual.soft, marginTop: 4 }}>
                         {sec.TIPO_CULTIVO}
                         {surcos.length > 0 && ` · Surcos: ${surcos.join(", ")}`}
                       </div>
@@ -887,7 +1200,7 @@ export default function MapaPlanoModule() {
                       fontSize: 13,
                     }}
                   >
-                    No hay árboles muertos registrados
+                    No hay árboles registrados para gestión de resiembra
                   </div>
                 )}
               </div>
@@ -902,7 +1215,8 @@ export default function MapaPlanoModule() {
                           "Sector",
                           "Surco",
                           "Posición",
-                          "Variedad anterior",
+                          "Estado",
+                          "Variedad",
                           "Último tratamiento",
                           "Acción",
                         ].map((h) => (
@@ -913,40 +1227,83 @@ export default function MapaPlanoModule() {
                       </tr>
                     </thead>
                     <tbody>
-                      {arbolesResiembra.map((a) => (
-                        <tr
-                          key={a.ID_ARBOL}
-                          onClick={() => {
-                            setArbolSeleccionado(a);
-                            setVista(VISTA.MAPA);
-                          }}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <td style={s.td}>{a.ID_ARBOL}</td>
-                          <td style={s.td}>{a.NOMBRE_SECTOR}</td>
-                          <td style={s.td}>{a.NUMERO_SURCO || "—"}</td>
-                          <td style={{ ...s.td, fontFamily: "monospace", fontSize: 11, color: "#6B7280" }}>
-                            Pos {getNumeroPosicionArbol(a)}
-                          </td>
-                          <td style={s.td}>{a.NOMBRE_ARBOL || "—"}</td>
-                          <td style={{ ...s.td, fontSize: 11 }}>
-                            {a.NOMBRE_TRATAMIENTO ? (
-                              <>
-                                {a.NOMBRE_TRATAMIENTO}
-                                <br />
-                                <span style={{ color: "#9CA3AF" }}>{formatFecha(a.FECHA_APLICACION)}</span>
-                              </>
-                            ) : (
-                              <span style={{ color: "#E65100" }}>Sin registro</span>
-                            )}
-                          </td>
-                          <td style={s.td}>
-                            <button style={{ ...s.btnSmall, background: "#6A1B9A", color: "#fff" }}>
-                              🌿 Resembrar
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {arbolesResiembra.map((a) => {
+                        const visual = getResiembraVisual(a.NOMBRE_ESTADO);
+
+                        return (
+                          <tr
+                            key={a.ID_ARBOL}
+                            onClick={() => {
+                              setArbolSeleccionado(a);
+                              setVista(VISTA.MAPA);
+                            }}
+                            style={{
+                              cursor: "pointer",
+                              background: visual.rowBg,
+                              borderLeft: `4px solid ${visual.text}`,
+                            }}
+                          >
+                            <td style={s.td}>{a.ID_ARBOL}</td>
+                            <td style={s.td}>{a.NOMBRE_SECTOR}</td>
+                            <td style={s.td}>{a.NUMERO_SURCO || "—"}</td>
+                            <td style={{ ...s.td, fontFamily: "monospace", fontSize: 11, color: "#6B7280" }}>
+                              Pos {getNumeroPosicionArbol(a)}
+                            </td>
+                            <td style={s.td}>
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                  padding: "3px 10px",
+                                  borderRadius: 20,
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  background: getEstilo(a.NOMBRE_ESTADO).bg,
+                                  color: getEstilo(a.NOMBRE_ESTADO).color,
+                                  border: `1px solid ${getEstilo(a.NOMBRE_ESTADO).color}30`,
+                                }}
+                              >
+                                {getEstilo(a.NOMBRE_ESTADO).icon} {a.NOMBRE_ESTADO || "—"}
+                              </span>
+                            </td>
+                            <td style={s.td}>{a.NOMBRE_ARBOL || "—"}</td>
+                            <td style={{ ...s.td, fontSize: 11 }}>
+                              {a.NOMBRE_TRATAMIENTO ? (
+                                <>
+                                  {a.NOMBRE_TRATAMIENTO}
+                                  <br />
+                                  <span style={{ color: "#9CA3AF" }}>{formatFecha(a.FECHA_APLICACION)}</span>
+                                </>
+                              ) : (
+                                <span style={{ color: visual.text }}>
+                                  {String(a.NOMBRE_ESTADO || "").toUpperCase().trim() === "MUERTO"
+                                    ? "Pendiente"
+                                    : "Sin registro"}
+                                </span>
+                              )}
+                            </td>
+                            <td style={s.td}>
+                              <button
+                                style={{
+                                  ...s.btnSmall,
+                                  background: visual.buttonBg,
+                                  color: visual.buttonText,
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setArbolSeleccionado(a);
+                                  openModal("resiembra");
+                                }}
+                              >
+                                {String(a.NOMBRE_ESTADO || "").toUpperCase().trim() === "MUERTO"
+                                  ? "🌿 Resembrar"
+                                  : "🌿 Gestionar"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1215,29 +1572,31 @@ export default function MapaPlanoModule() {
                     )}
 
                     <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                      <button style={{ ...s.btnPrimary, justifyContent: "center" }}>
+                      <button
+                        style={{ ...s.btnPrimary, justifyContent: "center" }}
+                        onClick={() => openModal("actualizar_estado")}
+                      >
                         Actualizar estado
                       </button>
 
                       {["ENFERMO", "MUERTO"].includes(
                         String(arbolSeleccionado.NOMBRE_ESTADO || "").toUpperCase().trim()
                       ) && (
-                        <button style={{ ...s.btnSecondary, borderColor: "#E65100", color: "#E65100" }}>
+                        <button
+                          style={{ ...s.btnSecondary, borderColor: "#E65100", color: "#E65100" }}
+                          onClick={() => openModal("registrar_alerta")}
+                        >
                           ⚠️ Registrar alerta
                         </button>
                       )}
 
                       {String(arbolSeleccionado.NOMBRE_ESTADO || "").toUpperCase().trim() ===
                         "MUERTO" && (
-                        <button style={{ ...s.btnSecondary, borderColor: "#6A1B9A", color: "#6A1B9A" }}>
+                        <button
+                          style={{ ...s.btnSecondary, borderColor: "#6A1B9A", color: "#6A1B9A" }}
+                          onClick={() => openModal("resiembra")}
+                        >
                           🌿 Marcar para resiembra
-                        </button>
-                      )}
-
-                      {String(arbolSeleccionado.NOMBRE_ESTADO || "").toUpperCase().trim() ===
-                        "ENFERMO" && (
-                        <button style={{ ...s.btnSecondary, borderColor: "#1565C0", color: "#1565C0" }}>
-                          📋 Ver seguimiento
                         </button>
                       )}
                     </div>
@@ -1248,6 +1607,250 @@ export default function MapaPlanoModule() {
           </div>
         </aside>
       </div>
+
+      {modal.tipo && (
+        <div style={modalStyles.overlay} onClick={closeModal}>
+          <div style={modalStyles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={modalStyles.header}>
+              <h3 style={modalStyles.title}>
+                {modal.tipo === "nuevo_arbol" && "Nuevo árbol"}
+                {modal.tipo === "actualizar_estado" && "Actualizar estado"}
+                {modal.tipo === "registrar_alerta" && "Registrar alerta"}
+                {modal.tipo === "resiembra" && "Registrar resiembra"}
+              </h3>
+              <button style={modalStyles.close} onClick={closeModal}>✕</button>
+            </div>
+
+            {modal.error && <div style={modalStyles.error}>{modal.error}</div>}
+
+            {modal.tipo === "nuevo_arbol" && (
+              <form onSubmit={submitNuevoArbol} style={modalStyles.form}>
+                <label style={modalStyles.label}>Sector</label>
+                <select
+                  style={modalStyles.input}
+                  value={nuevoArbolForm.id_sector}
+                  onChange={(e) => setNuevoArbolForm((f) => ({ ...f, id_sector: e.target.value }))}
+                  required
+                >
+                  <option value="">Selecciona...</option>
+                  {sectoresDeLaFinca.map((s) => (
+                    <option key={s.ID_SECTOR} value={s.ID_SECTOR}>
+                      {s.NOMBRE_SECTOR}
+                    </option>
+                  ))}
+                </select>
+
+                <label style={modalStyles.label}>Variedad</label>
+                <select
+                  style={modalStyles.input}
+                  value={nuevoArbolForm.id_tipo_variedad_arbol}
+                  onChange={(e) =>
+                    setNuevoArbolForm((f) => ({ ...f, id_tipo_variedad_arbol: e.target.value }))
+                  }
+                  required
+                >
+                  <option value="">Selecciona...</option>
+                  {catalogos.variedades.map((v) => (
+                    <option
+                      key={v.ID_TIPO_VARIEDAD_ARBOL || v.ID_TIPO_ARBOL}
+                      value={v.ID_TIPO_VARIEDAD_ARBOL || v.ID_TIPO_ARBOL}
+                    >
+                      {v.NOMBRE_ARBOL || v.nombre_arbol}
+                    </option>
+                  ))}
+                </select>
+
+                <label style={modalStyles.label}>Estado inicial</label>
+                <select
+                  style={modalStyles.input}
+                  value={nuevoArbolForm.id_estado}
+                  onChange={(e) => setNuevoArbolForm((f) => ({ ...f, id_estado: e.target.value }))}
+                  required
+                >
+                  <option value="">Selecciona...</option>
+                  {catalogos.estados.map((x) => (
+                    <option key={x.ID_ESTADO} value={x.ID_ESTADO}>
+                      {x.NOMBRE_ESTADO || x.nombre_estado}
+                    </option>
+                  ))}
+                </select>
+
+                <label style={modalStyles.label}>Surco</label>
+                <input
+                  style={modalStyles.input}
+                  type="number"
+                  min="1"
+                  value={nuevoArbolForm.numero_surco}
+                  onChange={(e) => setNuevoArbolForm((f) => ({ ...f, numero_surco: e.target.value }))}
+                />
+
+                <label style={modalStyles.label}>Posición en surco</label>
+                <input
+                  style={modalStyles.input}
+                  type="number"
+                  min="1"
+                  value={nuevoArbolForm.posicion}
+                  onChange={(e) => setNuevoArbolForm((f) => ({ ...f, posicion: e.target.value }))}
+                  placeholder="Número de posición dentro del surco"
+                />
+
+                <label style={modalStyles.label}>Descripción</label>
+                <textarea
+                  style={{ ...modalStyles.input, minHeight: 100 }}
+                  value={nuevoArbolForm.descripcion}
+                  onChange={(e) => setNuevoArbolForm((f) => ({ ...f, descripcion: e.target.value }))}
+                />
+
+                <div style={modalStyles.footer}>
+                  <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    {modal.loading ? "Guardando..." : "Guardar árbol"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {modal.tipo === "actualizar_estado" && arbolSeleccionado && (
+              <form onSubmit={submitActualizarEstado} style={modalStyles.form}>
+                <div style={modalStyles.readonly}>
+                  Árbol: <strong>{arbolSeleccionado.NOMBRE_ARBOL} · {arbolSeleccionado.NOMBRE_SECTOR}</strong>
+                </div>
+
+                <label style={modalStyles.label}>Nuevo estado</label>
+                <select
+                  style={modalStyles.input}
+                  value={estadoForm.id_estado_nuevo}
+                  onChange={(e) => setEstadoForm((f) => ({ ...f, id_estado_nuevo: e.target.value }))}
+                  required
+                >
+                  <option value="">Selecciona...</option>
+                  {catalogos.estados.map((x) => (
+                    <option key={x.ID_ESTADO} value={x.ID_ESTADO}>
+                      {x.NOMBRE_ESTADO || x.nombre_estado}
+                    </option>
+                  ))}
+                </select>
+
+                <label style={modalStyles.label}>Fecha</label>
+                <input
+                  style={modalStyles.input}
+                  type="date"
+                  value={estadoForm.fecha_cambio}
+                  onChange={(e) => setEstadoForm((f) => ({ ...f, fecha_cambio: e.target.value }))}
+                  required
+                />
+
+                <label style={modalStyles.label}>Observaciones</label>
+                <textarea
+                  style={{ ...modalStyles.input, minHeight: 100 }}
+                  value={estadoForm.observaciones}
+                  onChange={(e) => setEstadoForm((f) => ({ ...f, observaciones: e.target.value }))}
+                />
+
+                <div style={modalStyles.footer}>
+                  <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    {modal.loading ? "Guardando..." : "Actualizar estado"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {modal.tipo === "registrar_alerta" && arbolSeleccionado && (
+              <form onSubmit={submitRegistrarAlerta} style={modalStyles.form}>
+                <div style={modalStyles.readonly}>
+                  Árbol: <strong>{arbolSeleccionado.NOMBRE_ARBOL} · {arbolSeleccionado.NOMBRE_SECTOR}</strong>
+                </div>
+
+                <label style={modalStyles.label}>Plaga / enfermedad</label>
+                <select
+                  style={modalStyles.input}
+                  value={alertaForm.id_plaga}
+                  onChange={(e) => setAlertaForm((f) => ({ ...f, id_plaga: e.target.value }))}
+                  required
+                >
+                  <option value="">Selecciona...</option>
+                  {catalogos.plagas.map((p) => (
+                    <option key={p.ID_PLAGA} value={p.ID_PLAGA}>
+                      {p.NOMBRE_PLAGA || p.nombre_plaga}
+                    </option>
+                  ))}
+                </select>
+
+                <label style={modalStyles.label}>Fecha detección</label>
+                <input
+                  style={modalStyles.input}
+                  type="date"
+                  value={alertaForm.fecha_deteccion}
+                  onChange={(e) => setAlertaForm((f) => ({ ...f, fecha_deteccion: e.target.value }))}
+                  required
+                />
+
+                <label style={modalStyles.label}>Fecha resolución</label>
+                <input
+                  style={modalStyles.input}
+                  type="date"
+                  value={alertaForm.fecha_resolucion}
+                  onChange={(e) => setAlertaForm((f) => ({ ...f, fecha_resolucion: e.target.value }))}
+                />
+
+                <label style={modalStyles.label}>Observaciones</label>
+                <textarea
+                  style={{ ...modalStyles.input, minHeight: 100 }}
+                  value={alertaForm.observaciones}
+                  onChange={(e) => setAlertaForm((f) => ({ ...f, observaciones: e.target.value }))}
+                />
+
+                <div style={modalStyles.footer}>
+                  <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    {modal.loading ? "Guardando..." : "Registrar alerta"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {modal.tipo === "resiembra" && arbolSeleccionado && (
+              <form onSubmit={submitResiembra} style={modalStyles.form}>
+                <div style={modalStyles.readonly}>
+                  Árbol seleccionado: <strong>{arbolSeleccionado.NOMBRE_ARBOL} · {arbolSeleccionado.NOMBRE_SECTOR}</strong>
+                </div>
+
+                <label style={modalStyles.label}>Fecha resiembra</label>
+                <input
+                  style={modalStyles.input}
+                  type="date"
+                  value={resiembraForm.fecha_resiembra}
+                  onChange={(e) => setResiembraForm((f) => ({ ...f, fecha_resiembra: e.target.value }))}
+                  required
+                />
+
+                <label style={modalStyles.label}>Motivo</label>
+                <textarea
+                  style={{ ...modalStyles.input, minHeight: 100 }}
+                  value={resiembraForm.motivo}
+                  onChange={(e) => setResiembraForm((f) => ({ ...f, motivo: e.target.value }))}
+                />
+
+                <div style={modalStyles.footer}>
+                  <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    {modal.loading ? "Guardando..." : "Registrar resiembra"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1480,5 +2083,115 @@ const s = {
     color: "#6B7280",
     fontSize: 13,
     fontWeight: 600,
+  },
+};
+
+const modalStyles = {
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(7,16,10,.45)",
+    backdropFilter: "blur(3px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 200,
+    padding: 16,
+  },
+  modal: {
+    width: "100%",
+    maxWidth: 560,
+    background: "#fff",
+    borderRadius: 18,
+    border: "1px solid #DCEBDD",
+    overflow: "hidden",
+    boxShadow: "0 24px 80px rgba(0,0,0,.22)",
+  },
+  header: {
+    padding: "16px 18px",
+    borderBottom: "1px solid #EEF4EF",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    background: "#F7FBF8",
+  },
+  title: {
+    margin: 0,
+    fontSize: 18,
+    color: "#1B4D2A",
+    fontWeight: 800,
+  },
+  close: {
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    fontSize: 18,
+    color: "#6B7280",
+  },
+  form: {
+    padding: 18,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#1B4D2A",
+  },
+  input: {
+    width: "100%",
+    minHeight: 44,
+    border: "1px solid #CFE0D1",
+    borderRadius: 12,
+    padding: "10px 12px",
+    fontSize: 13,
+    outline: "none",
+    background: "#fff",
+    color: "#1F2937",
+  },
+  footer: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 10,
+  },
+  btnPrimary: {
+    background: "#1B4D2A",
+    color: "#fff",
+    border: "none",
+    borderRadius: 12,
+    padding: "10px 16px",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  btnSecondary: {
+    background: "#fff",
+    color: "#1B4D2A",
+    border: "1px solid #1B4D2A",
+    borderRadius: 12,
+    padding: "10px 16px",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  error: {
+    margin: 16,
+    marginBottom: 0,
+    background: "#FFF4F4",
+    border: "1px solid #F0C7C7",
+    color: "#B42318",
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 13,
+  },
+  readonly: {
+    background: "#F7FBF8",
+    border: "1px solid #E3EEE4",
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 13,
+    color: "#374151",
   },
 };
