@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacidad y Preguntas Frecuentes — Gestión Forestal</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F2F7F3;
+      color: #4A4A4A;
+      line-height: 1.7;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #0D2B18 0%, #1B4D2A 55%, #245934 100%);
+      padding: 0 32px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,.18);
+    }
+    .header-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center; gap: 16px;
+      height: 68px;
+    }
+    .logo-box {
+      width: 40px; height: 40px;
+      background: #D4A853; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-box .material-icons { color: #1B4D2A; font-size: 22px; }
+    .header h1 { color: #fff; font-size: 16px; font-weight: 700; }
+    .header p  { color: rgba(255,255,255,.55); font-size: 12px; }
+    .back-btn {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,.8); font-size: 13px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 10px; padding: 8px 14px;
+      cursor: pointer; text-decoration: none;
+      transition: background .15s ease;
+    }
+    .back-btn:hover { background: rgba(255,255,255,.18); }
+    .back-btn .material-icons { font-size: 16px; }
+
+    /* ── Nav tabs ── */
+    .tabs {
+      background: #fff;
+      border-bottom: 1px solid #DCEDDF;
+      position: sticky; top: 68px; z-index: 99;
+    }
+    .tabs-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; gap: 0; padding: 0 8px;
+    }
+    .tab-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 16px 20px;
+      font-size: 13px; font-weight: 600;
+      color: #8B6F47;
+      border-bottom: 3px solid transparent;
+      cursor: pointer; background: none; border-top: none;
+      border-left: none; border-right: none;
+      transition: color .15s, border-color .15s;
+    }
+    .tab-btn .material-icons { font-size: 18px; }
+    .tab-btn:hover { color: #1B4D2A; }
+    .tab-btn.active { color: #1B4D2A; border-bottom-color: #D4A853; }
+
+    /* ── Content ── */
+    .main { max-width: 960px; margin: 0 auto; padding: 36px 32px 60px; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1B4D2A, #2D7A3E);
+      border-radius: 20px; padding: 32px 36px; margin-bottom: 28px;
+      display: flex; align-items: flex-start; gap: 20px;
+    }
+    .hero-icon {
+      width: 56px; height: 56px; background: #D4A853;
+      border-radius: 16px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; box-shadow: 0 6px 18px rgba(212,168,83,.35);
+    }
+    .hero-icon .material-icons { color: #1B4D2A; font-size: 28px; }
+    .hero h2 { color: #fff; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .hero p  { color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.6; }
+    .hero-date { color: rgba(255,255,255,.45); font-size: 11px; margin-top: 8px; }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff; border: 1px solid #DCEDDF;
+      border-radius: 16px; padding: 24px 28px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(27,77,42,.05);
+    }
+    .card-title {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px; padding-bottom: 14px;
+      border-bottom: 1px solid #DCEDDF;
+    }
+    .card-title-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #E8F5E9;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .card-title-icon .material-icons { color: #1B4D2A; font-size: 19px; }
+    .card-title h3 { font-size: 15px; font-weight: 700; color: #1B4D2A; }
+    .card-title p  { font-size: 11px; color: #8B6F47; margin-top: 2px; }
+
+    .card p { font-size: 13px; color: #4A4A4A; margin-bottom: 10px; line-height: 1.7; }
+    .card p:last-child { margin-bottom: 0; }
+
+    .data-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .data-list li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; color: #4A4A4A;
+    }
+    .data-list li .material-icons {
+      font-size: 16px; color: #2D7A3E; flex-shrink: 0; margin-top: 1px;
+    }
+
+    .highlight {
+      background: #E8F5E9; border: 1px solid #DCEDDF;
+      border-left: 4px solid #2D7A3E;
+      border-radius: 0 10px 10px 0;
+      padding: 14px 16px; font-size: 13px; color: #1B4D2A; font-weight: 600;
+      margin: 12px 0;
+    }
+
+    /* ── FAQ ── */
+    .faq-item {
+      background: #fff; border: 1px solid #DCEDDF;
+      border-radius: 14px; margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(27,77,42,.05);
+    }
+    .faq-question {
+      width: 100%; display: flex; align-items: center;
+      justify-content: space-between; gap: 12px;
+      padding: 18px 22px;
+      background: none; border: none; cursor: pointer;
+      text-align: left;
+      transition: background .15s;
+    }
+    .faq-question:hover { background: #F2F7F3; }
+    .faq-question.open  { background: #E8F5E9; }
+    .faq-question span.text {
+      font-size: 14px; font-weight: 600; color: #1B4D2A; flex: 1;
+    }
+    .faq-question .material-icons {
+      font-size: 20px; color: #2D7A3E; flex-shrink: 0;
+      transition: transform .2s ease;
+    }
+    .faq-question.open .material-icons { transform: rotate(180deg); }
+    .faq-answer {
+      display: none; padding: 0 22px 18px;
+      font-size: 13px; color: #4A4A4A; line-height: 1.7;
+      border-top: 1px solid #DCEDDF;
+    }
+    .faq-answer.open { display: block; }
+    .faq-answer p { margin-bottom: 8px; }
+    .faq-answer p:last-child { margin-bottom: 0; }
+    .faq-answer ul { padding-left: 18px; margin-top: 6px; }
+    .faq-answer ul li { margin-bottom: 4px; }
+
+    .faq-category {
+      font-size: 11px; font-weight: 800; color: #8B6F47;
+      letter-spacing: 1px; text-transform: uppercase;
+      margin: 24px 0 10px;
+    }
+
+    /* ── Contact ── */
+    .contact-box {
+      background: linear-gradient(135deg, #1B4D2A, #2D7A3E);
+      border-radius: 16px; padding: 24px 28px;
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    }
+    .contact-box .material-icons { font-size: 40px; color: #D4A853; }
+    .contact-box h3 { color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .contact-box p  { color: rgba(255,255,255,.7); font-size: 13px; }
+    .contact-box a  { color: #D4A853; font-weight: 700; }
+    .contact-btn {
+      margin-left: auto;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #D4A853; color: #1B4D2A;
+      padding: 12px 20px; border-radius: 12px;
+      font-size: 13px; font-weight: 700;
+      text-decoration: none; flex-shrink: 0;
+      transition: opacity .15s;
+    }
+    .contact-btn:hover { opacity: .88; }
+    .contact-btn .material-icons { font-size: 18px; }
+
+    @media (max-width: 640px) {
+      .main { padding: 24px 16px 48px; }
+      .hero { flex-direction: column; padding: 24px; }
+      .card { padding: 18px 20px; }
+      .tabs-inner { overflow-x: auto; }
+      .tab-btn { white-space: nowrap; padding: 14px 14px; }
+      .contact-box { flex-direction: column; }
+      .contact-btn { width: 100%; justify-content: center; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo-box">
+        <span class="material-icons">park</span>
+      </div>
+      <div>
+        <h1>Gestión Forestal</h1>
+        <p>Sistema de control y monitoreo de árboles</p>
+      </div>
+      <a href="javascript:window.close()" class="back-btn">
+        <span class="material-icons">close</span>
+        Cerrar
+      </a>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="tabs">
+    <div class="tabs-inner">
+      <button class="tab-btn active" onclick="showTab('privacidad', this)">
+        <span class="material-icons">shield</span>
+        Política de Privacidad
+      </button>
+      <button class="tab-btn" onclick="showTab('faq', this)">
+        <span class="material-icons">help_outline</span>
+        Preguntas Frecuentes
+      </button>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- ── PRIVACIDAD ── -->
+    <section id="privacidad" class="section active">
+
+      <div class="hero">
+        <div class="hero-icon"><span class="material-icons">shield</span></div>
+        <div>
+          <h2>Política de Privacidad</h2>
+          <p>Nos comprometemos a proteger tu información personal y a ser transparentes sobre cómo la usamos dentro del sistema de gestión forestal.</p>
+          <p class="hero-date">Última actualización: Enero 2026</p>
+        </div>
+      </div>
+
+      <!-- Datos recopilados -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><span class="material-icons">database</span></div>
+          <div>
+            <h3>Datos que recopilamos</h3>
+            <p>Información personal del usuario del sistema</p>
+          </div>
+        </div>
+        <ul class="data-list">
+          <li><span class="material-icons">check_circle</span> <span><strong>Datos de identificación:</strong> nombre, apellidos y nombre de usuario para identificarte dentro del sistema.</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Datos de contacto:</strong> correo electrónico y número de teléfono (opcionales), usados únicamente para comunicación interna.</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Credenciales de acceso:</strong> tu contraseña se almacena encriptada con bcrypt y nunca en texto plano.</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Actividad operativa:</strong> registros de árboles, fincas, sectores y operaciones que realizas en el sistema.</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Fecha de último acceso:</strong> para control de seguridad y auditoría del sistema.</span></li>
+        </ul>
+      </div>
+
+      <!-- Uso de datos -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><span class="material-icons">settings</span></div>
+          <div>
+            <h3>Cómo usamos tu información</h3>
+            <p>Finalidades del tratamiento de datos</p>
+          </div>
+        </div>
+        <ul class="data-list">
+          <li><span class="material-icons">check_circle</span> <span>Permitirte iniciar sesión y acceder a las funcionalidades del sistema.</span></li>
+          <li><span class="material-icons">check_circle</span> <span>Identificar quién realizó cada operación (registro de plagas, tratamientos, resiembras, etc.).</span></li>
+          <li><span class="material-icons">check_circle</span> <span>Enviar notificaciones relacionadas con el sistema (cuando esté habilitado).</span></li>
+          <li><span class="material-icons">check_circle</span> <span>Mantener la seguridad y auditoría del sistema agrícola.</span></li>
+        </ul>
+        <div class="highlight">
+          Tus datos nunca son vendidos, compartidos con terceros ni usados para publicidad.
+        </div>
+      </div>
+
+      <!-- Acceso -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><span class="material-icons">admin_panel_settings</span></div>
+          <div>
+            <h3>¿Quién tiene acceso a tus datos?</h3>
+            <p>Control de acceso por roles</p>
+          </div>
+        </div>
+        <ul class="data-list">
+          <li><span class="material-icons">check_circle</span> <span><strong>Tú mismo:</strong> puedes ver y editar tu información en la sección "Mi perfil".</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Administradores del sistema:</strong> tienen acceso a la lista de usuarios para gestión interna.</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Técnicos de campo:</strong> solo tienen acceso a los módulos operativos, no a datos de otros usuarios.</span></li>
+        </ul>
+      </div>
+
+      <!-- Seguridad -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><span class="material-icons">security</span></div>
+          <div>
+            <h3>Seguridad de tus datos</h3>
+            <p>Medidas de protección implementadas</p>
+          </div>
+        </div>
+        <ul class="data-list">
+          <li><span class="material-icons">check_circle</span> <span>Las contraseñas se encriptan con <strong>bcrypt</strong> (10 rondas de salting) antes de almacenarse.</span></li>
+          <li><span class="material-icons">check_circle</span> <span>La base de datos Oracle está alojada en Google Cloud Platform con acceso restringido.</span></li>
+          <li><span class="material-icons">check_circle</span> <span>Las sesiones no persisten entre cierres del navegador — cada acceso requiere autenticación.</span></li>
+          <li><span class="material-icons">check_circle</span> <span>El sistema registra la fecha del último acceso para detectar accesos no autorizados.</span></li>
+        </ul>
+      </div>
+
+      <!-- Tus derechos -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><span class="material-icons">gavel</span></div>
+          <div>
+            <h3>Tus derechos</h3>
+            <p>Lo que puedes solicitar en cualquier momento</p>
+          </div>
+        </div>
+        <ul class="data-list">
+          <li><span class="material-icons">check_circle</span> <span><strong>Acceso:</strong> ver toda la información que tenemos sobre ti.</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Rectificación:</strong> corregir tus datos desde "Mi perfil" o contactando al administrador.</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Eliminación:</strong> solicitar la eliminación de tu cuenta al administrador del sistema.</span></li>
+          <li><span class="material-icons">check_circle</span> <span><strong>Cambio de contraseña:</strong> disponible en cualquier momento desde "Mi perfil".</span></li>
+        </ul>
+      </div>
+
+      <!-- Contacto -->
+      <div class="contact-box">
+        <span class="material-icons">email</span>
+        <div>
+          <h3>¿Dudas sobre tu privacidad?</h3>
+          <p>Contáctanos en <a href="mailto:soporte@gestionforestal.com">soporte@gestionforestal.com</a> y respondemos en menos de 48 horas.</p>
+        </div>
+        <a href="mailto:soporte@gestionforestal.com" class="contact-btn">
+          <span class="material-icons">send</span>
+          Enviar correo
+        </a>
+      </div>
+    </section>
+
+    <!-- ── FAQ ── -->
+    <section id="faq" class="section">
+
+      <div class="hero">
+        <div class="hero-icon"><span class="material-icons">help_outline</span></div>
+        <div>
+          <h2>Preguntas Frecuentes</h2>
+          <p>Encuentra respuestas rápidas a las dudas más comunes sobre el Sistema de Gestión Forestal.</p>
+        </div>
+      </div>
+
+      <!-- Categoría: Acceso -->
+      <p class="faq-category"><span class="material-icons" style="font-size:14px;vertical-align:middle">login</span> Acceso y cuenta</p>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Cómo inicio sesión en el sistema?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>Ingresa tu <strong>nombre de usuario</strong> y <strong>contraseña</strong> en la pantalla de inicio. Si no tienes cuenta, haz clic en "Regístrate" para crear una. Cada vez que abras el navegador deberás iniciar sesión nuevamente por seguridad.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Qué hago si olvidé mi contraseña?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>Contacta al administrador del sistema en <a href="mailto:soporte@gestionforestal.com" style="color:#2D7A3E;font-weight:600">soporte@gestionforestal.com</a> indicando tu nombre de usuario. El administrador podrá restablecer tu contraseña.</p>
+          <p>Si ya estás dentro del sistema, puedes cambiar tu contraseña desde <strong>Mi perfil → Cambiar contraseña</strong>.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Cuál es la diferencia entre Administrador y Técnico de campo?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p><strong>Administrador:</strong> tiene acceso completo al sistema, puede gestionar usuarios y todos los módulos operativos.</p>
+          <p><strong>Técnico de campo:</strong> tiene acceso a los módulos operativos (árboles, fincas, registros, mapa) pero no puede gestionar otros usuarios.</p>
+        </div>
+      </div>
+
+      <!-- Categoría: Módulos -->
+      <p class="faq-category" style="margin-top:28px"><span class="material-icons" style="font-size:14px;vertical-align:middle">apps</span> Módulos del sistema</p>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Cómo registro un árbol nuevo?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>Ve al módulo <strong>Árboles</strong> desde el menú lateral y haz clic en "Agregar registro". Deberás seleccionar:</p>
+          <ul>
+            <li>La finca y sector donde está ubicado</li>
+            <li>La variedad del árbol</li>
+            <li>El estado actual (Creciendo, Producción, Enfermo, Muerto)</li>
+            <li>El número de surco (opcional)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Qué es el Mapa de Árboles?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>El <strong>Mapa de Árboles</strong> es una visualización interactiva que muestra la distribución de los árboles dentro de cada finca. Puedes:</p>
+          <ul>
+            <li>Ver la posición de cada árbol en el terreno</li>
+            <li>Filtrar por sector y estado</li>
+            <li>Hacer clic en un árbol para ver su información detallada</li>
+            <li>Identificar rápidamente árboles enfermos o muertos</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Cómo registro una plaga o enfermedad?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>Ve a <strong>Registros → Reg. de plagas</strong>. Selecciona el árbol afectado, la plaga o enfermedad detectada, y la fecha de detección. Opcionalmente puedes agregar una fecha de resolución cuando el problema esté controlado.</p>
+          <p>Primero debes tener configuradas las plagas en el módulo <strong>Catálogos → Plagas y Enfermedades</strong>.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Qué es una Resiembra?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>Una <strong>resiembra</strong> es el registro de un árbol nuevo que reemplaza a uno anterior que murió o fue removido. Se registra en <strong>Registros → Resiembras</strong> indicando el árbol nuevo, la fecha y el motivo.</p>
+        </div>
+      </div>
+
+      <!-- Categoría: Técnico -->
+      <p class="faq-category" style="margin-top:28px"><span class="material-icons" style="font-size:14px;vertical-align:middle">build</span> Aspectos técnicos</p>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Por qué me pide iniciar sesión cada vez que abro el sistema?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>Por seguridad, el sistema <strong>no guarda tu sesión</strong> entre cierres del navegador. Esto protege tus datos si alguien más usa el mismo computador. Deberás ingresar tu usuario y contraseña cada vez que abras el navegador.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Qué hago si el sistema dice "Error de conexión"?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>Este mensaje aparece cuando el servidor backend no está activo. Verifica:</p>
+          <ul>
+            <li>Que el servidor backend esté corriendo (<code>node server.js</code>)</li>
+            <li>Que la base de datos Oracle en GCP esté disponible</li>
+            <li>Que estés conectado a la red correcta</li>
+          </ul>
+          <p>Si el problema persiste, contacta al administrador del sistema.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Los datos se guardan en tiempo real?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>Sí. Cada vez que agregas, editas o eliminas un registro, los cambios se guardan inmediatamente en la base de datos Oracle. No hay un paso adicional de "guardar todo".</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="text">¿Puedo usar el sistema desde el celular?</span>
+          <span class="material-icons">expand_more</span>
+        </button>
+        <div class="faq-answer">
+          <p>La versión web está optimizada para escritorio pero es accesible desde móvil. Para una mejor experiencia móvil, existe la <strong>aplicación Flutter</strong> disponible para Android, que ofrece una interfaz nativa optimizada para dispositivos móviles.</p>
+        </div>
+      </div>
+
+      <!-- Contacto -->
+      <div class="contact-box" style="margin-top:28px">
+        <span class="material-icons">support_agent</span>
+        <div>
+          <h3>¿No encontraste tu respuesta?</h3>
+          <p>Escríbenos a <a href="mailto:soporte@gestionforestal.com">soporte@gestionforestal.com</a> y te ayudamos.</p>
+        </div>
+        <a href="mailto:soporte@gestionforestal.com" class="contact-btn">
+          <span class="material-icons">send</span>
+          Contactar soporte
+        </a>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    function showTab(id, btn) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function toggleFaq(btn) {
+      const answer = btn.nextElementSibling;
+      const isOpen = btn.classList.contains('open');
+      // Cerrar todos
+      document.querySelectorAll('.faq-question').forEach(q => q.classList.remove('open'));
+      document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
+      // Abrir este si estaba cerrado
+      if (!isOpen) {
+        btn.classList.add('open');
+        answer.classList.add('open');
+      }
+    }
+  </script>
+</body>
+</html>

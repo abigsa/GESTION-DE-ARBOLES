@@ -1,81 +1,152 @@
+import { useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { NAV_SECTIONS } from '../config/modulesNuevo';
 import s from './SidebarNuevo.module.css';
 
+const DEFAULT_OPEN = ['Operativo', 'Registros'];
+
 export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
   const { logout, displayName, rolLabel } = useAuth();
 
-  // ── Rail compacto (tablet) ─────────────────────
-  if (mode === 'rail') return (
-    <nav className={s.rail}>
-      <div className={s.railLogo}>
-        <span className="material-icons">park</span>
-      </div>
-      <div className={s.railDiv} />
-      {NAV_SECTIONS.flatMap(sec => sec.entries).map(e => (
-        <button key={e.key} title={e.label}
-          className={`${s.railBtn} ${activeKey === e.key ? s.railActive : ''}`}
-          onClick={() => onSelect(e.key)}>
-          <span className="material-icons">{e.icon}</span>
-        </button>
-      ))}
-      <div style={{flex:1}} />
-      <div className={s.railDiv} />
-      <button className={s.railBtn} title="Cerrar sesión"
-        style={{color:'var(--rojo-alerta)'}} onClick={logout}>
-        <span className="material-icons">logout</span>
-      </button>
-    </nav>
+  const [openSections, setOpenSections] = useState(() => {
+    const initial = {};
+    NAV_SECTIONS.forEach(sec => {
+      initial[sec.title] =
+        DEFAULT_OPEN.includes(sec.title) ||
+        sec.entries.some(entry => entry.key === activeKey);
+    });
+    return initial;
+  });
+
+  const allEntries = useMemo(
+    () => NAV_SECTIONS.flatMap(sec => sec.entries),
+    []
   );
 
-  // ── Sidebar completo (desktop) ─────────────────
-  return (
-    <nav className={s.sidebar}>
-      {/* Logo */}
-      <div className={s.logo}>
-        <div className={s.logoIcon}>
+  const toggleSection = title => {
+    setOpenSections(prev => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
+
+  if (mode === 'rail') {
+    return (
+      <nav className={s.rail}>
+        <div className={s.railLogo}>
           <span className="material-icons">park</span>
         </div>
-        <div>
-          <p className={s.logoTitle}>Gestión Árboles</p>
-          <p className={s.logoSub}>Panel de control</p>
-        </div>
-      </div>
 
-      {/* Navegación */}
-      <div className={s.nav}>
         <button
-          className={`${s.navItem} ${activeKey === '' ? s.navActive : ''}`}
-          onClick={() => onSelect('')}>
+          className={`${s.railBtn} ${activeKey === '' ? s.railActive : ''}`}
+          title="Inicio"
+          onClick={() => onSelect('')}
+        >
           <span className="material-icons">dashboard</span>
-          <span>Inicio</span>
         </button>
 
-        {NAV_SECTIONS.map(sec => (
-          <div key={sec.title}>
-            <p className={s.secLabel}>{sec.title}</p>
-            {sec.entries.map(e => (
-              <button key={e.key}
-                className={`${s.navItem} ${activeKey === e.key ? s.navActive : ''}`}
-                onClick={() => onSelect(e.key)}>
-                <span className="material-icons">{e.icon}</span>
-                <span>{e.label}</span>
-              </button>
-            ))}
-          </div>
+        <div className={s.railDiv} />
+
+        {allEntries.map(entry => (
+          <button
+            key={entry.key}
+            title={entry.label}
+            className={`${s.railBtn} ${activeKey === entry.key ? s.railActive : ''}`}
+            onClick={() => onSelect(entry.key)}
+          >
+            <span className="material-icons">{entry.icon}</span>
+          </button>
         ))}
+
+        <div className={s.railSpacer} />
+        <div className={s.railDiv} />
+
+        <button className={s.railBtn} title="Cerrar sesión" onClick={logout}>
+          <span className="material-icons">logout</span>
+        </button>
+      </nav>
+    );
+  }
+
+  return (
+    <nav className={s.sidebar}>
+      <div className={s.sidebarTop}>
+        <div className={s.logo}>
+          <div className={s.logoIcon}>
+            <span className="material-icons">park</span>
+          </div>
+          <div>
+            <p className={s.logoTitle}>Gestión Árboles</p>
+            <p className={s.logoSub}>Panel agrícola</p>
+          </div>
+        </div>
+
+        <button
+          className={`${s.homeBtn} ${activeKey === '' ? s.homeBtnActive : ''}`}
+          onClick={() => onSelect('')}
+        >
+          <span className="material-icons">dashboard</span>
+          <div className={s.homeText}>
+            <span>Inicio</span>
+            <small>Resumen general</small>
+          </div>
+        </button>
       </div>
 
-      {/* Footer */}
+      <div className={s.nav}>
+        {NAV_SECTIONS.map(section => {
+          const isOpen = openSections[section.title];
+          const hasActive = section.entries.some(entry => entry.key === activeKey);
+
+          return (
+            <div key={section.title} className={s.group}>
+              <button
+                className={`${s.groupHeader} ${hasActive ? s.groupHeaderActive : ''}`}
+                onClick={() => toggleSection(section.title)}
+                type="button"
+              >
+                <span className={s.groupTitle}>{section.title}</span>
+                <span className={`material-icons ${s.groupArrow} ${isOpen ? s.groupArrowOpen : ''}`}>
+                  expand_more
+                </span>
+              </button>
+
+              <div className={`${s.groupBody} ${isOpen ? s.groupBodyOpen : ''}`}>
+                <div className={s.groupBodyInner}>
+                  {section.entries.map(entry => (
+                    <button
+                      key={entry.key}
+                      className={`${s.navItem} ${activeKey === entry.key ? s.navActive : ''}`}
+                      onClick={() => onSelect(entry.key)}
+                      type="button"
+                    >
+                      <span className={`material-icons ${s.navIcon}`}>{entry.icon}</span>
+                      <span className={s.navText}>{entry.label}</span>
+                      <span className={`material-icons ${s.navArrow}`}>chevron_right</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       <div className={s.footer}>
-        <div className={s.userInfo}>
-          <div className={s.avatar}>{displayName[0]?.toUpperCase()}</div>
-          <div>
+        <button
+          className={`${s.profileBtn} ${activeKey === 'perfil' ? s.profileBtnActive : ''}`}
+          onClick={() => onSelect('perfil')}
+          type="button"
+        >
+          <div className={s.avatar}>{displayName?.[0]?.toUpperCase() || 'U'}</div>
+          <div className={s.userMeta}>
             <p className={s.userName}>{displayName}</p>
             <p className={s.userRole}>{rolLabel}</p>
           </div>
-        </div>
-        <button className={s.logoutBtn} onClick={logout}>
+          <span className={`material-icons ${s.profileArrow}`}>manage_accounts</span>
+        </button>
+
+        <button className={s.logoutBtn} onClick={logout} type="button">
           <span className="material-icons">logout</span>
           <span>Cerrar sesión</span>
         </button>
