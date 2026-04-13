@@ -227,6 +227,8 @@ export const MODULES = {
       optionSource:'/sector',
       optionValue:'id_sector',
       optionLabel:'nombre_sector',
+      distinct:true,
+      distinctBy:'label',
       omitOnSubmit:true,
     },
    {
@@ -237,7 +239,7 @@ export const MODULES = {
   optionSource:'/arbol',
   optionValue:'id_arbol',
   optionLabel:'nombre_arbol',
-  labelTemplate: ['nombre_arbol', 'nombre_sector', 'numero_surco'],
+  labelTemplate: ['nombre_arbol', 'numero_surco'],
   dependsOn:{
     field:'id_sector_filtro',
     optionField:'id_sector',
@@ -274,6 +276,8 @@ export const MODULES = {
       optionSource:'/sector',
       optionValue:'id_sector',
       optionLabel:'nombre_sector',
+      distinct:true,
+      distinctBy:'label',
       omitOnSubmit:true,
     },
    {
@@ -284,7 +288,7 @@ export const MODULES = {
   optionSource:'/arbol',
   optionValue:'id_arbol',
   optionLabel:'nombre_arbol',
-  labelTemplate: ['nombre_arbol', 'nombre_sector', 'numero_surco'],
+  labelTemplate: ['nombre_arbol', 'numero_surco'],
   dependsOn:{
     field:'id_sector_filtro',
     optionField:'id_sector',
@@ -317,6 +321,8 @@ export const MODULES = {
       optionSource:'/sector',
       optionValue:'id_sector',
       optionLabel:'nombre_sector',
+      distinct:true,
+      distinctBy:'label',
       omitOnSubmit:true,
     },
    {
@@ -327,7 +333,7 @@ export const MODULES = {
   optionSource:'/arbol',
   optionValue:'id_arbol',
   optionLabel:'nombre_arbol',
-  labelTemplate: ['nombre_arbol', 'nombre_sector', 'numero_surco'],
+  labelTemplate: ['nombre_arbol', 'numero_surco'],
   dependsOn:{
     field:'id_sector_filtro',
     optionField:'id_sector',
@@ -367,6 +373,8 @@ export const MODULES = {
       optionSource:'/sector',
       optionValue:'id_sector',
       optionLabel:'nombre_sector',
+      distinct:true,
+      distinctBy:'label',
       omitOnSubmit:true,
     },
   {
@@ -377,7 +385,7 @@ export const MODULES = {
   optionSource:'/arbol',
   optionValue:'id_arbol',
   optionLabel:'nombre_arbol',
-  labelTemplate: ['nombre_arbol', 'nombre_sector', 'numero_surco'],
+  labelTemplate: ['nombre_arbol', 'numero_surco'],
   dependsOn:{
     field:'id_sector_filtro',
     optionField:'id_sector',
@@ -394,6 +402,17 @@ export const MODULES = {
   icon:'swap_horiz',
   fields:[
     {
+      name:'id_sector_filtro',
+      label:'Sector',
+      type:'remote-select',
+      optionSource:'/sector',
+      optionValue:'id_sector',
+      optionLabel:'nombre_sector',
+      distinct:true,
+      distinctBy:'label',
+      omitOnSubmit:true,
+    },
+    {
   name:'id_arbol',
   label:'Árbol',
   type:'remote-select',
@@ -401,7 +420,7 @@ export const MODULES = {
   optionSource:'/arbol',
   optionValue:'id_arbol',
   optionLabel:'nombre_arbol',
-  labelTemplate: ['nombre_arbol', 'nombre_sector', 'numero_surco'],
+  labelTemplate: ['nombre_arbol', 'numero_surco'],
   dependsOn:{
     field:'id_sector_filtro',
     optionField:'id_sector',
