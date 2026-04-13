@@ -204,3 +204,10 @@
 .railBtn:hover { background:rgba(255,255,255,.08); transform:translateY(-1px); }
 .railActive { background:rgba(255,255,255,.12) !important; color:var(--oro-forestal) !important; }
 .railActive .material-icons { color:var(--oro-forestal); }
+
+
+/* ── Animación Sidebar ───────────────────────────── */
+@keyframes sidebarIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}

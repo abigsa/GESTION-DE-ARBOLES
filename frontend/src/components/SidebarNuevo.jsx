@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { NAV_SECTIONS } from '../config/modulesNuevo';
 import s from './SidebarNuevo.module.css';
 
-const DEFAULT_OPEN = ['Operativo', 'Registros'];
+const DEFAULT_OPEN = []; // Todas cerradas al iniciar
 
 export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
   const { logout, displayName, rolLabel } = useAuth();

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-
+import DatePickerField from './DatePickerField';
 import s from './CrudFormNuevo.module.css';
 
 const API = 'http://localhost:3000/api';
@@ -401,15 +401,15 @@ if (!label) {
                     rows={4}
                     placeholder={`Ingresa ${field.label.toLowerCase()}`}
                   />
+                ) : field.type === 'date' ? (
+                  <DatePickerField
+                    value={form[field.name]}
+                    onChange={val => set(field.name, val)}
+                    placeholder="dd/mm/aaaa"
+                  />
                 ) : (
                   <input
-                    type={
-                      field.type === 'number'
-                        ? 'number'
-                        : field.type === 'date'
-                          ? 'date'
-                          : 'text'
-                    }
+                    type={field.type === 'number' ? 'number' : 'text'}
                     value={form[field.name]}
                     onChange={e => set(field.name, e.target.value)}
                     className={s.input}
