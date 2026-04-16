@@ -211,3 +211,23 @@
   from { transform: translateX(-100%); opacity: 0; }
   to   { transform: translateX(0);     opacity: 1; }
 }
+
+/* ── Botón admin (Super Admin only) ─────────────── */
+.adminBtn {
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+  color: var(--oro-forestal);
+  background: rgba(212,168,83,.10);
+  border: 1px solid rgba(212,168,83,.25);
+  font-size: 13px; font-weight: 700;
+  transition: background var(--transition), border-color var(--transition);
+}
+.adminBtn:hover { background: rgba(212,168,83,.18); border-color: rgba(212,168,83,.4); }
+.adminBtn .material-icons { font-size: 18px; flex-shrink: 0; }
+.adminBtnActive {
+  background: rgba(212,168,83,.22);
+  border-color: rgba(212,168,83,.5);
+}
