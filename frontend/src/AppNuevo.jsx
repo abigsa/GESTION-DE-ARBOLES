@@ -7,6 +7,7 @@ import SidebarNuevo   from './components/SidebarNuevo';
 import DashboardNuevo from './components/DashboardNuevo';
 import CrudPageNuevo  from './components/CrudPageNuevo';
 import MapaPlanoModule from './components/MapaPlanoModule';
+import GestionUsuarios from './components/GestionUsuarios';
 
 export default function AppNuevo() {
   return (
@@ -111,6 +112,11 @@ function ActivePage({ activeKey, onSelect }) {
   // Perfil de usuario
   if (activeKey === 'perfil') {
     return <PerfilUsuario onBack={() => onSelect('')} />;
+  }
+
+  // Gestión de usuarios (solo Super Admin)
+  if (activeKey === 'gestion-usuarios') {
+    return <GestionUsuarios onBack={() => onSelect('')} />;
   }
 
   // Mapa

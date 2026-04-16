@@ -6,7 +6,7 @@ import s from './SidebarNuevo.module.css';
 const DEFAULT_OPEN = []; // Todas cerradas al iniciar
 
 export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
-  const { logout, displayName, rolLabel } = useAuth();
+  const { logout, displayName, rolLabel, isAdmin, usuario } = useAuth();
 
   const [openSections, setOpenSections] = useState(() => {
     const initial = {};
@@ -133,6 +133,17 @@ export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
       </div>
 
       <div className={s.footer}>
+        {(usuario?.ROL_ID === 1 || usuario?.rol_id === 1) && (
+          <button
+            className={`${s.adminBtn} ${activeKey === 'gestion-usuarios' ? s.adminBtnActive : ''}`}
+            onClick={() => onSelect('gestion-usuarios')}
+            type="button"
+            title="Gestión de usuarios"
+          >
+            <span className="material-icons">admin_panel_settings</span>
+            <span>Gestión de usuarios</span>
+          </button>
+        )}
         <button
           className={`${s.profileBtn} ${activeKey === 'perfil' ? s.profileBtnActive : ''}`}
           onClick={() => onSelect('perfil')}
