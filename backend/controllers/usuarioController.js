@@ -6,6 +6,7 @@ const bcrypt   = require('bcrypt');
 const { getConnection, closeConnection } = require('../config/db');
 
 const SALT_ROUNDS = 10;
+const { generarToken } = require('../middleware/auth');
 
 // ----------------------------------------------------------
 // LOGIN
@@ -53,7 +54,8 @@ const login = async (req, res) => {
     delete usuario.PASSWORD_HASH;
     delete usuario.password_hash;
 
-    res.status(200).json({ ok: true, data: usuario });
+    const token = generarToken(usuario);
+    res.status(200).json({ ok: true, data: usuario, token });
   } catch (err) {
     res.status(500).json({ ok: false, mensaje: err.message });
   } finally {

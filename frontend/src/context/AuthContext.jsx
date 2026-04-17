@@ -1,13 +1,28 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const API = 'http://localhost:3000/api';
 
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [usuario,   setUsuario]   = useState(null);
   const [loading,   setLoading]   = useState(false);
-  const iniciando = false;
+  const [iniciando, setIniciando] = useState(true);
+
+  // Restaurar sesión desde sessionStorage al iniciar
+  const [usuario, setUsuario] = useState(() => {
+    try {
+      const token = sessionStorage.getItem('ga_token');
+      const saved = sessionStorage.getItem('ga_usuario');
+      if (token && saved) {
+        // Decodificar JWT sin librería (solo verificar expiración)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp * 1000 > Date.now()) return JSON.parse(saved);
+      }
+    } catch { /* ignore */ }
+    return null;
+  });
+
+  useEffect(() => { setIniciando(false); }, []);
 
   // ── Login ─────────────────────────────────────────
   const login = useCallback(async (username, password) => {
@@ -41,6 +56,10 @@ export function AuthProvider({ children }) {
       }
 
       setUsuario(usuarioCompleto);
+      try {
+        if (data.token) sessionStorage.setItem('ga_token', data.token);
+        sessionStorage.setItem('ga_usuario', JSON.stringify(usuarioCompleto));
+      } catch { /* ignore */ }
       return { ok: true };
     } catch (e) {
       return { ok: false, mensaje: 'Error de conexión con el servidor' };
@@ -119,8 +138,15 @@ export function AuthProvider({ children }) {
   // ── Logout ────────────────────────────────────────
   const logout = useCallback(() => {
     setUsuario(null);
-    try { localStorage.removeItem('ga_usuario'); } catch (_) {}
+    try {
+      sessionStorage.removeItem('ga_usuario');
+      sessionStorage.removeItem('ga_token');
+    } catch { /* ignore */ }
   }, []);
+
+  const getToken = () => {
+    try { return sessionStorage.getItem('ga_token') || null; } catch { return null; }
+  };
 
   // ── Helpers ───────────────────────────────────────
   const isAdmin = (usuario?.ROL_ID ?? usuario?.rol_id ?? 3) <= 2;
@@ -136,7 +162,7 @@ export function AuthProvider({ children }) {
       usuario, loading, iniciando,
       isLoggedIn: !!usuario,
       isAdmin, displayName, rolLabel,
-      login, registrar, logout, actualizarPerfil,
+      login, registrar, logout, actualizarPerfil, getToken,
       API,
     }}>
       {children}

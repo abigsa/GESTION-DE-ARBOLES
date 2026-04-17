@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { NAV_SECTIONS } from '../config/modulesNuevo';
 import s from './DashboardNuevo.module.css';
@@ -324,7 +324,15 @@ export default function DashboardNuevo({ onSelect }) {
         </div>
       </div>
 
-      {/* Acciones rápidas */}
+      {/* ── Gráficas ── */}
+      {!loading && (
+        <div className={s.chartsGrid}>
+          <GraficaEstados arboles={arboles} />
+          <GraficaPlagasMes plagas={plagas} />
+        </div>
+      )}
+
+      {/* Acciones rápidas */}}
       <section className={s.sectionBlock}>
         <div className={s.sectionHeader}>
           <div>
@@ -378,5 +386,183 @@ function ModCard({ label, icon, onClick, compact = false }) {
       </div>
       <span className={`material-icons ${s.modArrow}`}>arrow_forward</span>
     </button>
+  );
+}
+
+
+// ── Gráfica: árboles por estado ──────────────────
+function GraficaEstados({ arboles }) {
+  const canvasRef = useRef(null);
+
+  const data = useMemo(() => {
+    const map = {};
+    arboles.forEach(a => {
+      const est = a?.NOMBRE_ESTADO ?? a?.nombre_estado ?? 'Sin estado';
+      map[est] = (map[est] || 0) + 1;
+    });
+    return Object.entries(map).sort((a,b) => b[1]-a[1]).slice(0,6);
+  }, [arboles]);
+
+  useEffect(() => {
+    if (!canvasRef.current || data.length === 0) return;
+    const canvas = canvasRef.current;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = rect.width  * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const COLORS = ['#2D7A3E','#4CB968','#D4A853','#8B2E2E','#8B6F47','#1B4D2A'];
+    const max = Math.max(...data.map(d => d[1]), 1);
+    const W = rect.width;
+    const H = rect.height;
+    const padL = 90, padR = 20, padT = 20, padB = 30;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    const barH   = Math.floor((chartH / data.length) * 0.6);
+    const gap    = Math.floor((chartH / data.length) * 0.4);
+
+    ctx.clearRect(0, 0, W, H);
+
+    data.forEach(([label, val], i) => {
+      const y    = padT + i * (barH + gap);
+      const barW = Math.round((val / max) * chartW);
+      const color = COLORS[i % COLORS.length];
+
+      // Barra fondo
+      ctx.fillStyle = '#DCEDDF';
+      ctx.beginPath();
+      ctx.roundRect(padL, y, chartW, barH, 4);
+      ctx.fill();
+
+      // Barra valor
+      if (barW > 0) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(padL, y, barW, barH, 4);
+        ctx.fill();
+      }
+
+      // Label izquierda
+      ctx.fillStyle = '#4A4A4A';
+      ctx.font = '11px -apple-system, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const shortLabel = label.length > 12 ? label.slice(0,12)+'…' : label;
+      ctx.fillText(shortLabel, padL - 8, y + barH/2);
+
+      // Valor derecha
+      ctx.fillStyle = color;
+      ctx.font = 'bold 11px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(val, padL + barW + 6, y + barH/2);
+    });
+  }, [data]);
+
+  return (
+    <div className="chartCard">
+      <p className="chartTitle">Árboles por estado</p>
+      <canvas ref={canvasRef} style={{width:'100%',height:'200px',display:'block'}} />
+    </div>
+  );
+}
+
+// ── Gráfica: plagas por mes ───────────────────────
+function GraficaPlagasMes({ plagas }) {
+  const canvasRef = useRef(null);
+
+  const data = useMemo(() => {
+    const map = {};
+    plagas.forEach(p => {
+      const fecha = p?.FECHA_DETECCION ?? p?.fecha_deteccion;
+      if (!fecha) return;
+      const d = fecha instanceof Date ? fecha : new Date(fecha);
+      if (isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      map[key] = (map[key] || 0) + 1;
+    });
+    // Últimos 6 meses
+    const sorted = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).slice(-6);
+    const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return sorted.map(([key, val]) => {
+      const [y, m] = key.split('-');
+      return { label: `${MESES[parseInt(m)-1]} ${y.slice(2)}`, val };
+    });
+  }, [plagas]);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = rect.width  * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const W = rect.width;
+    const H = rect.height;
+    const padL=30, padR=20, padT=20, padB=30;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    ctx.clearRect(0,0,W,H);
+
+    if (data.length === 0) {
+      ctx.fillStyle = '#8B6F47';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Sin datos de plagas', W/2, H/2);
+      return;
+    }
+
+    const max    = Math.max(...data.map(d=>d.val), 1);
+    const barW   = Math.floor((chartW / data.length) * 0.6);
+    const gapW   = Math.floor((chartW / data.length) * 0.4);
+    const step   = chartW / data.length;
+
+    // Líneas guía
+    ctx.strokeStyle = '#DCEDDF';
+    ctx.lineWidth = 1;
+    for (let g=0; g<=4; g++) {
+      const y = padT + chartH - (g/4)*chartH;
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    }
+
+    data.forEach(({label,val}, i) => {
+      const x   = padL + i*step + gapW/2;
+      const bH  = Math.round((val/max)*chartH);
+      const y   = padT + chartH - bH;
+
+      // Barra
+      ctx.fillStyle = '#8B2E2E';
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, bH, [4,4,0,0]);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Valor arriba
+      if (val > 0) {
+        ctx.fillStyle = '#8B2E2E';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(val, x+barW/2, y-2);
+      }
+
+      // Label abajo
+      ctx.fillStyle = '#8B6F47';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(label, x+barW/2, padT+chartH+6);
+    });
+  }, [data]);
+
+  return (
+    <div className="chartCard">
+      <p className="chartTitle">Plagas detectadas por mes</p>
+      <canvas ref={canvasRef} style={{width:'100%',height:'200px',display:'block'}} />
+    </div>
   );
 }
