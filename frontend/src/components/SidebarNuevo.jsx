@@ -75,7 +75,7 @@ export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
           <div className={s.logoIcon}>
             <span className="material-icons">park</span>
           </div>
-          <div>
+          <div className={s.logoText}>
             <p className={s.logoTitle}>Gestión Árboles</p>
             <p className={s.logoSub}>Panel agrícola</p>
           </div>
@@ -133,12 +133,21 @@ export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
       </div>
 
       <div className={s.footer}>
+        {Number(usuario?.ROL_ID ?? usuario?.rol_id ?? 3) <= 2 && (
+          <button
+            className={`${s.adminBtn} ${activeKey === 'historial-cambios' ? s.adminBtnActive : ''}`}
+            onClick={() => onSelect('historial-cambios')}
+            type="button"
+          >
+            <span className="material-icons">history</span>
+            <span>Historial de cambios</span>
+          </button>
+        )}
         {(usuario?.ROL_ID === 1 || usuario?.rol_id === 1) && (
           <button
             className={`${s.adminBtn} ${activeKey === 'gestion-usuarios' ? s.adminBtnActive : ''}`}
             onClick={() => onSelect('gestion-usuarios')}
             type="button"
-            title="Gestión de usuarios"
           >
             <span className="material-icons">admin_panel_settings</span>
             <span>Gestión de usuarios</span>
