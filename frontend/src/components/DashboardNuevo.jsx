@@ -332,7 +332,7 @@ export default function DashboardNuevo({ onSelect }) {
         </div>
       )}
 
-      {/* Acciones rápidas */}}
+      {/* Acciones rápidas */}
       <section className={s.sectionBlock}>
         <div className={s.sectionHeader}>
           <div>

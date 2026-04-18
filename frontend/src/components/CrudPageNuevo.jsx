@@ -96,9 +96,13 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
       const res  = await fetch(`${API}${endpoint}/${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.ok === true || json.success === true) {
-        setConfirmRow(null);
-        fetchData();
-      } else {
+  setConfirmRow(null);
+  fetchData();
+
+  // 🔥 NOTIFICAR AL MAPA
+  window.dispatchEvent(new Event('arbol_actualizado'));
+}
+      else {
         alert(json.mensaje ?? json.message ?? 'Error al eliminar');
       }
     } catch { alert('Error de conexión al eliminar'); }

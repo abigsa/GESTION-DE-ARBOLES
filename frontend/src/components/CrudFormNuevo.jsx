@@ -10,18 +10,23 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
 
   const initForm = () => {
     const f = {};
+
     fields.forEach(field => {
-  let val = editItem?.[field.name] ?? editItem?.[field.name?.toUpperCase()] ?? '';
+      let val =
+        editItem?.[field.name] ??
+        editItem?.[field.name?.toUpperCase()] ??
+        '';
 
-  if (field.type === 'date' && val) {
-    const d = new Date(val);
-    if (!isNaN(d)) {
-      val = d.toISOString().slice(0, 10);
-    }
-  }
+      if (field.type === 'date' && val) {
+        const d = new Date(val);
+        if (!isNaN(d)) {
+          val = d.toISOString().slice(0, 10);
+        }
+      }
 
-  f[field.name] = val;
-});
+      f[field.name] = val;
+    });
+
     return f;
   };
 
@@ -44,6 +49,40 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
     return map;
   }, [fields]);
 
+  const getFieldValue = (obj, key) => {
+    if (!key) return null;
+    return obj?.[key] ?? obj?.[key?.toUpperCase()] ?? null;
+  };
+
+  const formatTemplateValue = (key, rawValue) => {
+    if (rawValue === null || rawValue === undefined || rawValue === '') return null;
+
+    if (key === 'numero_surco' || key === 'NUMERO_SURCO') {
+      return `Surco ${rawValue}`;
+    }
+
+    if (key === 'posicion_x' || key === 'POSICION_X') {
+      return `Posición ${rawValue}`;
+    }
+
+    if (key === 'id_arbol' || key === 'ID_ARBOL') {
+      return `ID ${rawValue}`;
+    }
+
+    return String(rawValue);
+  };
+
+  const dedupeOptions = options => {
+    const seen = new Set();
+
+    return options.filter(option => {
+      const key = `${option.value}__${option.label}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
   const set = (k, v) => {
     setForm(prev => {
       const next = { ...prev, [k]: v };
@@ -56,82 +95,86 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
 
       return next;
     });
+
+    fields.forEach(field => {
+      if (field.dependsOn?.field === k) {
+        setRemoteOptions(prev => ({
+          ...prev,
+          [field.name]: [],
+        }));
+      }
+    });
   };
 
   useEffect(() => {
-    const remoteFields = fields.filter(f => f.type === 'remote-select' && f.optionSource);
-    if (remoteFields.length === 0) return;
+    const cancelledRef = { cancelled: false };
 
-    let cancelled = false;
+    const buildRemoteUrlLocal = (field) => {
+      const url = new URL(`${API}${field.optionSource}`);
 
-    const normalizeOption = (field, item, index) => {
+      if (field.dependsOn?.field) {
+        const parentValue = form[field.dependsOn.field];
+
+        if (parentValue !== undefined && parentValue !== null && parentValue !== '') {
+          const queryParam =
+  field.dependsOn.queryParam ||
+  field.dependsOn.optionField ||
+  field.dependsOn.field;
+
+url.searchParams.set(queryParam, parentValue);
+        }
+      }
+
+      return url.toString();
+    };
+
+    const normalizeOptionLocal = (field, item, index) => {
       const value =
-        item?.[field.optionValue] ??
-        item?.[field.optionValue?.toUpperCase()] ??
+        getFieldValue(item, field.optionValue) ??
         item?.id ??
         item?.ID ??
-        item?.[field.name] ??
-        item?.[field.name?.toUpperCase()] ??
+        getFieldValue(item, field.name) ??
         index + 1;
 
-      const getFieldValue = (obj, key) => {
-  if (!key) return null;
-  return obj?.[key] ?? obj?.[key?.toUpperCase()] ?? null;
-};
+      let label = null;
 
-const formatTemplateValue = (key, rawValue) => {
-  if (rawValue === null || rawValue === undefined || rawValue === '') return null;
+      if (Array.isArray(field.labelTemplate) && field.labelTemplate.length > 0) {
+        const parts = field.labelTemplate
+          .map(key => formatTemplateValue(key, getFieldValue(item, key)))
+          .filter(Boolean);
 
-  if (key === 'numero_surco') {
-    return `Surco ${rawValue}`;
-  }
+        if (parts.length > 0) {
+          label = parts.join(' · ');
+        }
+      }
 
-  if (key === 'id_arbol') {
-    return `ID ${rawValue}`;
-  }
+      if (!label) {
+        const candidateLabel =
+          getFieldValue(item, field.optionLabel) ??
+          item?.nombre ??
+          item?.NOMBRE ??
+          item?.descripcion ??
+          item?.DESCRIPCION ??
+          item?.nombre_finca ??
+          item?.NOMBRE_FINCA ??
+          item?.nombre_sector ??
+          item?.NOMBRE_SECTOR ??
+          item?.nombre_estado ??
+          item?.NOMBRE_ESTADO ??
+          item?.nombre_plaga ??
+          item?.NOMBRE_PLAGA ??
+          item?.nombre_tratamiento ??
+          item?.NOMBRE_TRATAMIENTO ??
+          item?.nombre_fertilizante ??
+          item?.NOMBRE_FERTILIZANTE ??
+          item?.nombre_arbol ??
+          item?.NOMBRE_ARBOL;
 
-  return String(rawValue);
-};
-
-let label = null;
-
-if (Array.isArray(field.labelTemplate) && field.labelTemplate.length > 0) {
-  const parts = field.labelTemplate
-    .map(key => formatTemplateValue(key, getFieldValue(item, key)))
-    .filter(Boolean);
-
-  if (parts.length > 0) {
-    label = parts.join(' · ');
-  }
-}
-
-if (!label) {
-  const candidateLabel =
-    getFieldValue(item, field.optionLabel) ??
-    item?.nombre ??
-    item?.NOMBRE ??
-    item?.descripcion ??
-    item?.DESCRIPCION ??
-    item?.nombre_finca ??
-    item?.NOMBRE_FINCA ??
-    item?.nombre_sector ??
-    item?.NOMBRE_SECTOR ??
-    item?.nombre_estado ??
-    item?.NOMBRE_ESTADO ??
-    item?.nombre_plaga ??
-    item?.NOMBRE_PLAGA ??
-    item?.nombre_tratamiento ??
-    item?.NOMBRE_TRATAMIENTO ??
-    item?.nombre_fertilizante ??
-    item?.NOMBRE_FERTILIZANTE ??
-    item?.nombre_arbol ??
-    item?.NOMBRE_ARBOL;
-
-  label =
-    candidateLabel && String(candidateLabel).trim()
-      ? String(candidateLabel)
-      : `Registro #${value}`;
-}
+        label =
+          candidateLabel && String(candidateLabel).trim()
+            ? String(candidateLabel)
+            : `Registro #${value}`;
+      }
 
       return {
         value: String(value),
@@ -140,105 +183,105 @@ if (!label) {
       };
     };
 
-    const dedupeOptions = options => {
-      const seen = new Set();
-      return options.filter(option => {
-        const key = `${option.value}__${option.label}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+    const loadFieldOptions = async (field) => {
+      const requiresParent = Boolean(field.dependsOn?.field);
+      const parentValue = requiresParent ? form[field.dependsOn.field] : null;
+
+      if (requiresParent && !parentValue) {
+        if (!cancelledRef.cancelled) {
+          setRemoteOptions(prev => ({
+            ...prev,
+            [field.name]: [],
+          }));
+          setLoadingOptions(prev => ({
+            ...prev,
+            [field.name]: false,
+          }));
+        }
+        return;
+      }
+
+      if (!cancelledRef.cancelled) {
+        setLoadingOptions(prev => ({
+          ...prev,
+          [field.name]: true,
+        }));
+      }
+
+      try {
+        const res = await fetch(buildRemoteUrlLocal(field));
+        const json = await res.json();
+
+        const rows = Array.isArray(json?.data)
+          ? json.data
+          : Array.isArray(json?.rows)
+            ? json.rows
+            : [];
+
+        let options = rows.map((item, index) =>
+          normalizeOptionLocal(field, item, index)
+        );
+
+        if (field.distinct) {
+          const distinctMap = new Map();
+
+          options.forEach(option => {
+            const norm = String(option.value ?? '').trim();
+            if (!norm) return;
+
+            const dedupeKey =
+              field.distinctBy === 'label'
+                ? option.label
+                : option.value;
+
+            if (!distinctMap.has(dedupeKey)) {
+              distinctMap.set(dedupeKey, option);
+            }
+          });
+
+          options = Array.from(distinctMap.values());
+        }
+
+        options = dedupeOptions(options);
+
+        if (!cancelledRef.cancelled) {
+          setRemoteOptions(prev => ({
+            ...prev,
+            [field.name]: options,
+          }));
+        }
+      } catch {
+        if (!cancelledRef.cancelled) {
+          setRemoteOptions(prev => ({
+            ...prev,
+            [field.name]: [],
+          }));
+        }
+      } finally {
+        if (!cancelledRef.cancelled) {
+          setLoadingOptions(prev => ({
+            ...prev,
+            [field.name]: false,
+          }));
+        }
+      }
     };
 
-    const loadOptions = async () => {
-      const nextLoading = {};
-      remoteFields.forEach(field => {
-        nextLoading[field.name] = true;
-      });
-      setLoadingOptions(prev => ({ ...prev, ...nextLoading }));
+    const remoteFields = fields.filter(
+      field => field.type === 'remote-select' && field.optionSource
+    );
 
-      await Promise.all(
-        remoteFields.map(async field => {
-          try {
-            const res = await fetch(`${API}${field.optionSource}`);
-            const json = await res.json();
-            const rows = Array.isArray(json?.data) ? json.data : (Array.isArray(json?.rows) ? json.rows : []);
-
-            let options = rows.map((item, index) => normalizeOption(field, item, index));
-
-            if (field.distinct) {
-              const distinctMap = new Map();
-
-              options.forEach(option => {
-                const norm = String(option.value ?? '').trim();
-                if (!norm) return;
-
-                const dedupeKey = field.distinctBy === 'label'
-                  ? option.label
-                  : option.value;
-
-                if (!distinctMap.has(dedupeKey)) {
-                  distinctMap.set(dedupeKey, option);
-                }
-              });
-
-              options = Array.from(distinctMap.values());
-            }
-
-            options = dedupeOptions(options);
-
-            if (!cancelled) {
-              setRemoteOptions(prev => ({
-                ...prev,
-                [field.name]: options,
-              }));
-            }
-          } catch {
-            if (!cancelled) {
-              setRemoteOptions(prev => ({
-                ...prev,
-                [field.name]: [],
-              }));
-            }
-          } finally {
-            if (!cancelled) {
-              setLoadingOptions(prev => ({
-                ...prev,
-                [field.name]: false,
-              }));
-            }
-          }
-        })
-      );
-    };
-
-    loadOptions();
+    remoteFields.forEach(field => {
+      loadFieldOptions(field);
+    });
 
     return () => {
-      cancelled = true;
+      cancelledRef.cancelled = true;
     };
-  }, [fields]);
+  }, [fields, form]);
 
   const getDependentOptions = field => {
-    let options = remoteOptions[field.name] ?? [];
-
-    if (field.dependsOn?.field) {
-      const parentValue = form[field.dependsOn.field];
-
-      if (!parentValue) return [];
-
-      options = options.filter(option => {
-        const raw = option.raw ?? {};
-        const relationField = field.dependsOn.optionField;
-        const rawValue =
-          raw?.[relationField] ??
-          raw?.[relationField?.toUpperCase()];
-
-        return String(rawValue ?? '') === String(parentValue);
-      });
-    }
-
-    return options;
+    return remoteOptions[field.name] ?? [];
   };
 
   const getRemotePlaceholder = field => {

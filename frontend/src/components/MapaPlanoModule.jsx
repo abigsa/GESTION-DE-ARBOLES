@@ -138,6 +138,20 @@ export default function MapaPlanoModule() {
     }
   }, [fincaSeleccionada]);
 
+  useEffect(() => {
+  const handleUpdate = () => {
+    if (fincaSeleccionada) {
+      cargarPlano(fincaSeleccionada);
+    }
+  };
+
+  window.addEventListener('arbol_actualizado', handleUpdate);
+
+  return () => {
+    window.removeEventListener('arbol_actualizado', handleUpdate);
+  };
+}, [fincaSeleccionada]);
+
   const cargarFincas = async () => {
     try {
       const res = await axios.get(`${API}/finca`);
