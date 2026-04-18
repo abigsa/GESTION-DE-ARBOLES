@@ -1,4 +1,5 @@
 const oracledb = require('oracledb');
+const { registrar: registrarAuditoria } = require('./auditoriaController');
 const { getConnection, closeConnection } = require('../config/db');
 
 // ----------------------------------------------------------
@@ -19,6 +20,7 @@ const insertar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(201).json({ success: true, message: 'Resiembra insertada correctamente.' });
+    await registrarAuditoria(conn, { tabla:'RESIEMBRA', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en RESIEMBRA`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -46,6 +48,7 @@ const actualizar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ success: true, message: 'Resiembra actualizada correctamente.' });
+    await registrarAuditoria(conn, { tabla:'RESIEMBRA', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en RESIEMBRA`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -67,6 +70,7 @@ const eliminar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ success: true, message: 'Resiembra eliminada correctamente.' });
+    await registrarAuditoria(conn, { tabla:'RESIEMBRA', operacion:'DELETE', idRegistro:null, descripcion:`Registro eliminado en RESIEMBRA`, usuarioId: null, usuarioNombre: 'Sistema' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {

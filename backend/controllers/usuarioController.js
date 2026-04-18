@@ -2,11 +2,11 @@
 // controllers/usuarioController.js
 // ============================================================
 const oracledb = require('oracledb');
+const { registrar: registrarAuditoria } = require('./auditoriaController');
 const bcrypt   = require('bcrypt');
 const { getConnection, closeConnection } = require('../config/db');
 
 const SALT_ROUNDS = 10;
-const { generarToken } = require('../middleware/auth');
 
 // ----------------------------------------------------------
 // LOGIN
@@ -54,8 +54,7 @@ const login = async (req, res) => {
     delete usuario.PASSWORD_HASH;
     delete usuario.password_hash;
 
-    const token = generarToken(usuario);
-    res.status(200).json({ ok: true, data: usuario, token });
+    res.status(200).json({ ok: true, data: usuario });
   } catch (err) {
     res.status(500).json({ ok: false, mensaje: err.message });
   } finally {
@@ -102,6 +101,7 @@ const insertar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(201).json({ ok: true, mensaje: 'Usuario creado correctamente.' });
+    await registrarAuditoria(conn, { tabla:'USUARIO', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en USUARIO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     // Error de duplicado (username o email ya existe)
     if (err.message && err.message.includes('20001')) {
@@ -141,6 +141,7 @@ const actualizar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ ok: true, mensaje: 'Usuario actualizado correctamente.' });
+    await registrarAuditoria(conn, { tabla:'USUARIO', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en USUARIO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     res.status(500).json({ ok: false, mensaje: err.message });
   } finally {
@@ -167,6 +168,7 @@ const cambiarPassword = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ ok: true, mensaje: 'Contraseña actualizada correctamente.' });
+    await registrarAuditoria(conn, { tabla:'USUARIO', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en USUARIO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     res.status(500).json({ ok: false, mensaje: err.message });
   } finally {
@@ -188,6 +190,7 @@ const eliminar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ ok: true, mensaje: 'Usuario eliminado correctamente.' });
+    await registrarAuditoria(conn, { tabla:'USUARIO', operacion:'DELETE', idRegistro:null, descripcion:`Registro eliminado en USUARIO`, usuarioId: null, usuarioNombre: 'Sistema' });
   } catch (err) {
     res.status(500).json({ ok: false, mensaje: err.message });
   } finally {
