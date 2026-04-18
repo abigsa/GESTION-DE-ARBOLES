@@ -410,3 +410,90 @@
   from { transform: translateY(16px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
+
+/* ── KPI Cards enriquecidas ──────────────────────── */
+.kpiCard1:nth-child(1) { animation-delay:.08s }
+.kpiCard2:nth-child(2) { animation-delay:.16s }
+.kpiCard3:nth-child(3) { animation-delay:.24s }
+.kpiCard4:nth-child(4) { animation-delay:.32s }
+
+.kpiDivider {
+  height: 1px; background: var(--pergamino-verde);
+  margin: 14px 0 10px;
+}
+
+.kpiDetailTitle {
+  font-size: 10px; font-weight: 800;
+  color: var(--tierra-calida); letter-spacing: .6px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+
+.kpiRow {
+  display: flex; align-items: center;
+  gap: 8px; padding: 3px 0;
+}
+.kpiRowName {
+  font-size: 11px; color: var(--grafito);
+  white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 90px;
+}
+.kpiBarWrap {
+  flex: 1; height: 4px;
+  background: var(--pergamino-verde);
+  border-radius: 2px; overflow: hidden;
+}
+.kpiBarFill { height: 100%; border-radius: 2px; }
+.kpiRowVal {
+  font-size: 11px; font-weight: 700;
+  color: var(--verde-profundo); white-space: nowrap;
+}
+
+/* Plaga rows */
+.plagaRow {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; padding: 6px 0;
+  border-bottom: 1px solid var(--pergamino-verde);
+}
+.plagaRow:last-child { border-bottom: none; }
+.plagaLeft { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.plagaArbol {
+  font-size: 12px; font-weight: 700;
+  color: var(--verde-profundo);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.plagaSub { font-size: 11px; color: var(--tierra-calida); }
+
+/* Badges */
+.badgeOk {
+  display: inline-block; white-space: nowrap;
+  font-size: 10px; font-weight: 700;
+  background: #E8F5E9; color: #1B4D2A;
+  border: 1px solid rgba(27,77,42,.15);
+  padding: 2px 8px; border-radius: 20px;
+  flex-shrink: 0;
+}
+.badgeWarn {
+  display: inline-block; white-space: nowrap;
+  font-size: 10px; font-weight: 700;
+  background: #FFEBEE; color: #8B2E2E;
+  border: 1px solid rgba(139,46,46,.15);
+  padding: 2px 8px; border-radius: 20px;
+  flex-shrink: 0;
+}
+.kpiEmpty {
+  font-size: 11px; color: var(--tierra-calida);
+  text-align: center; padding: 8px 0;
+  font-style: italic;
+}
+
+/* ── Gráficas ──────────────────────────────────── */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 900px) {
+  .chartsGrid { grid-template-columns: 1fr; }
+}

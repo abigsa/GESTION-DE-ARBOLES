@@ -7,6 +7,9 @@ import SidebarNuevo   from './components/SidebarNuevo';
 import DashboardNuevo from './components/DashboardNuevo';
 import CrudPageNuevo  from './components/CrudPageNuevo';
 import MapaPlanoModule from './components/MapaPlanoModule';
+import GestionUsuarios      from './components/GestionUsuarios';
+import NotificacionesPanel  from './components/NotificacionesPanel';
+import HistorialCambios  from './components/HistorialCambios';
 
 export default function AppNuevo() {
   return (
@@ -89,6 +92,16 @@ function MainLayout() {
                 <small>Panel agrícola</small>
               </div>
             </div>
+            <div style={{marginLeft:'auto'}}>
+              <NotificacionesPanel />
+            </div>
+          </div>
+        )}
+        {!isMobile && (
+          <div className="desktopTopbar">
+            <div style={{marginLeft:'auto'}}>
+              <NotificacionesPanel />
+            </div>
           </div>
         )}
 
@@ -100,44 +113,100 @@ function MainLayout() {
   );
 }
 
+
+// ── Permisos por rol ──────────────────────────────
+// rol_id=1 Super Admin, rol_id=2 Admin, rol_id=3 Técnico de campo
+const SOLO_ADMIN = new Set([
+  'gestion-usuarios',          // solo rol 1
+]);
+const REQUIERE_ADMIN = new Set([
+  'historial-cambios',
+  'tipos-variedad', 'tipos-fertilizante', 'tipos-tratamiento',
+  'estados-arbol', 'plagas-enfermedades',  // catálogos
+]);
+// Técnico puede: fincas, sectores, arboles, registros, mapa, perfil
+
+function canAccess(key, rolId) {
+  if (!key) return true; // dashboard siempre
+  if (key === 'perfil') return true;
+  if (SOLO_ADMIN.has(key))       return rolId === 1;
+  if (REQUIERE_ADMIN.has(key))   return rolId <= 2;
+  return true; // resto accesible para todos
+}
+
 // ── Página activa ─────────────────────────────────
 function ActivePage({ activeKey, onSelect }) {
+  const { usuario } = useAuth();
+  const rolId = usuario?.ROL_ID ?? usuario?.rol_id ?? 3;
+
+  // Verificar acceso
+  if (activeKey && !canAccess(activeKey, rolId)) {
+    return <AccesoDenegado onBack={() => onSelect('')} rolId={rolId} />;
+  }
 
   // Dashboard
-  if (!activeKey) {
-    return <DashboardNuevo onSelect={onSelect} />;
-  }
+  if (!activeKey) return <DashboardNuevo onSelect={onSelect} />;
 
-  // Perfil de usuario
-  if (activeKey === 'perfil') {
-    return <PerfilUsuario onBack={() => onSelect('')} />;
-  }
+  // Perfil
+  if (activeKey === 'perfil') return <PerfilUsuario onBack={() => onSelect('')} />;
+
+  // Gestión de usuarios (Super Admin)
+  if (activeKey === 'gestion-usuarios') return <GestionUsuarios onBack={() => onSelect('')} />;
+
+  // Historial de cambios (Admin+)
+  if (activeKey === 'historial-cambios') return <HistorialCambios onBack={() => onSelect('')} />;
 
   // Mapa
   if (activeKey === 'mapa-plano') {
     return (
       <div className="mapPage">
         <div className="pageToolbar">
-          <button
-            className="breadcrumbBtn"
-            onClick={() => onSelect('')}
-            type="button"
-          >
-            <span className="material-icons">arrow_back_ios</span>
-            Inicio
+          <button className="breadcrumbBtn" onClick={() => onSelect('')} type="button">
+            <span className="material-icons">arrow_back_ios</span> Inicio
           </button>
           <span className="breadcrumbSep">/</span>
           <span className="breadcrumbCurrent">Mapa de árboles</span>
         </div>
-        <div className="mapWrapper">
-          <MapaPlanoModule />
-        </div>
+        <div className="mapWrapper"><MapaPlanoModule /></div>
       </div>
     );
   }
 
   // CRUD módulos
   return <CrudPageNuevo moduleKey={activeKey} onBack={() => onSelect('')} />;
+}
+
+// ── Pantalla acceso denegado ──────────────────────
+function AccesoDenegado({ onBack, rolId }) {
+  return (
+    <div style={{
+      display:'flex', flexDirection:'column', alignItems:'center',
+      justifyContent:'center', height:'100%', gap:16, padding:32, textAlign:'center'
+    }}>
+      <div style={{
+        width:80, height:80, borderRadius:24, background:'#FFEBEE',
+        display:'flex', alignItems:'center', justifyContent:'center'
+      }}>
+        <span className="material-icons" style={{fontSize:40, color:'#8B2E2E'}}>lock</span>
+      </div>
+      <h2 style={{fontSize:22, fontWeight:800, color:'#1B4D2A'}}>Acceso restringido</h2>
+      <p style={{fontSize:13, color:'#8B6F47', maxWidth:360, lineHeight:1.6}}>
+        No tienes permisos para acceder a este módulo.
+        {rolId === 3 && ' Los catálogos y configuraciones requieren rol de Administrador.'}
+      </p>
+      <button
+        onClick={onBack} type="button"
+        style={{
+          background:'#1B4D2A', color:'#fff', padding:'12px 24px',
+          borderRadius:12, fontWeight:700, fontSize:13, cursor:'pointer',
+          display:'flex', alignItems:'center', gap:8
+        }}
+      >
+        <span className="material-icons" style={{fontSize:18}}>arrow_back</span>
+        Volver al inicio
+      </button>
+    </div>
+  );
 }
 
 // ── Splash de carga ───────────────────────────────

@@ -41,6 +41,16 @@ export const DASHBOARD_QUICK_ACCESS = [
   'mapa-plano',
 ];
 
+// ── Catálogo controlado de nombres de sector ──────
+export const SECTOR_NAME_OPTIONS = [
+  { value:'Sector Norte', label:'Sector Norte' },
+  { value:'Sector Sur', label:'Sector Sur' },
+  { value:'Sector Este', label:'Sector Este' },
+  { value:'Sector Oeste', label:'Sector Oeste' },
+  { value:'Sector Centro', label:'Sector Centro' },
+  { value:'Sector Occidente', label:'Sector Occidente' },
+];
+
 // ── Configuración de cada módulo CRUD ─────────────
 export const MODULES = {
   'tipos-variedad': {
@@ -158,7 +168,13 @@ export const MODULES = {
         optionValue:'id_finca',
         optionLabel:'nombre_finca'
       },
-      { name:'nombre_sector',        label:'Nombre sector',  type:'text',   required:true },
+      {
+        name:'nombre_sector',
+        label:'Nombre sector',
+        type:'select',
+        required:true,
+        options: SECTOR_NAME_OPTIONS
+      },
       { name:'area_hectareas',       label:'Área (ha)',      type:'number' },
       { name:'numero_surcos',        label:'Surcos',         type:'number' },
       { name:'posiciones_por_surco', label:'Pos. por surco', type:'number' },
