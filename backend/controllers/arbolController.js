@@ -154,8 +154,13 @@ const eliminar = async (req, res) => {
 // ----------------------------------------------------------
 // LISTAR
 // Soporta:
-//   GET /api/arboles
-//   GET /api/arboles?id_sector=12
+//   GET /api/arbol
+//   GET /api/arbol?id_sector=12
+//
+// Regla:
+// - listado general: solo árboles activos
+// - listado por sector para selects operativos: solo activos y tratables
+//   excluye MUERTO y RESIEMBRA
 // ----------------------------------------------------------
 const listar = async (req, res) => {
   const { id_sector } = req.query;
@@ -170,9 +175,12 @@ const listar = async (req, res) => {
           SELECT
             A.ID_ARBOL,
             A.ID_SECTOR,
+            A.ID_ESTADO,
             A.NUMERO_SURCO,
             A.POSICION_X,
             A.DESCRIPCION,
+            TA.NOMBRE_ARBOL,
+            EA.NOMBRE_ESTADO,
             (
               NVL(TA.NOMBRE_ARBOL, 'Sin variedad') ||
               ' — Árbol #' || A.ID_ARBOL ||
@@ -190,7 +198,11 @@ const listar = async (req, res) => {
           FROM ARBOL A
           LEFT JOIN TIPO_VARIEDAD_ARBOL TA
             ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
+          LEFT JOIN ESTADO_ARBOL EA
+            ON EA.ID_ESTADO = A.ID_ESTADO
           WHERE A.ID_SECTOR = :id_sector
+            AND NVL(A.ACTIVO, 'S') = 'S'
+            AND UPPER(NVL(EA.NOMBRE_ESTADO, 'SIN ESTADO')) NOT IN ('MUERTO', 'RESIEMBRA')
           ORDER BY A.NUMERO_SURCO, A.POSICION_X, A.ID_ARBOL
         `,
         { id_sector: Number(id_sector) },
@@ -204,17 +216,37 @@ const listar = async (req, res) => {
     }
 
     const result = await conn.execute(
-      `BEGIN PKG_ARBOL.LISTAR(:cursor); END;`,
-      { cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR } }
+      `
+        SELECT
+          A.ID_ARBOL,
+          A.ID_SECTOR,
+          S.NOMBRE_SECTOR,
+          A.ID_TIPO_VARIEDAD_ARBOL,
+          TA.NOMBRE_ARBOL,
+          A.ID_ESTADO,
+          EA.NOMBRE_ESTADO,
+          A.NUMERO_SURCO,
+          A.POSICION_X,
+          A.DESCRIPCION,
+          A.ACTIVO
+        FROM ARBOL A
+        INNER JOIN SECTOR S
+          ON S.ID_SECTOR = A.ID_SECTOR
+        LEFT JOIN TIPO_VARIEDAD_ARBOL TA
+          ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
+        LEFT JOIN ESTADO_ARBOL EA
+          ON EA.ID_ESTADO = A.ID_ESTADO
+        WHERE NVL(A.ACTIVO, 'S') = 'S'
+          AND NVL(S.ACTIVO, 'S') = 'S'
+        ORDER BY A.ID_ARBOL
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
-
-    const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows(1000);
-    await cursor.close();
 
     res.status(200).json({
       success: true,
-      data: rows,
+      data: result.rows,
     });
   } catch (err) {
     console.error('Error al listar árboles:', err);
@@ -238,18 +270,34 @@ const obtenerPorId = async (req, res) => {
     conn = await getConnection();
 
     const result = await conn.execute(
-      `BEGIN PKG_ARBOL.OBTENER_POR_ID(:id_arbol, :cursor); END;`,
-      {
-        id_arbol: toNullableNumber(id_arbol),
-        cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR },
-      }
+      `
+        SELECT
+          A.ID_ARBOL,
+          A.ID_SECTOR,
+          S.NOMBRE_SECTOR,
+          A.ID_TIPO_VARIEDAD_ARBOL,
+          TA.NOMBRE_ARBOL,
+          A.ID_ESTADO,
+          EA.NOMBRE_ESTADO,
+          A.NUMERO_SURCO,
+          A.POSICION_X,
+          A.DESCRIPCION,
+          A.ACTIVO
+        FROM ARBOL A
+        INNER JOIN SECTOR S
+          ON S.ID_SECTOR = A.ID_SECTOR
+        LEFT JOIN TIPO_VARIEDAD_ARBOL TA
+          ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
+        LEFT JOIN ESTADO_ARBOL EA
+          ON EA.ID_ESTADO = A.ID_ESTADO
+        WHERE A.ID_ARBOL = :id_arbol
+          AND NVL(A.ACTIVO, 'S') = 'S'
+      `,
+      { id_arbol: toNullableNumber(id_arbol) },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 
-    const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows(100);
-    await cursor.close();
-
-    if (!rows || rows.length === 0) {
+    if (!result.rows || result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Árbol no encontrado.',
@@ -258,7 +306,7 @@ const obtenerPorId = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: rows[0],
+      data: result.rows[0],
     });
   } catch (err) {
     res.status(500).json({
