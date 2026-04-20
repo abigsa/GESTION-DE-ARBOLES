@@ -1,6 +1,6 @@
 .sidebar {
   width: var(--sidebar-w);
-  background: linear-gradient(180deg, #174625 0%, #12391f 100%);
+  background: linear-gradient(135deg, #0D2B18 0%, #1B4D2A 55%, #245934 100%);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -237,3 +237,21 @@
 .profileBtn:hover { background:rgba(255,255,255,.10); }
 .profileBtnActive { background:rgba(212,168,83,.15); border-color:rgba(212,168,83,.3); }
 .profileArrow { font-size:16px !important; color:rgba(255,255,255,.4); margin-left:auto; }
+
+/* ── Textura diagonal igual que login ── */
+.sidebar {
+  position: relative;
+}
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent, transparent 38px,
+    rgba(255,255,255,.04) 38px, rgba(255,255,255,.04) 40px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+.sidebarTop, .nav, .footer { position: relative; z-index: 1; }

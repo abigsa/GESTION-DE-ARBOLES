@@ -2,6 +2,7 @@
 // controllers/plagaEnfermedadController.js
 // ============================================================
 const oracledb = require('oracledb');
+const { registrar: registrarAuditoria } = require('./auditoriaController');
 const { getConnection, closeConnection } = require('../config/db');
 
 // ----------------------------------------------------------
@@ -23,6 +24,7 @@ const insertar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(201).json({ success: true, message: 'Plaga/Enfermedad insertada correctamente.' });
+    await registrarAuditoria(conn, { tabla:'PLAGA_ENFERMEDAD', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en PLAGA_ENFERMEDAD`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -51,6 +53,7 @@ const actualizar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ success: true, message: 'Plaga/Enfermedad actualizada correctamente.' });
+    await registrarAuditoria(conn, { tabla:'PLAGA_ENFERMEDAD', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en PLAGA_ENFERMEDAD`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -72,6 +75,7 @@ const eliminar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ success: true, message: 'Plaga/Enfermedad eliminada correctamente.' });
+    await registrarAuditoria(conn, { tabla:'PLAGA_ENFERMEDAD', operacion:'DELETE', idRegistro:null, descripcion:`Registro eliminado en PLAGA_ENFERMEDAD`, usuarioId: null, usuarioNombre: 'Sistema' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {

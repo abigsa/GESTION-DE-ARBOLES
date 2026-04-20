@@ -1,4 +1,6 @@
 const { getConnection, closeConnection, oracledb } = require("../config/db");
+const { registrar: registrarAuditoria } = require('./auditoriaController');
+
 
 const listar = async (req, res) => {
   let conn;
@@ -120,6 +122,7 @@ const insertar = async (req, res) => {
       success: true,
       message: "Movimiento de inventario registrado correctamente"
     });
+    await registrarAuditoria(conn, { tabla:'MOVIMIENTO_INVENTARIO', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo movimiento de inventario`, usuarioId:null, usuarioNombre:'Sistema' });
   } catch (error) {
     console.error("Error al insertar movimiento de inventario:", error);
     res.status(500).json({
@@ -180,6 +183,7 @@ const actualizar = async (req, res) => {
       success: true,
       message: "Movimiento de inventario actualizado correctamente"
     });
+    await registrarAuditoria(conn, { tabla:'MOVIMIENTO_INVENTARIO', operacion:'UPDATE', idRegistro:null, descripcion:`Movimiento actualizado`, usuarioId:null, usuarioNombre:'Sistema' });
   } catch (error) {
     console.error("Error al actualizar movimiento de inventario:", error);
     res.status(500).json({
