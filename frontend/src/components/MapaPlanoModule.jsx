@@ -69,6 +69,7 @@ const RIESGO_COLOR = { ALTO: "#B71C1C", MEDIO: "#E65100", BAJO: "#F57F17" };
 const VISTA = { MAPA: "mapa", ALERTAS: "alertas", RESIEMBRA: "resiembra" };
 
 const HOY = () => new Date().toISOString().slice(0, 10);
+const AREA_POR_ARBOL_M2 = 4;
 
 export default function MapaPlanoModule() {
   const [fincas, setFincas] = useState([]);
@@ -82,6 +83,7 @@ export default function MapaPlanoModule() {
   const [tooltip, setTooltip] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [mostrarAlertaEspacios, setMostrarAlertaEspacios] = useState(false);
 
   const [catalogos, setCatalogos] = useState({
     estados: [],
@@ -222,6 +224,24 @@ export default function MapaPlanoModule() {
 
   const anchoFinca = Number(finca?.ANCHO || 100);
   const largoFinca = Number(finca?.LARGO || 200);
+
+  const resumenEspacio = useMemo(() => {
+  const areaTotal = anchoFinca * largoFinca;
+  const arbolesSembrados = arboles.length;
+  const metrosOcupados = arbolesSembrados * AREA_POR_ARBOL_M2;
+  const metrosDisponibles = Math.max(areaTotal - metrosOcupados, 0);
+  const capacidadTotal = Math.floor(areaTotal / AREA_POR_ARBOL_M2);
+  const espaciosDisponibles = Math.max(capacidadTotal - arbolesSembrados, 0);
+
+  return {
+    areaTotal,
+    arbolesSembrados,
+    metrosOcupados,
+    metrosDisponibles,
+    capacidadTotal,
+    espaciosDisponibles,
+  };
+}, [anchoFinca, largoFinca, arboles.length]);
 
   const estadosUnicos = useMemo(
     () => [...new Set(arboles.map((a) => a.NOMBRE_ESTADO).filter(Boolean))],
@@ -659,13 +679,17 @@ export default function MapaPlanoModule() {
           <div style={s.card}>
             <p style={s.cardTitle}>Resumen</p>
             {[
-              { l: "Finca", v: finca?.NOMBRE_FINCA || "—" },
-              { l: "Área", v: finca ? `${anchoFinca}m × ${largoFinca}m` : "—" },
-              { l: "Sectores", v: sectores.length },
-              { l: "Árboles", v: arboles.length },
-              { l: "Con alertas", v: stats.alertas, warn: stats.alertas > 0 },
-              { l: "Con plagas", v: arbolesConPlagas.length, warn: arbolesConPlagas.length > 0 },
-            ].map(({ l, v, warn }) => (
+  { l: "Finca", v: finca?.NOMBRE_FINCA || "—" },
+  { l: "Área", v: finca ? `${anchoFinca}m × ${largoFinca}m` : "—" },
+  { l: "Área total", v: `${resumenEspacio.areaTotal} m²` },
+  { l: "Metros ocupados", v: `${resumenEspacio.metrosOcupados} m²` },
+  { l: "Metros disponibles", v: `${resumenEspacio.metrosDisponibles} m²` },
+  { l: "Sectores", v: sectores.length },
+  { l: "Árboles", v: arboles.length },
+  { l: "Espacios disponibles", v: resumenEspacio.espaciosDisponibles },
+  { l: "Con alertas", v: stats.alertas, warn: stats.alertas > 0 },
+  { l: "Con plagas", v: arbolesConPlagas.length, warn: arbolesConPlagas.length > 0 },
+].map(({ l, v, warn }) => (
               <div key={l} style={s.summaryRow}>
                 <span style={{ color: "#6B7280", fontSize: 11 }}>{l}</span>
                 <strong style={{ fontSize: 12, color: warn ? "#B71C1C" : "#1B4D2A" }}>
@@ -724,7 +748,33 @@ export default function MapaPlanoModule() {
                       {finca.NOMBRE_FINCA} · {anchoFinca}m × {largoFinca}m
                     </span>
                   )}
-                </div>
+
+          <div style={{ marginTop: 10 }}>
+  <button
+    style={{
+      background: "#1B4D2A",
+      color: "#FFFFFF",
+      border: "none",
+      borderRadius: 8,
+      padding: "8px 14px",
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: "pointer",
+      boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+    }}
+    onClick={() => setMostrarAlertaEspacios(true)}
+  >
+    🌱 Espacios dispo.
+  </button>
+</div>
+                <div style={{ marginTop: 6, fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
+      Área total: {resumenEspacio.areaTotal} m² · Ocupados: {resumenEspacio.metrosOcupados} m² · Disponibles: {resumenEspacio.metrosDisponibles} m²
+    </div>
+
+    <div style={{ fontSize: 11, color: "#1B4D2A", fontWeight: 700, lineHeight: 1.5 }}>
+      Árboles sembrados: {resumenEspacio.arbolesSembrados} · Espacios disponibles: {resumenEspacio.espaciosDisponibles}
+    </div>
+  </div>
 
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <button style={s.btnZoom} onClick={() => setZoom((z) => Math.min(z + 0.25, 2.5))}>
@@ -742,6 +792,7 @@ export default function MapaPlanoModule() {
                   <button style={s.btnPrimary} onClick={() => openModal("nuevo_arbol")}>
                     ＋ Nuevo Árbol
                   </button>
+                 
                 </div>
               </div>
 
@@ -755,7 +806,109 @@ export default function MapaPlanoModule() {
                   border: "1px solid #C7D8C8",
                 }}
               >
-                {cargando ? (
+                
+               {mostrarAlertaEspacios && (
+    <div
+      style={{
+        position: "absolute",
+        top: 14,
+        right: 14,
+        zIndex: 40,
+        width: 320,
+        background: "linear-gradient(135deg, #1B4D2A 0%, #2E7D32 100%)",
+        color: "#FFFFFF",
+        borderRadius: 14,
+        padding: "14px 16px",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+        border: "1px solid rgba(255,255,255,0.16)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 10,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 4 }}>
+            🌱 Espacios disponibles
+          </div>
+          <div style={{ fontSize: 11, opacity: 0.9, lineHeight: 1.5 }}>
+            Capacidad actual de siembra en esta finca.
+          </div>
+        </div>
+
+        <button
+          onClick={() => setMostrarAlertaEspacios(false)}
+          style={{
+            background: "rgba(255,255,255,0.16)",
+            color: "#fff",
+            border: "none",
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            cursor: "pointer",
+            fontWeight: 700,
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 10,
+          marginTop: 12,
+        }}
+      >
+        <div
+          style={{
+            background: "rgba(255,255,255,0.12)",
+            borderRadius: 10,
+            padding: "10px 12px",
+          }}
+        >
+          <div style={{ fontSize: 10, opacity: 0.85 }}>Espacios libres</div>
+          <div style={{ fontSize: 22, fontWeight: 800 }}>
+            {resumenEspacio.espaciosDisponibles}
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "rgba(255,255,255,0.12)",
+            borderRadius: 10,
+            padding: "10px 12px",
+          }}
+        >
+          <div style={{ fontSize: 10, opacity: 0.85 }}>Capacidad total</div>
+          <div style={{ fontSize: 22, fontWeight: 800 }}>
+            {resumenEspacio.capacidadTotal}
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "rgba(255,255,255,0.12)",
+            borderRadius: 10,
+            padding: "10px 12px",
+            gridColumn: "1 / -1",
+          }}
+        >
+          <div style={{ fontSize: 10, opacity: 0.85 }}>Metros disponibles</div>
+          <div style={{ fontSize: 20, fontWeight: 800 }}>
+            {resumenEspacio.metrosDisponibles} m²
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {cargando ? (
                   <div style={s.mapCenter}>
                     <span style={{ fontSize: 22 }}>🌿</span> Cargando mapa agrícola...
                   </div>
