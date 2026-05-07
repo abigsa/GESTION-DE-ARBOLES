@@ -4,12 +4,43 @@
 const oracledb = require('oracledb');
 const { getConnection, closeConnection } = require('../config/db');
 
+const validarFechaNoFutura = (fecha, nombreCampo) => {
+  if (!fecha) {
+    return `${nombreCampo} es obligatoria.`;
+  }
+
+  const fechaIngresada = new Date(fecha);
+  const hoy = new Date();
+
+  hoy.setHours(0, 0, 0, 0);
+  fechaIngresada.setHours(0, 0, 0, 0);
+
+  if (isNaN(fechaIngresada.getTime())) {
+    return `${nombreCampo} no es válida.`;
+  }
+
+  if (fechaIngresada > hoy) {
+    return `${nombreCampo} no puede ser futura.`;
+  }
+
+  return null;
+};
+
 // ----------------------------------------------------------
 // INSERTAR
 // ----------------------------------------------------------
 const insertar = async (req, res) => {
   const { id_arbol, id_tipo_tratamiento, id_fertilizante, fecha_aplicacion, observaciones } = req.body;
   let conn;
+  const errorFecha = validarFechaNoFutura(fecha_aplicacion, "La fecha de aplicación");
+
+  if (errorFecha) {
+    return res.status(400).json({
+      success: false,
+      message: errorFecha,
+    });
+  }
+
   try {
     conn = await getConnection();
     await conn.execute(
@@ -38,6 +69,16 @@ const actualizar = async (req, res) => {
   const { id_registro } = req.params;
   const { id_arbol, id_tipo_tratamiento, id_fertilizante, fecha_aplicacion, observaciones } = req.body;
   let conn;
+
+  const errorFecha = validarFechaNoFutura(fecha_aplicacion, "La fecha de aplicación");
+
+  if (errorFecha) {
+    return res.status(400).json({
+      success: false,
+      message: errorFecha,
+    });
+  }
+  
   try {
     conn = await getConnection();
     await conn.execute(

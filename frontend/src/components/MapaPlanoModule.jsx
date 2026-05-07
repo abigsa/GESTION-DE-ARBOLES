@@ -74,6 +74,7 @@ const AREA_POR_ARBOL_M2 = 4;
 export default function MapaPlanoModule() {
   const [fincas, setFincas] = useState([]);
   const [fincaSeleccionada, setFincaSeleccionada] = useState("");
+
   const [sectorFiltro, setSectorFiltro] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("");
   const [datosPlano, setDatosPlano] = useState(null);
@@ -130,17 +131,22 @@ export default function MapaPlanoModule() {
     cargarCatalogos();
   }, []);
 
-  useEffect(() => {
-    if (fincaSeleccionada) {
-      setArbolSeleccionado(null);
-      setSectorFiltro("");
-      setEstadoFiltro("");
-      setErrorMsg(null);
-      cargarPlano(fincaSeleccionada);
-    }
-  }, [fincaSeleccionada]);
+useEffect(() => {
+  if (fincaSeleccionada) {
+    setArbolSeleccionado(null);
+    setSectorFiltro("");
+    setEstadoFiltro("");
+    setErrorMsg(null);
 
-  useEffect(() => {
+    cargarPlano(fincaSeleccionada);
+
+    // cargarArbolesPorFinca(fincaSeleccionada);
+  }
+}, [fincaSeleccionada]);
+
+
+
+useEffect(() => {
   const handleUpdate = () => {
     if (fincaSeleccionada) {
       cargarPlano(fincaSeleccionada);
@@ -153,6 +159,7 @@ export default function MapaPlanoModule() {
     window.removeEventListener('arbol_actualizado', handleUpdate);
   };
 }, [fincaSeleccionada]);
+
 
   const cargarFincas = async () => {
     try {
@@ -176,6 +183,9 @@ export default function MapaPlanoModule() {
         axios.get(`${API}/plaga-enfermedad`),
         axios.get(`${API}/sector`),
       ]);
+
+   
+
 
       setCatalogos({
         estados: estadosRes.data?.data || [],
@@ -446,6 +456,36 @@ export default function MapaPlanoModule() {
 
   const submitNuevoArbol = async (e) => {
     e.preventDefault();
+     // Validar variedad seleccionada
+  if (!nuevoArbolForm.id_tipo_variedad_arbol) {
+    setModal((m) => ({
+      ...m,
+      error: "Debes seleccionar una variedad de árbol.",
+    }));
+    return;
+  }
+
+  // Buscar la variedad seleccionada
+  const variedadSeleccionada = catalogos.variedades.find(
+    (v) =>
+      String(v.ID_TIPO_VARIEDAD_ARBOL || v.ID_TIPO_ARBOL) ===
+      String(nuevoArbolForm.id_tipo_variedad_arbol)
+  );
+
+  // Validar nombre
+  const nombreVariedad = (
+    variedadSeleccionada?.NOMBRE_ARBOL ||
+    variedadSeleccionada?.nombre_arbol ||
+    ""
+  ).trim();
+
+  if (!nombreVariedad) {
+    setModal((m) => ({
+      ...m,
+      error: "La variedad del árbol no tiene nombre válido.",
+    }));
+    return;
+  }
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
@@ -497,6 +537,35 @@ export default function MapaPlanoModule() {
   const submitRegistrarAlerta = async (e) => {
     e.preventDefault();
     if (!arbolSeleccionado) return;
+
+    const hoy = HOY();
+
+if (!alertaForm.fecha_deteccion) {
+  setModal((m) => ({
+    ...m,
+    error: "Debes ingresar la fecha de detección.",
+  }));
+  return;
+}
+
+if (alertaForm.fecha_deteccion > hoy) {
+  setModal((m) => ({
+    ...m,
+    error: "La fecha de detección no puede ser futura.",
+  }));
+  return;
+}
+
+if (
+  alertaForm.fecha_resolucion &&
+  alertaForm.fecha_resolucion < alertaForm.fecha_deteccion
+) {
+  setModal((m) => ({
+    ...m,
+    error: "La fecha de resolución no puede ser menor que la fecha de detección.",
+  }));
+  return;
+}
 
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
@@ -586,16 +655,18 @@ export default function MapaPlanoModule() {
         </div>
 
         <select
-          style={s.selectFinca}
-          value={fincaSeleccionada}
-          onChange={(e) => setFincaSeleccionada(e.target.value)}
-        >
-          {fincas.map((f) => (
-            <option key={f.ID_FINCA} value={f.ID_FINCA}>
-              {f.NOMBRE_FINCA}
-            </option>
-          ))}
-        </select>
+  style={s.selectFinca}
+  value={fincaSeleccionada}
+  onChange={(e) => setFincaSeleccionada(e.target.value)}
+>
+  <option value="">Selecciona una finca</option>
+
+  {fincas.map((f) => (
+    <option key={f.ID_FINCA} value={f.ID_FINCA}>
+      {f.NOMBRE_FINCA}
+    </option>
+  ))}
+</select>
       </div>
 
       <div style={s.layout}>
@@ -1492,6 +1563,7 @@ export default function MapaPlanoModule() {
                   <tr style={{ background: "#E8F5E9" }}>
                     {[
                       "ID",
+                      "Finca",
                       "Sector · Surco",
                       "Estado",
                       "Variedad",
@@ -1509,7 +1581,7 @@ export default function MapaPlanoModule() {
                 <tbody>
                   {arbolesFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "#9CA3AF", fontSize: 13 }}>
+                      <td colSpan={8} style={{ textAlign: "center", padding: 24, color: "#9CA3AF", fontSize: 13 }}>
                         No hay árboles con los filtros seleccionados
                       </td>
                     </tr>
@@ -1527,6 +1599,15 @@ export default function MapaPlanoModule() {
                           <td style={s.td}>
                             <strong style={{ color: "#374151" }}>{a.ID_ARBOL}</strong>
                           </td>
+  <td style={s.td}>
+  <strong style={{ color: "#374151" }}>{a.ID_ARBOL}</strong>
+</td>
+
+<td style={s.td}>
+  {finca?.NOMBRE_FINCA || "—"}
+</td>
+
+
                           <td style={s.td}>
                             <span style={{ fontSize: 12 }}>{a.NOMBRE_SECTOR}</span>
                             {a.NUMERO_SURCO && (
@@ -1771,7 +1852,8 @@ export default function MapaPlanoModule() {
                 );
               })()
             )}
-          </div>
+            
+           </div>
         </aside>
       </div>
 

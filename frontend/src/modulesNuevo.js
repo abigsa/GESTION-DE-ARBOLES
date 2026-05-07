@@ -135,15 +135,38 @@ export const MODULES = {
     ],
   },
   'registros-tratamiento': {
-    title:'Registros de Tratamiento', endpoint:'/registro-tratamiento', icon:'assignment',
-    fields:[
-      { name:'id_arbol',             label:'ID Árbol',     type:'number', required:true },
-      { name:'id_tipo_tratamiento',  label:'Tratamiento',  type:'number', required:true },
-      { name:'id_fertilizante',      label:'Fertilizante', type:'number' },
-      { name:'fecha_aplicacion',     label:'Fecha aplic.', type:'date',   required:true },
-      { name:'observaciones',        label:'Observaciones',type:'textarea' },
-    ],
-  },
+  title:'Registros de Tratamiento', endpoint:'/registro-tratamiento', icon:'assignment',
+  fields:[
+    {
+      name:'id_arbol',
+      label:'Árbol',
+      type:'select',
+      required:true,
+      source:'/arbol',
+      valueKey:'ID_ARBOL',
+      labelKey:'NOMBRE_ARBOL'
+    },
+    {
+      name:'id_tipo_tratamiento',
+      label:'Tratamiento',
+      type:'select',
+      required:true,
+      source:'/tipo-tratamiento',
+      valueKey:'ID_TIPO_TRATAMIENTO',
+      labelKey:'NOMBRE_TRATAMIENTO'
+    },
+    {
+      name:'id_fertilizante',
+      label:'Fertilizante',
+      type:'select',
+      source:'/tipo-fertilizante',
+      valueKey:'ID_FERTILIZANTE',
+      labelKey:'NOMBRE_FERTILIZANTE'
+    },
+    { name:'fecha_aplicacion', label:'Fecha aplic.', type:'date', required:true },
+    { name:'observaciones', label:'Observaciones', type:'textarea' },
+  ],
+},
   resiembras: {
     title:'Resiembras', endpoint:'/resiembra', icon:'restart_alt',
     fields:[
