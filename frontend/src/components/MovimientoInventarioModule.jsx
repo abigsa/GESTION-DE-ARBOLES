@@ -1,606 +1,516 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE = "http://localhost:3000/api";
 
+const C = {
+  verdeProfundo:  '#1B4D2A',
+  verdeMedio:     '#2D7A3E',
+  verdeSalvia:    '#4CB968',
+  verdeMenta:     '#E8F5E9',
+  tierraCalida:   '#8B6F47',
+  oroForestal:    '#D4A853',
+  rojoAlerta:     '#8B2E2E',
+  fondoClaro:     '#F2F7F3',
+  pergaminoVerde: '#DCEDDF',
+  grafito:        '#4A4A4A',
+};
+
+// Tipos que requieren fecha de revisión (tratamientos, fertilizantes)
+const TIPOS_CON_REVISION = ['TRATAMIENTO','FERTILIZACION','FERTILIZANTE','TRATAMIENTO FITOSANITARIO','APLICACION','APLICACIÓN'];
+// Tipos de traslado (solo fecha de traslado)
+const TIPOS_TRASLADO = ['TRASLADO','TRANSLADO','MOVIMIENTO','REUBICACION','REUBICACIÓN'];
+
+function get(obj, ...keys) {
+  for (const k of keys) if (obj?.[k] !== undefined && obj?.[k] !== null) return obj[k];
+  return null;
+}
+
+function fmt(val) {
+  if (!val) return '—';
+  const d = new Date(val);
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('es-GT', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function fmtFechaInput(fecha) {
+  if (!fecha) return '';
+  if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
+  if (typeof fecha === 'string' && /^\d{2}\/\d{2}\/\d{4}/.test(fecha)) {
+    const [dia, mes, anio] = fecha.split('/');
+    return `${anio}-${mes}-${dia}`;
+  }
+  const d = new Date(fecha);
+  if (isNaN(d)) return '';
+  return d.toISOString().slice(0,10);
+}
+
+function diasRestantes(fecha) {
+  if (!fecha) return null;
+  const d = new Date(fecha);
+  if (isNaN(d)) return null;
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  d.setHours(0,0,0,0);
+  return Math.ceil((d - hoy) / (1000*60*60*24));
+}
+
+function BadgeDias({ fecha }) {
+  if (!fecha) return null;
+  const dias = diasRestantes(fecha);
+  if (dias === null) return null;
+  let bg, color, txt;
+  if (dias < 0)      { bg='#FFEBEE'; color=C.rojoAlerta; txt=`Vencido hace ${Math.abs(dias)}d`; }
+  else if (dias === 0) { bg='#FFF8E1'; color='#E65100'; txt='Hoy'; }
+  else if (dias <= 3) { bg='#FFF8E1'; color='#E65100'; txt=`En ${dias}d`; }
+  else if (dias <= 7) { bg='#E8F5E9'; color:C.verdeMedio; txt=`En ${dias}d`; }
+  else               { bg:C.fondoClaro; color=C.verdeMedio; txt=`En ${dias}d`; }
+  return (
+    <span style={{background:bg, color, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:700, whiteSpace:'nowrap'}}>
+      {txt}
+    </span>
+  );
+}
+
+const FORM_VACIO = {
+  id_movimiento_inventario_arbol: null,
+  id_arbol: '',
+  id_tipo_movimiento: '',
+  id_sector_origen: '',
+  id_sector_destino: '',
+  fecha_movimiento: '',
+  fecha_aplicacion: '',       // Para tratamientos: cuándo se aplicó
+  fecha_proxima_revision: '', // Para tratamientos: cuándo volver a checar
+  observaciones: '',
+  usuario_registro: '',
+};
+
 export default function MovimientoInventarioModule() {
-  const [movimientos, setMovimientos] = useState([]);
-  const [arboles, setArboles] = useState([]);
-  const [sectores, setSectores] = useState([]);
-  const [tiposMovimiento, setTiposMovimiento] = useState([]);
+  const { usuario, displayName } = useAuth();
+  const [movimientos,       setMovimientos]       = useState([]);
+  const [arboles,           setArboles]           = useState([]);
+  const [sectores,          setSectores]          = useState([]);
+  const [tiposMovimiento,   setTiposMovimiento]   = useState([]);
+  const [loading,           setLoading]           = useState(false);
+  const [saving,            setSaving]            = useState(false);
+  const [alerta,            setAlerta]            = useState({ tipo:'', mensaje:'' });
+  const [errores,           setErrores]           = useState({});
+  const [form,              setForm]              = useState(FORM_VACIO);
+  const [editando,          setEditando]          = useState(false);
+  const [search,            setSearch]            = useState('');
+  const [filtroTipo,        setFiltroTipo]        = useState('');
+  const [verDetalle,        setVerDetalle]        = useState(null);
 
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const nombreUsuario = displayName ||
+    get(usuario,'NOMBRES','nombres') ||
+    get(usuario,'USERNAME','username') || 'Usuario';
 
-  const [alerta, setAlerta] = useState({
-    tipo: "",
-    mensaje: "",
-  });
-
-  const [errores, setErrores] = useState({});
-
-  const [form, setForm] = useState({
-    id_movimiento_inventario_arbol: null,
-    id_arbol: "",
-    id_tipo_movimiento: "",
-    id_sector_origen: "",
-    id_sector_destino: "",
-    fecha_movimiento: "",
-    observaciones: "",
-  });
-
-  const [editando, setEditando] = useState(false);
-
-  useEffect(() => {
-  cargarTodo();
-}, []);
+  useEffect(() => { cargarTodo(); }, []);
 
   const mostrarAlerta = (tipo, mensaje) => {
     setAlerta({ tipo, mensaje });
-    setTimeout(() => {
-      setAlerta({ tipo: "", mensaje: "" });
-    }, 3000);
+    setTimeout(() => setAlerta({ tipo:'', mensaje:'' }), 4000);
   };
 
-  const obtenerListaRespuesta = (data) => {
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.data)) return data.data;
-    return [];
-  };
+  const obtenerLista = (data) => Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
 
   const cargarTodo = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        cargarMovimientos(),
-        cargarArboles(),
-        cargarSectores(),
-        cargarTiposMovimiento(),
+      const [rM, rA, rS, rT] = await Promise.all([
+        fetch(`${API_BASE}/movimiento-inventario`).then(r => r.json()),
+        fetch(`${API_BASE}/arbol`).then(r => r.json()),
+        fetch(`${API_BASE}/sector`).then(r => r.json()),
+        fetch(`${API_BASE}/tipo-movimiento`).then(r => r.json()),
       ]);
-    } catch (error) {
-      mostrarAlerta("error", "Error al cargar la información inicial");
-      console.error("Error carga inicial:", error);
+      setMovimientos(obtenerLista(rM));
+      setArboles(obtenerLista(rA));
+      setSectores(obtenerLista(rS));
+      setTiposMovimiento(obtenerLista(rT));
+    } catch {
+      mostrarAlerta('error', 'Error al cargar datos');
     } finally {
       setLoading(false);
     }
   };
 
-  const cargarMovimientos = async () => {
-    const res = await fetch(`${API_BASE}/movimiento-inventario`);
-    if (!res.ok) throw new Error("Error al listar movimientos");
-    const data = await res.json();
-    setMovimientos(obtenerListaRespuesta(data));
-  };
-
-  const cargarArboles = async () => {
-    const res = await fetch(`${API_BASE}/arbol`);
-    if (!res.ok) throw new Error("Error al listar árboles");
-    const data = await res.json();
-    setArboles(obtenerListaRespuesta(data));
-  };
-
-  const cargarSectores = async () => {
-    const res = await fetch(`${API_BASE}/sector`);
-    if (!res.ok) throw new Error("Error al listar sectores");
-    const data = await res.json();
-    setSectores(obtenerListaRespuesta(data));
-  };
-
-  const cargarTiposMovimiento = async () => {
-    const res = await fetch(`${API_BASE}/tipo-movimiento`);
-    if (!res.ok) throw new Error("Error al listar tipos de movimiento");
-    const data = await res.json();
-    setTiposMovimiento(obtenerListaRespuesta(data));
-  };
-
-  const limpiarFormulario = () => {
-    setForm({
-      id_movimiento_inventario_arbol: null,
-      id_arbol: "",
-      id_tipo_movimiento: "",
-      id_sector_origen: "",
-      id_sector_destino: "",
-      fecha_movimiento: "",
-      observaciones: "",
-    });
-    setErrores({});
-    setEditando(false);
-  };
+  // Detectar si el tipo seleccionado es traslado o tratamiento
+  const tipoSeleccionado = useMemo(() => {
+    if (!form.id_tipo_movimiento) return 'otro';
+    const tipo = tiposMovimiento.find(t =>
+      String(get(t,'ID_TIPO_MOVIMIENTO','id_tipo_movimiento')) === String(form.id_tipo_movimiento)
+    );
+    if (!tipo) return 'otro';
+    const nombre = (get(tipo,'NOMBRE_TIPO_MOVIMIENTO','nombre_tipo_movimiento','DESCRIPCION','descripcion') || '').toUpperCase();
+    if (TIPOS_TRASLADO.some(k => nombre.includes(k))) return 'traslado';
+    if (TIPOS_CON_REVISION.some(k => nombre.includes(k))) return 'tratamiento';
+    return 'otro';
+  }, [form.id_tipo_movimiento, tiposMovimiento]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setErrores((prev) => ({
-      ...prev,
-      [name]: "",
-    }));
+    setForm(prev => ({ ...prev, [name]: value }));
+    setErrores(prev => ({ ...prev, [name]: '' }));
   };
 
-  const validarFormulario = () => {
-    const nuevosErrores = {};
-
-    if (!form.id_arbol) {
-      nuevosErrores.id_arbol = "Debe seleccionar un árbol";
+  const validar = () => {
+    const err = {};
+    if (!form.id_arbol)           err.id_arbol = 'Seleccione un árbol';
+    if (!form.id_tipo_movimiento) err.id_tipo_movimiento = 'Seleccione tipo de movimiento';
+    if (!form.fecha_movimiento)   err.fecha_movimiento = 'Ingrese la fecha';
+    if (tipoSeleccionado === 'traslado') {
+      if (!form.id_sector_origen)  err.id_sector_origen = 'Seleccione sector origen';
+      if (!form.id_sector_destino) err.id_sector_destino = 'Seleccione sector destino';
+      if (form.id_sector_origen && form.id_sector_destino &&
+          String(form.id_sector_origen) === String(form.id_sector_destino))
+        err.id_sector_destino = 'Destino debe ser diferente al origen';
     }
-
-    if (!form.id_tipo_movimiento) {
-      nuevosErrores.id_tipo_movimiento = "Debe seleccionar un tipo de movimiento";
-    }
-
-    if (!form.id_sector_origen) {
-      nuevosErrores.id_sector_origen = "Debe seleccionar un sector origen";
-    }
-
-    if (!form.id_sector_destino) {
-      nuevosErrores.id_sector_destino = "Debe seleccionar un sector destino";
-    }
-
-    if (
-      form.id_sector_origen &&
-      form.id_sector_destino &&
-      String(form.id_sector_origen) === String(form.id_sector_destino)
-    ) {
-      nuevosErrores.id_sector_destino =
-        "El sector destino debe ser diferente al sector origen";
-    }
-
-    if (!form.fecha_movimiento) {
-      nuevosErrores.fecha_movimiento = "Debe ingresar una fecha";
-    }
-
-    setErrores(nuevosErrores);
-    return Object.keys(nuevosErrores).length === 0;
-  };
-
-  const prepararPayload = () => {
-    return {
-      id_arbol: Number(form.id_arbol),
-      id_tipo_movimiento: Number(form.id_tipo_movimiento),
-      id_sector_origen: Number(form.id_sector_origen),
-      id_sector_destino: Number(form.id_sector_destino),
-      fecha_movimiento: form.fecha_movimiento || null,
-      observacion: form.observaciones || null,
-      usuario_registro: "ADMIN",
-    };
+    setErrores(err);
+    return Object.keys(err).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validarFormulario()) {
-      mostrarAlerta("error", "Por favor corrige los campos marcados");
-      return;
-    }
-
+    if (!validar()) { mostrarAlerta('error', 'Corrige los campos marcados'); return; }
     setSaving(true);
-
     try {
-      const payload = prepararPayload();
-
-      const url = editando
-        ? `${API_BASE}/movimiento-inventario/${form.id_movimiento_inventario_arbol}`
-        : `${API_BASE}/movimiento-inventario`;
-
-      const method = editando ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.message || data?.mensaje || "Error al guardar");
-      }
-
-      mostrarAlerta(
-        "success",
-        editando
-          ? "Movimiento actualizado correctamente"
-          : "Movimiento creado correctamente"
-      );
-
-      limpiarFormulario();
-      await cargarMovimientos();
-    } catch (error) {
-      mostrarAlerta("error", error.message || "Error al guardar el movimiento");
+      const payload = {
+        id_arbol:               Number(form.id_arbol),
+        id_tipo_movimiento:     Number(form.id_tipo_movimiento),
+        id_sector_origen:       form.id_sector_origen ? Number(form.id_sector_origen) : null,
+        id_sector_destino:      form.id_sector_destino ? Number(form.id_sector_destino) : null,
+        fecha_movimiento:       form.fecha_movimiento || null,
+        fecha_aplicacion:       form.fecha_aplicacion || null,
+        fecha_proxima_revision: form.fecha_proxima_revision || null,
+        observacion:            form.observaciones || null,
+        usuario_registro:       nombreUsuario,
+      };
+      const url    = editando ? `${API_BASE}/movimiento-inventario/${form.id_movimiento_inventario_arbol}` : `${API_BASE}/movimiento-inventario`;
+      const method = editando ? 'PUT' : 'POST';
+      const res    = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+      const data   = await res.json();
+      if (!res.ok) throw new Error(data?.message || data?.mensaje || 'Error al guardar');
+      mostrarAlerta('success', editando ? 'Movimiento actualizado' : 'Movimiento registrado correctamente');
+      limpiar();
+      await cargarTodo();
+    } catch (err) {
+      mostrarAlerta('error', err.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const formatearFechaInput = (fecha) => {
-    if (!fecha) return "";
-
-    if (typeof fecha === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      return fecha;
-    }
-
-    if (typeof fecha === "string" && /^\d{2}\/\d{2}\/\d{4}/.test(fecha)) {
-      const partes = fecha.split("/");
-      const dia = partes[0];
-      const mes = partes[1];
-      const anio = partes[2].substring(0, 4);
-      return `${anio}-${mes}-${dia}`;
-    }
-
-    return "";
-  };
+  const limpiar = () => { setForm({...FORM_VACIO, usuario_registro: nombreUsuario}); setErrores({}); setEditando(false); };
 
   const handleEditar = (item) => {
     setForm({
-      id_movimiento_inventario_arbol:
-        item.ID_MOVIMIENTO_INVENTARIO_ARBOL ||
-        item.id_movimiento_inventario_arbol ||
-        item.ID_MOVIMIENTO ||
-        item.id_movimiento,
-      id_arbol: String(item.ID_ARBOL || item.id_arbol || ""),
-      id_tipo_movimiento: String(
-        item.ID_TIPO_MOVIMIENTO || item.id_tipo_movimiento || ""
-      ),
-      id_sector_origen: String(
-        item.ID_SECTOR_ORIGEN || item.id_sector_origen || ""
-      ),
-      id_sector_destino: String(
-        item.ID_SECTOR_DESTINO || item.id_sector_destino || ""
-      ),
-      fecha_movimiento: formatearFechaInput(
-        item.FECHA_MOVIMIENTO || item.fecha_movimiento || ""
-      ),
-      observaciones:
-        item.OBSERVACION ||
-        item.observacion ||
-        item.OBSERVACIONES ||
-        item.observaciones ||
-        "",
+      id_movimiento_inventario_arbol: get(item,'ID_MOVIMIENTO_INVENTARIO_ARBOL','id_movimiento_inventario_arbol','ID_MOVIMIENTO','id_movimiento'),
+      id_arbol:               String(get(item,'ID_ARBOL','id_arbol') || ''),
+      id_tipo_movimiento:     String(get(item,'ID_TIPO_MOVIMIENTO','id_tipo_movimiento') || ''),
+      id_sector_origen:       String(get(item,'ID_SECTOR_ORIGEN','id_sector_origen') || ''),
+      id_sector_destino:      String(get(item,'ID_SECTOR_DESTINO','id_sector_destino') || ''),
+      fecha_movimiento:       fmtFechaInput(get(item,'FECHA_MOVIMIENTO','fecha_movimiento')),
+      fecha_aplicacion:       fmtFechaInput(get(item,'FECHA_APLICACION','fecha_aplicacion')),
+      fecha_proxima_revision: fmtFechaInput(get(item,'FECHA_PROXIMA_REVISION','fecha_proxima_revision')),
+      observaciones:          get(item,'OBSERVACION','observacion','OBSERVACIONES','observaciones') || '',
+      usuario_registro:       get(item,'USUARIO_REGISTRO','usuario_registro') || nombreUsuario,
     });
-
     setErrores({});
     setEditando(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top:0, behavior:'smooth' });
   };
 
   const handleEliminar = async (id) => {
-    const confirmado = window.confirm(
-      "¿Seguro que deseas eliminar este movimiento?"
-    );
-
-    if (!confirmado) return;
-
+    if (!window.confirm('¿Seguro que deseas eliminar este movimiento?')) return;
     try {
-      const res = await fetch(`${API_BASE}/movimiento-inventario/${id}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`${API_BASE}/movimiento-inventario/${id}`, { method:'DELETE' });
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.message || data?.mensaje || "Error al eliminar");
-      }
-
-      mostrarAlerta("success", "Movimiento eliminado correctamente");
-      await cargarMovimientos();
-    } catch (error) {
-      mostrarAlerta("error", error.message || "Error al eliminar el movimiento");
+      if (!res.ok) throw new Error(data?.message || 'Error al eliminar');
+      mostrarAlerta('success', 'Movimiento eliminado');
+      await cargarTodo();
+    } catch (err) {
+      mostrarAlerta('error', err.message);
     }
   };
 
-  const obtenerTexto = (obj, posiblesCampos) => {
-    for (const campo of posiblesCampos) {
-      if (obj?.[campo] !== undefined && obj?.[campo] !== null) {
-        return obj[campo];
-      }
-    }
-    return "";
+  const getText = (obj, ...fields) => {
+    for (const f of fields) if (obj?.[f] != null) return obj[f];
+    return '';
   };
+
+  // Filtrado de listado
+  const movimientosFiltrados = useMemo(() => {
+    let rows = movimientos;
+    if (filtroTipo) rows = rows.filter(m => String(get(m,'ID_TIPO_MOVIMIENTO','id_tipo_movimiento')) === filtroTipo);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      rows = rows.filter(m =>
+        [getText(m,'ARBOL','arbol','NOMBRE_ARBOL','nombre_arbol'),
+         getText(m,'TIPO_MOVIMIENTO','tipo_movimiento','NOMBRE_TIPO_MOVIMIENTO','nombre_tipo_movimiento'),
+         getText(m,'SECTOR_ORIGEN','sector_origen'),
+         getText(m,'SECTOR_DESTINO','sector_destino'),
+         getText(m,'USUARIO_REGISTRO','usuario_registro'),
+         getText(m,'OBSERVACION','observacion')]
+          .some(v => String(v).toLowerCase().includes(q))
+      );
+    }
+    return rows;
+  }, [movimientos, filtroTipo, search]);
+
+  // Movimientos próximos a revisión
+  const proximosRevision = useMemo(() =>
+    movimientos
+      .filter(m => get(m,'FECHA_PROXIMA_REVISION','fecha_proxima_revision'))
+      .map(m => ({ ...m, _dias: diasRestantes(get(m,'FECHA_PROXIMA_REVISION','fecha_proxima_revision')) }))
+      .filter(m => m._dias !== null && m._dias <= 7)
+      .sort((a,b) => a._dias - b._dias)
+  , [movimientos]);
+
+  const st = estilos;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h2 style={styles.title}>Movimiento de Inventario de Árbol</h2>
-        <p style={styles.subtitle}>
-          Administra traslados de árboles entre sectores
-        </p>
+    <div style={st.container}>
+      {/* Alertas */}
+      {proximosRevision.length > 0 && (
+        <div style={st.alertaRevision}>
+          <span className="material-icons" style={{fontSize:18}}>notifications_active</span>
+          <strong>{proximosRevision.length} movimiento(s)</strong> próximos a fecha de revisión
+          {proximosRevision.map((m,i) => {
+            const id = get(m,'ID_MOVIMIENTO_INVENTARIO_ARBOL','id_movimiento_inventario_arbol','ID_MOVIMIENTO','id_movimiento');
+            return (
+              <span key={i} style={st.alertaTag}>
+                {getText(m,'ARBOL','arbol') || `Árbol #${get(m,'ID_ARBOL','id_arbol')}`} — <BadgeDias fecha={get(m,'FECHA_PROXIMA_REVISION','fecha_proxima_revision')}/>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={st.header}>
+        <div>
+          <h2 style={st.title}>Movimientos de Inventario</h2>
+          <p style={st.subtitle}>Traslados, tratamientos y otros movimientos de árboles</p>
+        </div>
+        <button style={st.refreshBtn} onClick={cargarTodo} type="button">
+          <span className="material-icons">refresh</span>
+        </button>
       </div>
 
+      {/* Alerta de éxito/error */}
       {alerta.mensaje && (
-        <div
-          style={{
-            ...styles.alert,
-            ...(alerta.tipo === "success"
-              ? styles.alertSuccess
-              : styles.alertError),
-          }}
-        >
+        <div style={{...st.alerta, ...(alerta.tipo==='success' ? st.alertaOk : st.alertaErr)}}>
+          <span className="material-icons">{alerta.tipo==='success'?'check_circle':'error_outline'}</span>
           {alerta.mensaje}
         </div>
       )}
 
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>
-          {editando ? "Editar movimiento" : "Nuevo movimiento"}
+      {/* Formulario */}
+      <div style={st.card}>
+        <h3 style={st.cardTitle}>
+          <span className="material-icons" style={{fontSize:18, verticalAlign:'middle', marginRight:6}}>
+            {editando ? 'edit' : 'add_circle_outline'}
+          </span>
+          {editando ? 'Editar movimiento' : 'Registrar nuevo movimiento'}
         </h3>
 
         <form onSubmit={handleSubmit}>
-          <div style={styles.grid}>
-            <div style={styles.field}>
-              <label style={styles.label}>Árbol *</label>
-              <select
-                name="id_arbol"
-                value={form.id_arbol}
-                onChange={handleChange}
-                style={{
-                  ...styles.input,
-                  ...(errores.id_arbol ? styles.inputError : {}),
-                }}
-              >
+          <div style={st.grid}>
+
+            {/* Árbol */}
+            <div style={st.field}>
+              <label style={st.label}>Árbol *</label>
+              <select name="id_arbol" value={form.id_arbol} onChange={handleChange}
+                style={{...st.input, ...(errores.id_arbol ? st.inputErr : {})}}>
                 <option value="">Seleccione un árbol</option>
-                {arboles.map((a) => (
-                  <option
-                    key={a.ID_ARBOL || a.id_arbol}
-                    value={a.ID_ARBOL || a.id_arbol}
-                  >
-                    {obtenerTexto(a, [
-                      "NOMBRE_ARBOL",
-                      "nombre_arbol",
-                      "CODIGO_ARBOL",
-                      "codigo_arbol",
-                      "ID_ARBOL",
-                      "id_arbol",
-                    ])}
+                {arboles.map(a => (
+                  <option key={get(a,'ID_ARBOL','id_arbol')} value={get(a,'ID_ARBOL','id_arbol')}>
+                    {getText(a,'CODIGO_ARBOL','codigo_arbol','NOMBRE_ARBOL','nombre_arbol','ID_ARBOL','id_arbol')}
                   </option>
                 ))}
               </select>
-              {errores.id_arbol && (
-                <span style={styles.errorText}>{errores.id_arbol}</span>
-              )}
+              {errores.id_arbol && <span style={st.errTxt}>{errores.id_arbol}</span>}
             </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Tipo movimiento *</label>
-              <select
-                name="id_tipo_movimiento"
-                value={form.id_tipo_movimiento}
-                onChange={handleChange}
-                style={{
-                  ...styles.input,
-                  ...(errores.id_tipo_movimiento ? styles.inputError : {}),
-                }}
-              >
+            {/* Tipo movimiento */}
+            <div style={st.field}>
+              <label style={st.label}>Tipo de movimiento *</label>
+              <select name="id_tipo_movimiento" value={form.id_tipo_movimiento} onChange={handleChange}
+                style={{...st.input, ...(errores.id_tipo_movimiento ? st.inputErr : {})}}>
                 <option value="">Seleccione un tipo</option>
-                {tiposMovimiento.map((t) => (
-                  <option
-                    key={t.ID_TIPO_MOVIMIENTO || t.id_tipo_movimiento}
-                    value={t.ID_TIPO_MOVIMIENTO || t.id_tipo_movimiento}
-                  >
-                    {obtenerTexto(t, [
-                      "NOMBRE_TIPO_MOVIMIENTO",
-                      "nombre_tipo_movimiento",
-                      "DESCRIPCION",
-                      "descripcion",
-                      "ID_TIPO_MOVIMIENTO",
-                      "id_tipo_movimiento",
-                    ])}
+                {tiposMovimiento.map(t => (
+                  <option key={get(t,'ID_TIPO_MOVIMIENTO','id_tipo_movimiento')} value={get(t,'ID_TIPO_MOVIMIENTO','id_tipo_movimiento')}>
+                    {getText(t,'NOMBRE_TIPO_MOVIMIENTO','nombre_tipo_movimiento','DESCRIPCION','descripcion')}
                   </option>
                 ))}
               </select>
-              {errores.id_tipo_movimiento && (
-                <span style={styles.errorText}>
-                  {errores.id_tipo_movimiento}
-                </span>
-              )}
+              {errores.id_tipo_movimiento && <span style={st.errTxt}>{errores.id_tipo_movimiento}</span>}
             </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Sector origen *</label>
-              <select
-                name="id_sector_origen"
-                value={form.id_sector_origen}
-                onChange={handleChange}
-                style={{
-                  ...styles.input,
-                  ...(errores.id_sector_origen ? styles.inputError : {}),
-                }}
-              >
-                <option value="">Seleccione sector origen</option>
-                {sectores.map((s) => (
-                  <option
-                    key={s.ID_SECTOR || s.id_sector}
-                    value={s.ID_SECTOR || s.id_sector}
-                  >
-                    {obtenerTexto(s, [
-                      "NOMBRE_SECTOR",
-                      "nombre_sector",
-                      "ID_SECTOR",
-                      "id_sector",
-                    ])}
-                  </option>
-                ))}
-              </select>
-              {errores.id_sector_origen && (
-                <span style={styles.errorText}>{errores.id_sector_origen}</span>
-              )}
+            {/* Fecha del movimiento */}
+            <div style={st.field}>
+              <label style={st.label}>
+                {tipoSeleccionado === 'tratamiento' ? 'Fecha de registro *' : 'Fecha del movimiento *'}
+              </label>
+              <input type="date" name="fecha_movimiento" value={form.fecha_movimiento} onChange={handleChange}
+                style={{...st.input, ...(errores.fecha_movimiento ? st.inputErr : {})}}/>
+              {errores.fecha_movimiento && <span style={st.errTxt}>{errores.fecha_movimiento}</span>}
             </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Sector destino *</label>
-              <select
-                name="id_sector_destino"
-                value={form.id_sector_destino}
-                onChange={handleChange}
-                style={{
-                  ...styles.input,
-                  ...(errores.id_sector_destino ? styles.inputError : {}),
-                }}
-              >
-                <option value="">Seleccione sector destino</option>
-                {sectores.map((s) => (
-                  <option
-                    key={s.ID_SECTOR || s.id_sector}
-                    value={s.ID_SECTOR || s.id_sector}
-                  >
-                    {obtenerTexto(s, [
-                      "NOMBRE_SECTOR",
-                      "nombre_sector",
-                      "ID_SECTOR",
-                      "id_sector",
-                    ])}
-                  </option>
-                ))}
-              </select>
-              {errores.id_sector_destino && (
-                <span style={styles.errorText}>{errores.id_sector_destino}</span>
-              )}
+            {/* Usuario que registra — se auto-llena */}
+            <div style={st.field}>
+              <label style={st.label}>Registrado por</label>
+              <input type="text" value={nombreUsuario} readOnly
+                style={{...st.input, background:C.verdeMenta, color:C.verdeProfundo, fontWeight:600, cursor:'default'}}/>
             </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Fecha movimiento *</label>
-              <input
-                type="date"
-                name="fecha_movimiento"
-                value={form.fecha_movimiento}
-                onChange={handleChange}
-                style={{
-                  ...styles.input,
-                  ...(errores.fecha_movimiento ? styles.inputError : {}),
-                }}
-              />
-              {errores.fecha_movimiento && (
-                <span style={styles.errorText}>{errores.fecha_movimiento}</span>
-              )}
-            </div>
+            {/* ── Campos de TRASLADO ── */}
+            {(tipoSeleccionado === 'traslado' || tipoSeleccionado === 'otro') && (
+              <>
+                <div style={st.field}>
+                  <label style={st.label}>Sector / Posición origen {tipoSeleccionado==='traslado'?'*':''}</label>
+                  <select name="id_sector_origen" value={form.id_sector_origen} onChange={handleChange}
+                    style={{...st.input, ...(errores.id_sector_origen ? st.inputErr : {})}}>
+                    <option value="">Seleccione origen</option>
+                    {sectores.map(s => (
+                      <option key={get(s,'ID_SECTOR','id_sector')} value={get(s,'ID_SECTOR','id_sector')}>
+                        {getText(s,'NOMBRE_SECTOR','nombre_sector','ID_SECTOR','id_sector')}
+                      </option>
+                    ))}
+                  </select>
+                  {errores.id_sector_origen && <span style={st.errTxt}>{errores.id_sector_origen}</span>}
+                </div>
+                <div style={st.field}>
+                  <label style={st.label}>Sector / Posición destino {tipoSeleccionado==='traslado'?'*':''}</label>
+                  <select name="id_sector_destino" value={form.id_sector_destino} onChange={handleChange}
+                    style={{...st.input, ...(errores.id_sector_destino ? st.inputErr : {})}}>
+                    <option value="">Seleccione destino</option>
+                    {sectores.map(s => (
+                      <option key={get(s,'ID_SECTOR','id_sector')} value={get(s,'ID_SECTOR','id_sector')}>
+                        {getText(s,'NOMBRE_SECTOR','nombre_sector','ID_SECTOR','id_sector')}
+                      </option>
+                    ))}
+                  </select>
+                  {errores.id_sector_destino && <span style={st.errTxt}>{errores.id_sector_destino}</span>}
+                </div>
+              </>
+            )}
 
-            <div style={styles.fieldFull}>
-              <label style={styles.label}>Observaciones</label>
-              <textarea
-                name="observaciones"
-                value={form.observaciones}
-                onChange={handleChange}
-                rows="4"
-                style={styles.textarea}
-                placeholder="Escribe una observación del movimiento..."
-              />
+            {/* ── Campos de TRATAMIENTO ── */}
+            {tipoSeleccionado === 'tratamiento' && (
+              <>
+                <div style={st.field}>
+                  <label style={st.label}>Fecha de aplicación</label>
+                  <input type="date" name="fecha_aplicacion" value={form.fecha_aplicacion} onChange={handleChange} style={st.input}/>
+                  <span style={{fontSize:10, color:C.tierraCalida, marginTop:4}}>Cuándo se aplicó el tratamiento</span>
+                </div>
+                <div style={st.field}>
+                  <label style={st.label}>Próxima revisión</label>
+                  <input type="date" name="fecha_proxima_revision" value={form.fecha_proxima_revision} onChange={handleChange} style={st.input}/>
+                  <span style={{fontSize:10, color:C.tierraCalida, marginTop:4}}>Cuándo volver a aplicar o revisar</span>
+                </div>
+              </>
+            )}
+
+            {/* Observaciones */}
+            <div style={{...st.field, gridColumn:'1 / -1'}}>
+              <label style={st.label}>Observaciones</label>
+              <textarea name="observaciones" value={form.observaciones} onChange={handleChange}
+                rows={3} style={st.textarea}
+                placeholder={
+                  tipoSeleccionado === 'traslado'
+                    ? 'Ej: Traslado por reorganización de surco 3 hacia surco 5, finca norte…'
+                    : tipoSeleccionado === 'tratamiento'
+                    ? 'Ej: Se aplicó fungicida preventivo, dosis 20ml/L, próxima aplicación en 3 semanas…'
+                    : 'Describe el motivo o detalles del movimiento…'
+                }/>
             </div>
           </div>
 
-          <div style={styles.actions}>
-            <button type="submit" style={styles.primaryButton} disabled={saving}>
-              {saving
-                ? "Guardando..."
-                : editando
-                ? "Actualizar movimiento"
-                : "Crear movimiento"}
+          <div style={st.actions}>
+            <button type="submit" style={st.btnPrimary} disabled={saving}>
+              <span className="material-icons" style={{fontSize:16}}>{saving?'hourglass_empty':editando?'save':'add'}</span>
+              {saving ? 'Guardando…' : editando ? 'Actualizar' : 'Registrar movimiento'}
             </button>
-
-            <button
-              type="button"
-              style={styles.secondaryButton}
-              onClick={limpiarFormulario}
-            >
+            <button type="button" style={st.btnSecondary} onClick={limpiar}>
               Limpiar
             </button>
           </div>
         </form>
       </div>
 
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>Listado de movimientos</h3>
+      {/* Listado */}
+      <div style={st.card}>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14, flexWrap:'wrap', gap:10}}>
+          <h3 style={st.cardTitle}>Listado de movimientos</h3>
+          <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+            <div style={st.searchWrap}>
+              <span className="material-icons" style={{fontSize:16, color:C.tierraCalida}}>search</span>
+              <input style={st.searchInput} placeholder="Buscar…" value={search} onChange={e => setSearch(e.target.value)}/>
+            </div>
+            <select style={st.sel} value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}>
+              <option value="">Todos los tipos</option>
+              {tiposMovimiento.map(t => (
+                <option key={get(t,'ID_TIPO_MOVIMIENTO','id_tipo_movimiento')} value={get(t,'ID_TIPO_MOVIMIENTO','id_tipo_movimiento')}>
+                  {getText(t,'NOMBRE_TIPO_MOVIMIENTO','nombre_tipo_movimiento','DESCRIPCION','descripcion')}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         {loading ? (
-          <p style={styles.emptyText}>Cargando movimientos...</p>
-        ) : movimientos.length === 0 ? (
-          <p style={styles.emptyText}>No hay movimientos registrados.</p>
+          <p style={{color:C.tierraCalida}}>Cargando movimientos…</p>
+        ) : movimientosFiltrados.length === 0 ? (
+          <p style={{color:C.tierraCalida}}>No hay movimientos registrados.</p>
         ) : (
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+          <div style={{overflowX:'auto'}}>
+            <table style={st.table}>
               <thead>
                 <tr>
-                  <th style={styles.th}>ID</th>
-                  <th style={styles.th}>Árbol</th>
-                  <th style={styles.th}>Tipo</th>
-                  <th style={styles.th}>Origen</th>
-                  <th style={styles.th}>Destino</th>
-                  <th style={styles.th}>Fecha</th>
-                  <th style={styles.th}>Observación</th>
-                  <th style={styles.th}>Acciones</th>
+                  {['#','Árbol','Tipo','Origen','Destino','Fecha mov.','Fecha aplic.','Próx. revisión','Registrado por','Obs.','Acciones'].map(h => (
+                    <th key={h} style={st.th}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {movimientos.map((m) => {
-                  const id =
-                    m.ID_MOVIMIENTO_INVENTARIO_ARBOL ||
-                    m.id_movimiento_inventario_arbol ||
-                    m.ID_MOVIMIENTO ||
-                    m.id_movimiento;
-
+                {movimientosFiltrados.map((m, i) => {
+                  const id = get(m,'ID_MOVIMIENTO_INVENTARIO_ARBOL','id_movimiento_inventario_arbol','ID_MOVIMIENTO','id_movimiento');
+                  const fRev = get(m,'FECHA_PROXIMA_REVISION','fecha_proxima_revision');
+                  const dias = diasRestantes(fRev);
+                  const rowBg = dias !== null && dias <= 3 ? '#FFFDE7' : i%2===0 ? '#fff' : C.fondoClaro;
                   return (
-                    <tr key={id}>
-                      <td style={styles.td}>{id}</td>
-                      <td style={styles.td}>
-                        {obtenerTexto(m, [
-                          "ARBOL",
-                          "arbol",
-                          "NOMBRE_ARBOL",
-                          "nombre_arbol",
-                          "ID_ARBOL",
-                          "id_arbol",
-                        ])}
+                    <tr key={id} style={{background:rowBg}}>
+                      <td style={st.td}>{id}</td>
+                      <td style={{...st.td, fontWeight:600, color:C.verdeProfundo}}>
+                        {getText(m,'ARBOL','arbol','NOMBRE_ARBOL','nombre_arbol') || getText(m,'ID_ARBOL','id_arbol')}
                       </td>
-                      <td style={styles.td}>
-                        {obtenerTexto(m, [
-                          "TIPO_MOVIMIENTO",
-                          "tipo_movimiento",
-                          "NOMBRE_TIPO_MOVIMIENTO",
-                          "nombre_tipo_movimiento",
-                        ])}
+                      <td style={st.td}>
+                        {getText(m,'TIPO_MOVIMIENTO','tipo_movimiento','NOMBRE_TIPO_MOVIMIENTO','nombre_tipo_movimiento')}
                       </td>
-                      <td style={styles.td}>
-                        {obtenerTexto(m, [
-                          "SECTOR_ORIGEN",
-                          "sector_origen",
-                          "NOMBRE_SECTOR_ORIGEN",
-                          "nombre_sector_origen",
-                        ])}
+                      <td style={st.td}>{getText(m,'SECTOR_ORIGEN','sector_origen','NOMBRE_SECTOR_ORIGEN','nombre_sector_origen') || '—'}</td>
+                      <td style={st.td}>{getText(m,'SECTOR_DESTINO','sector_destino','NOMBRE_SECTOR_DESTINO','nombre_sector_destino') || '—'}</td>
+                      <td style={st.td}>{fmt(get(m,'FECHA_MOVIMIENTO','fecha_movimiento'))}</td>
+                      <td style={st.td}>{fmt(get(m,'FECHA_APLICACION','fecha_aplicacion'))}</td>
+                      <td style={st.td}>
+                        <div style={{display:'flex', flexDirection:'column', gap:3}}>
+                          <span>{fmt(fRev)}</span>
+                          <BadgeDias fecha={fRev}/>
+                        </div>
                       </td>
-                      <td style={styles.td}>
-                        {obtenerTexto(m, [
-                          "SECTOR_DESTINO",
-                          "sector_destino",
-                          "NOMBRE_SECTOR_DESTINO",
-                          "nombre_sector_destino",
-                        ])}
+                      <td style={{...st.td, color:C.tierraCalida, fontSize:11}}>
+                        {get(m,'USUARIO_REGISTRO','usuario_registro') || '—'}
                       </td>
-                      <td style={styles.td}>
-                        {m.FECHA_MOVIMIENTO || m.fecha_movimiento || "-"}
+                      <td style={{...st.td, maxWidth:180, fontSize:11}}>
+                        {getText(m,'OBSERVACION','observacion','OBSERVACIONES','observaciones') || '—'}
                       </td>
-                      <td style={styles.td}>
-                        {m.OBSERVACION ||
-                          m.observacion ||
-                          m.OBSERVACIONES ||
-                          m.observaciones ||
-                          "-"}
-                      </td>
-                      <td style={styles.td}>
-                        <div style={styles.rowActions}>
-                          <button
-                            style={styles.editButton}
-                            onClick={() => handleEditar(m)}
-                          >
-                            Editar
+                      <td style={st.td}>
+                        <div style={{display:'flex', gap:6}}>
+                          <button style={st.btnEdit} onClick={() => handleEditar(m)} title="Editar">
+                            <span className="material-icons" style={{fontSize:15}}>edit</span>
                           </button>
-                          <button
-                            style={styles.deleteButton}
-                            onClick={() => handleEliminar(id)}
-                          >
-                            Eliminar
+                          <button style={st.btnDel} onClick={() => handleEliminar(id)} title="Eliminar">
+                            <span className="material-icons" style={{fontSize:15}}>delete</span>
                           </button>
                         </div>
                       </td>
@@ -616,163 +526,35 @@ export default function MovimientoInventarioModule() {
   );
 }
 
-const styles = {
-  container: {
-    padding: "24px",
-    backgroundColor: "#f4f8f4",
-    minHeight: "100vh",
-  },
-  header: {
-    marginBottom: "20px",
-  },
-  title: {
-    margin: 0,
-    fontSize: "28px",
-    color: "#1f4d2e",
-    fontWeight: "700",
-  },
-  subtitle: {
-    marginTop: "6px",
-    color: "#5f6f65",
-    fontSize: "14px",
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: "16px",
-    padding: "20px",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-    marginBottom: "20px",
-  },
-  cardTitle: {
-    marginTop: 0,
-    marginBottom: "16px",
-    color: "#1f4d2e",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-    gap: "16px",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  fieldFull: {
-    gridColumn: "1 / -1",
-    display: "flex",
-    flexDirection: "column",
-  },
-  label: {
-    marginBottom: "6px",
-    fontWeight: "600",
-    color: "#2d4739",
-  },
-  input: {
-    padding: "10px 12px",
-    borderRadius: "10px",
-    border: "1px solid #cfd8d3",
-    outline: "none",
-    fontSize: "14px",
-  },
-  textarea: {
-    padding: "10px 12px",
-    borderRadius: "10px",
-    border: "1px solid #cfd8d3",
-    outline: "none",
-    fontSize: "14px",
-    resize: "vertical",
-  },
-  inputError: {
-    border: "1px solid #d9534f",
-    backgroundColor: "#fff5f5",
-  },
-  errorText: {
-    marginTop: "6px",
-    fontSize: "12px",
-    color: "#d9534f",
-  },
-  actions: {
-    display: "flex",
-    gap: "10px",
-    marginTop: "20px",
-    flexWrap: "wrap",
-  },
-  primaryButton: {
-    backgroundColor: "#2e7d32",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    padding: "10px 18px",
-    cursor: "pointer",
-    fontWeight: "600",
-  },
-  secondaryButton: {
-    backgroundColor: "#e9efea",
-    color: "#23412e",
-    border: "none",
-    borderRadius: "10px",
-    padding: "10px 18px",
-    cursor: "pointer",
-    fontWeight: "600",
-  },
-  editButton: {
-    backgroundColor: "#1976d2",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    padding: "8px 12px",
-    cursor: "pointer",
-  },
-  deleteButton: {
-    backgroundColor: "#c62828",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    padding: "8px 12px",
-    cursor: "pointer",
-  },
-  rowActions: {
-    display: "flex",
-    gap: "8px",
-    flexWrap: "wrap",
-  },
-  alert: {
-    padding: "12px 16px",
-    borderRadius: "10px",
-    marginBottom: "16px",
-    fontWeight: "600",
-  },
-  alertSuccess: {
-    backgroundColor: "#e8f5e9",
-    color: "#256029",
-    border: "1px solid #b7dfb9",
-  },
-  alertError: {
-    backgroundColor: "#fdecea",
-    color: "#b42318",
-    border: "1px solid #f5c2c0",
-  },
-  tableWrapper: {
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    minWidth: "1000px",
-  },
-  th: {
-    textAlign: "left",
-    padding: "12px",
-    backgroundColor: "#eaf4ec",
-    color: "#23412e",
-    borderBottom: "1px solid #d8e5db",
-  },
-  td: {
-    padding: "12px",
-    borderBottom: "1px solid #edf2ee",
-    verticalAlign: "top",
-  },
-  emptyText: {
-    color: "#68776d",
-  },
+const estilos = {
+  container: { padding:24, background:C.fondoClaro, minHeight:'100vh' },
+  header:    { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 },
+  title:     { margin:0, fontSize:26, color:C.verdeProfundo, fontWeight:800 },
+  subtitle:  { marginTop:4, color:C.tierraCalida, fontSize:13 },
+  refreshBtn:{ background:C.verdeMedio, color:'#fff', border:'none', borderRadius:10, padding:'8px 12px', cursor:'pointer', display:'flex', alignItems:'center', gap:4 },
+  card:      { background:'#fff', borderRadius:16, padding:'20px 24px', boxShadow:`0 4px 14px rgba(0,0,0,.07)`, marginBottom:20 },
+  cardTitle: { marginTop:0, marginBottom:16, color:C.verdeProfundo, fontSize:16, fontWeight:700, display:'flex', alignItems:'center' },
+  grid:      { display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:14 },
+  field:     { display:'flex', flexDirection:'column' },
+  label:     { marginBottom:5, fontWeight:700, color:C.verdeProfundo, fontSize:12 },
+  input:     { padding:'9px 12px', borderRadius:10, border:`1px solid ${C.pergaminoVerde}`, outline:'none', fontSize:13, color:C.grafito, background:'#fff' },
+  textarea:  { padding:'9px 12px', borderRadius:10, border:`1px solid ${C.pergaminoVerde}`, outline:'none', fontSize:13, resize:'vertical', color:C.grafito },
+  inputErr:  { border:`1px solid ${C.rojoAlerta}`, background:'#fff5f5' },
+  errTxt:    { marginTop:4, fontSize:11, color:C.rojoAlerta },
+  actions:   { display:'flex', gap:10, marginTop:18, flexWrap:'wrap' },
+  btnPrimary:{ background:C.verdeMedio, color:'#fff', border:'none', borderRadius:10, padding:'10px 18px', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:6 },
+  btnSecondary:{ background:C.verdeMenta, color:C.verdeProfundo, border:`1px solid ${C.pergaminoVerde}`, borderRadius:10, padding:'10px 18px', cursor:'pointer', fontWeight:700 },
+  alerta:    { padding:'12px 16px', borderRadius:10, marginBottom:14, fontWeight:600, display:'flex', alignItems:'center', gap:8 },
+  alertaOk:  { background:'#E8F5E9', color:C.verdeProfundo, border:`1px solid ${C.pergaminoVerde}` },
+  alertaErr: { background:'#FFEBEE', color:C.rojoAlerta, border:'1px solid #fcc' },
+  alertaRevision: { background:'#FFF8E1', color:'#E65100', border:'1px solid #FFE0B2', borderRadius:12, padding:'12px 16px', marginBottom:16, display:'flex', flexWrap:'wrap', alignItems:'center', gap:10, fontSize:13 },
+  alertaTag: { background:'#fff', border:'1px solid #FFE0B2', borderRadius:20, padding:'3px 10px', fontSize:11, display:'flex', alignItems:'center', gap:6 },
+  searchWrap:{ display:'flex', alignItems:'center', gap:6, background:'#fff', border:`1px solid ${C.pergaminoVerde}`, borderRadius:8, padding:'5px 10px' },
+  searchInput:{ border:'none', outline:'none', fontSize:12, width:160, color:C.grafito },
+  sel:       { border:`1px solid ${C.pergaminoVerde}`, borderRadius:8, padding:'6px 10px', fontSize:12, color:C.grafito, background:'#fff' },
+  table:     { width:'100%', borderCollapse:'collapse', minWidth:1100 },
+  th:        { textAlign:'left', padding:'10px 12px', background:C.verdeProfundo, color:'#fff', fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', fontWeight:700 },
+  td:        { padding:'10px 12px', borderBottom:`1px solid ${C.pergaminoVerde}`, verticalAlign:'top', fontSize:12 },
+  btnEdit:   { background:'#1976D2', color:'#fff', border:'none', borderRadius:8, padding:'6px 10px', cursor:'pointer' },
+  btnDel:    { background:C.rojoAlerta, color:'#fff', border:'none', borderRadius:8, padding:'6px 10px', cursor:'pointer' },
 };

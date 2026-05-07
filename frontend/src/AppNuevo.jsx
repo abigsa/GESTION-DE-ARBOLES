@@ -10,6 +10,7 @@ import MapaPlanoModule from './components/MapaPlanoModule';
 import GestionUsuarios      from './components/GestionUsuarios';
 import NotificacionesPanel  from './components/NotificacionesPanel';
 import HistorialCambios  from './components/HistorialCambios';
+import ReporteHistorialEstados from './components/ReporteHistorialEstados';
 
 export default function AppNuevo() {
   return (
@@ -121,6 +122,7 @@ const SOLO_ADMIN = new Set([
 ]);
 const REQUIERE_ADMIN = new Set([
   'historial-cambios',
+  'reporte-historial-estados',
   'tipos-variedad', 'tipos-fertilizante', 'tipos-tratamiento',
   'estados-arbol', 'plagas-enfermedades',  // catálogos
 ]);
@@ -155,6 +157,9 @@ function ActivePage({ activeKey, onSelect }) {
 
   // Historial de cambios (Admin+)
   if (activeKey === 'historial-cambios') return <HistorialCambios onBack={() => onSelect('')} />;
+
+  // Reporte historial de estados
+  if (activeKey === 'reporte-historial-estados') return <ReporteHistorialEstados onBack={() => onSelect('')} />;
 
   // Mapa
   if (activeKey === 'mapa-plano') {
