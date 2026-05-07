@@ -143,6 +143,16 @@ export default function SidebarNuevo({ activeKey, onSelect, mode = 'full' }) {
             <span>Historial de cambios</span>
           </button>
         )}
+        {Number(usuario?.ROL_ID ?? usuario?.rol_id ?? 3) <= 2 && (
+          <button
+            className={`${s.adminBtn} ${activeKey === 'reporte-historial-estados' ? s.adminBtnActive : ''}`}
+            onClick={() => onSelect('reporte-historial-estados')}
+            type="button"
+          >
+            <span className="material-icons">timeline</span>
+            <span>Reporte historial estados</span>
+          </button>
+        )}
         {(usuario?.ROL_ID === 1 || usuario?.rol_id === 1) && (
           <button
             className={`${s.adminBtn} ${activeKey === 'gestion-usuarios' ? s.adminBtnActive : ''}`}

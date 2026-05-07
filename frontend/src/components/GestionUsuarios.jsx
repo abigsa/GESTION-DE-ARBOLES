@@ -21,12 +21,14 @@ function get(obj, ...keys) {
 
 export default function GestionUsuarios({ onBack }) {
   const { usuario } = useAuth();
-  const [usuarios,  setUsuarios]  = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState('');
-  const [search,    setSearch]    = useState('');
-  const [modal,     setModal]     = useState(null);   // null | 'new' | row
-  const [confirmId, setConfirmId] = useState(null);   // id para eliminar
+  const [usuarios,    setUsuarios]    = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState('');
+  const [search,      setSearch]      = useState('');
+  const [modal,       setModal]       = useState(null);
+  const [confirmId,   setConfirmId]   = useState(null);
+  const [resetModal,  setResetModal]  = useState(null);  // { id, username }
+  const [resetResult, setResetResult] = useState(null);  // { password_temporal, usuario }
 
   const fetchUsuarios = async () => {
     setLoading(true); setError('');
@@ -47,6 +49,29 @@ export default function GestionUsuarios({ onBack }) {
       const data = await res.json();
       if (data.ok || data.success) { setConfirmId(null); fetchUsuarios(); }
       else alert(data.mensaje || 'Error al eliminar');
+    } catch { alert('Error de conexión'); }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetModal) return;
+    try {
+      const adminNombre = get(usuario, 'NOMBRES', 'nombres', 'USERNAME', 'username') || 'Admin';
+      const adminId     = get(usuario, 'ID_USUARIO', 'id_usuario');
+      const res  = await fetch(`${API}/usuarios/${resetModal.id}/resetear-password`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usuario_solicitante_id:     adminId,
+          usuario_solicitante_nombre: adminNombre,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setResetModal(null);
+        setResetResult({ password_temporal: data.password_temporal, usuario: data.usuario });
+      } else {
+        alert(data.mensaje || 'Error al resetear contraseña');
+      }
     } catch { alert('Error de conexión'); }
   };
 
@@ -112,10 +137,21 @@ export default function GestionUsuarios({ onBack }) {
           <div className={s.statsWrap}>
             {ROLES.map(r => (
               <div key={r.id} className={s.rolBadge} style={{ background: r.bg, color: r.color }}>
-                <span>{usuarios.filter(u => Number(get(u,'ROL_ID','rol_id')) === r.id).length}</span>
+                <span>{usuarios.filter(u => {
+                  const rolVal = u?.ROL_ID ?? u?.rol_id ?? u?.ID_ROL ?? u?.id_rol;
+                  return Number(rolVal) === r.id;
+                }).length}</span>
                 {r.label.split(' ')[0]}
               </div>
             ))}
+            <div className={s.rolBadge} style={{ background:'#E8F5E9', color:'#1B4D2A' }}>
+              <span>{usuarios.filter(u => (u?.ESTADO ?? u?.estado) === 'ACTIVO').length}</span>
+              Activos
+            </div>
+            <div className={s.rolBadge} style={{ background:'#FFEBEE', color:'#8B2E2E' }}>
+              <span>{usuarios.filter(u => (u?.ESTADO ?? u?.estado) === 'INACTIVO').length}</span>
+              Inactivos
+            </div>
           </div>
         </div>
       </div>
@@ -160,7 +196,7 @@ export default function GestionUsuarios({ onBack }) {
               <tbody>
                 {filtered.map((u, i) => {
                   const id     = get(u,'ID_USUARIO','id_usuario');
-                  const rolId  = get(u,'ROL_ID','rol_id');
+                  const rolId  = u?.ROL_ID ?? u?.rol_id ?? u?.ID_ROL ?? u?.id_rol;
                   const rol    = getRol(rolId);
                   const estado = get(u,'ESTADO','estado') || 'ACTIVO';
                   const esYo   = String(id) === String(myId);
@@ -197,6 +233,17 @@ export default function GestionUsuarios({ onBack }) {
                           <button className={s.actionEdit} onClick={() => setModal(u)} title="Editar" type="button">
                             <span className="material-icons">edit</span>
                           </button>
+                          {!esYo && (
+                            <button
+                              className={s.actionEdit}
+                              onClick={() => setResetModal({ id, username: get(u,'USERNAME','username') || `#${id}` })}
+                              title="Resetear contraseña"
+                              type="button"
+                              style={{ background:'#FFF8E1', color:'#D4A853', border:'1px solid #FFE082' }}
+                            >
+                              <span className="material-icons">lock_reset</span>
+                            </button>
+                          )}
                           {!esYo && (
                             <button className={s.actionDelete} onClick={() => setConfirmId(id)} title="Eliminar" type="button">
                               <span className="material-icons">delete_outline</span>
@@ -240,6 +287,65 @@ export default function GestionUsuarios({ onBack }) {
           </div>
         </div>
       )}
+
+      {/* Modal confirmar reset contraseña */}
+      {resetModal !== null && (
+        <div className={s.overlay} onClick={() => setResetModal(null)}>
+          <div className={s.confirmModal} onClick={e => e.stopPropagation()}>
+            <div className={s.confirmIcon} style={{ background:'#FFF8E1' }}>
+              <span className="material-icons" style={{ color:'#D4A853' }}>lock_reset</span>
+            </div>
+            <h3>Resetear contraseña</h3>
+            <p>Se generará una contraseña temporal para <strong>{resetModal.username}</strong>. La contraseña actual quedará invalidada.</p>
+            <div className={s.confirmBtns}>
+              <button className={s.confirmCancel} onClick={() => setResetModal(null)} type="button">Cancelar</button>
+              <button
+                onClick={handleResetPassword}
+                type="button"
+                style={{ background:'#D4A853', color:'#fff', border:'none', borderRadius:10, padding:'9px 16px', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}
+              >
+                <span className="material-icons" style={{ fontSize:16 }}>lock_reset</span>
+                Generar contraseña
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal mostrar contraseña generada */}
+      {resetResult !== null && (
+        <div className={s.overlay} onClick={() => setResetResult(null)}>
+          <div className={s.confirmModal} onClick={e => e.stopPropagation()}>
+            <div className={s.confirmIcon} style={{ background:'#E8F5E9' }}>
+              <span className="material-icons" style={{ color:'#2D7A3E' }}>check_circle</span>
+            </div>
+            <h3>¡Contraseña generada!</h3>
+            <p>Usuario: <strong>{resetResult.usuario}</strong></p>
+            <div style={{ background:'#F2F7F3', border:'2px solid #DCEDDF', borderRadius:10, padding:'14px 18px', margin:'12px 0 8px', textAlign:'center' }}>
+              <p style={{ fontSize:9, color:'#8B6F47', marginBottom:6, textTransform:'uppercase', letterSpacing:'.6px', fontWeight:700 }}>Contraseña temporal</p>
+              <p style={{ fontSize:24, fontWeight:800, color:'#1B4D2A', letterSpacing:4, fontFamily:'monospace' }}>{resetResult.password_temporal}</p>
+            </div>
+            <p style={{ fontSize:11, color:'#8B2E2E', marginBottom:16 }}>Copia esta contraseña ahora, no se volverá a mostrar.</p>
+            <div className={s.confirmBtns}>
+              <button
+                type="button"
+                style={{ background:'#E8F5E9', color:'#1B4D2A', border:'1px solid #DCEDDF', borderRadius:10, padding:'9px 14px', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}
+                onClick={() => { try { navigator.clipboard.writeText(resetResult.password_temporal); } catch(_) {} }}
+              >
+                <span className="material-icons" style={{ fontSize:16 }}>content_copy</span> Copiar
+              </button>
+              <button
+                type="button"
+                style={{ background:'#2D7A3E', color:'#fff', border:'none', borderRadius:10, padding:'9px 16px', cursor:'pointer', fontWeight:700 }}
+                onClick={() => setResetResult(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -259,8 +365,8 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
     rol_id:    get2('ROL_ID','rol_id') || 3,
     estado:    get2('ESTADO','estado') || 'ACTIVO',
   });
-  const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState('');
+  const [saving,  setSaving]  = useState(false);
+  const [error,   setError]   = useState('');
   const [verPass, setVerPass] = useState(false);
 
   const set = (k, v) => { setForm(f => ({...f,[k]:v})); setError(''); };
@@ -273,7 +379,7 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
 
     setSaving(true); setError('');
     try {
-      const body   = { ...form };
+      const body = { ...form };
       if (!isEdit) body.password_hash = form.password;
       delete body.password;
 
@@ -315,7 +421,6 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
         <div className={s.modalBody}>
           <form id="userForm" onSubmit={handleSubmit} noValidate>
 
-            {/* Rol */}
             <div className={s.rolSelector}>
               <p className={s.fieldLabel}>Rol de acceso <span className={s.req}>*</span></p>
               <div className={s.rolOptions}>
@@ -345,7 +450,6 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
             </div>
 
             <div className={s.formGrid}>
-              {/* Usuario */}
               <div className={s.fieldWrap}>
                 <label className={s.fieldLabel}>
                   Usuario <span className={s.req}>*</span>
@@ -353,26 +457,16 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
                 </label>
                 <div className={`${s.field} ${isEdit ? s.fieldDisabled : ''}`}>
                   <span className="material-icons">alternate_email</span>
-                  <input
-                    type="text" value={form.username}
-                    onChange={e => set('username', e.target.value)}
-                    disabled={isEdit} placeholder="nombre_usuario"
-                  />
+                  <input type="text" value={form.username} onChange={e => set('username', e.target.value)} disabled={isEdit} placeholder="nombre_usuario" />
                 </div>
               </div>
 
-              {/* Contraseña solo en crear */}
               {!isEdit && (
                 <div className={s.fieldWrap}>
                   <label className={s.fieldLabel}>Contraseña <span className={s.req}>*</span></label>
                   <div className={s.field}>
                     <span className="material-icons">lock_outline</span>
-                    <input
-                      type={verPass ? 'text' : 'password'}
-                      value={form.password}
-                      onChange={e => set('password', e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
-                    />
+                    <input type={verPass ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)} placeholder="Mínimo 6 caracteres" />
                     <button type="button" onClick={() => setVerPass(v => !v)}>
                       <span className="material-icons">{verPass ? 'visibility_off' : 'visibility'}</span>
                     </button>
@@ -380,7 +474,6 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
                 </div>
               )}
 
-              {/* Nombres */}
               <div className={s.fieldWrap}>
                 <label className={s.fieldLabel}>Nombres</label>
                 <div className={s.field}>
@@ -389,7 +482,6 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
                 </div>
               </div>
 
-              {/* Apellidos */}
               <div className={s.fieldWrap}>
                 <label className={s.fieldLabel}>Apellidos</label>
                 <div className={s.field}>
@@ -398,7 +490,6 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
                 </div>
               </div>
 
-              {/* Email */}
               <div className={s.fieldWrap}>
                 <label className={s.fieldLabel}>Correo electrónico</label>
                 <div className={s.field}>
@@ -407,7 +498,6 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
                 </div>
               </div>
 
-              {/* Teléfono */}
               <div className={s.fieldWrap}>
                 <label className={s.fieldLabel}>Teléfono</label>
                 <div className={s.field}>
@@ -416,7 +506,6 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
                 </div>
               </div>
 
-              {/* Estado */}
               <div className={s.fieldWrap}>
                 <label className={s.fieldLabel}>Estado</label>
                 <div className={s.field}>

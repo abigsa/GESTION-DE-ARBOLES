@@ -37,20 +37,39 @@ const login = async (req, res) => {
     const usuario = rows[0];
     const hashBD  = usuario.PASSWORD_HASH || usuario.password_hash;
 
-    // Comparar contraseña con bcrypt
-    const valida  = await bcrypt.compare(password, hashBD);
+    // Soporte para hashes bcrypt ($2b$...) y MD5 legacy
+    let valida = false;
+    if (hashBD && hashBD.startsWith('$2')) {
+      // Hash bcrypt moderno
+      valida = await bcrypt.compare(password, hashBD);
+    } else {
+      // Hash MD5 legacy — comparar y migrar a bcrypt automáticamente
+      const crypto = require('crypto');
+      const md5    = crypto.createHash('md5').update(password).digest('hex');
+      valida = md5 === hashBD;
+      if (valida) {
+        // Migrar silenciosamente a bcrypt
+        try {
+          const nuevoHash = await bcrypt.hash(password, SALT_ROUNDS);
+          await conn.execute(
+            `BEGIN PKG_USUARIO.CAMBIAR_PASSWORD(:p_id_usuario, :p_password_hash); END;`,
+            { p_id_usuario: usuario.ID_USUARIO || usuario.id_usuario, p_password_hash: nuevoHash },
+            { autoCommit: true }
+          );
+        } catch (_) { /* no interrumpir el login si falla la migración */ }
+      }
+    }
+
     if (!valida) {
       return res.status(401).json({ ok: false, mensaje: 'Credenciales incorrectas.' });
     }
 
-    // Actualizar último acceso
     await conn.execute(
       `BEGIN PKG_USUARIO.ACTUALIZAR_ULTIMO_ACCESO(:p_id_usuario); END;`,
       { p_id_usuario: usuario.ID_USUARIO || usuario.id_usuario },
       { autoCommit: true }
     );
 
-    // No devolver el hash
     delete usuario.PASSWORD_HASH;
     delete usuario.password_hash;
 
@@ -78,7 +97,6 @@ const insertar = async (req, res) => {
 
   let conn;
   try {
-    // Encriptar contraseña
     const hash = await bcrypt.hash(password_hash, SALT_ROUNDS);
 
     conn = await getConnection();
@@ -103,7 +121,6 @@ const insertar = async (req, res) => {
     res.status(201).json({ ok: true, mensaje: 'Usuario creado correctamente.' });
     await registrarAuditoria(conn, { tabla:'USUARIO', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en USUARIO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
-    // Error de duplicado (username o email ya existe)
     if (err.message && err.message.includes('20001')) {
       return res.status(409).json({ ok: false, mensaje: 'El username o email ya existe.' });
     }
@@ -168,13 +185,79 @@ const cambiarPassword = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ ok: true, mensaje: 'Contraseña actualizada correctamente.' });
-    await registrarAuditoria(conn, { tabla:'USUARIO', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en USUARIO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
+    await registrarAuditoria(conn, { tabla:'USUARIO', operacion:'UPDATE', idRegistro:null, descripcion:`Contraseña cambiada para usuario ID ${id_usuario}`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     res.status(500).json({ ok: false, mensaje: err.message });
   } finally {
     await closeConnection(conn);
   }
 };
+
+// ----------------------------------------------------------
+// RESETEAR PASSWORD (Admin — genera nueva contraseña temporal y la devuelve en texto plano)
+// Solo accesible para administradores. Útil para recuperación.
+// ----------------------------------------------------------
+const resetearPassword = async (req, res) => {
+  const { id_usuario } = req.params;
+  const { password_nueva, usuario_solicitante_id, usuario_solicitante_nombre } = req.body;
+
+  // Se requiere una contraseña nueva explícita (el admin la define o auto-genera)
+  const nuevaPass = password_nueva || generarPasswordTemporal();
+
+  let conn;
+  try {
+    const hash = await bcrypt.hash(nuevaPass, SALT_ROUNDS);
+    conn = await getConnection();
+
+    // Obtener datos del usuario afectado para el log
+    const rUser = await conn.execute(
+      `BEGIN PKG_USUARIO.OBTENER_POR_ID(:p_id_usuario, :cursor); END;`,
+      { p_id_usuario: Number(id_usuario), cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR } }
+    );
+    const cursor = rUser.outBinds.cursor;
+    const rows   = await cursor.getRows();
+    await cursor.close();
+    const usrAfectado = rows[0] || {};
+
+    await conn.execute(
+      `BEGIN PKG_USUARIO.CAMBIAR_PASSWORD(:p_id_usuario, :p_password_hash); END;`,
+      { p_id_usuario: Number(id_usuario), p_password_hash: hash },
+      { autoCommit: true }
+    );
+
+    // Registrar en auditoría
+    await registrarAuditoria(conn, {
+      tabla: 'USUARIO',
+      operacion: 'UPDATE',
+      idRegistro: id_usuario,
+      descripcion: `Contraseña reseteada por administrador para usuario "${usrAfectado.USERNAME || usrAfectado.username || id_usuario}"`,
+      usuarioId: usuario_solicitante_id || null,
+      usuarioNombre: usuario_solicitante_nombre || 'Administrador',
+    });
+
+    // Devolver la contraseña en texto plano para que el admin pueda comunicársela al usuario
+    res.status(200).json({
+      ok: true,
+      mensaje: 'Contraseña reseteada correctamente.',
+      password_temporal: nuevaPass,
+      usuario: usrAfectado.USERNAME || usrAfectado.username || `ID-${id_usuario}`,
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, mensaje: err.message });
+  } finally {
+    await closeConnection(conn);
+  }
+};
+
+// Genera contraseña temporal legible
+function generarPasswordTemporal() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let pass = '';
+  for (let i = 0; i < 8; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pass;
+}
 
 // ----------------------------------------------------------
 // ELIMINAR (lógico)
@@ -249,4 +332,4 @@ const obtenerPorId = async (req, res) => {
   }
 };
 
-module.exports = { login, insertar, actualizar, cambiarPassword, eliminar, listar, obtenerPorId };
+module.exports = { login, insertar, actualizar, cambiarPassword, resetearPassword, eliminar, listar, obtenerPorId };
