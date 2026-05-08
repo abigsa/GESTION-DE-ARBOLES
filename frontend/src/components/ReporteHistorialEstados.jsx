@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 
 const C = {
   verdeProfundo:  '#1B4D2A',
@@ -207,9 +207,9 @@ export default function ReporteHistorialEstados({ onBack }) {
     setLoading(true); setError('');
     try {
       const [rH, rE, rA] = await Promise.all([
-        fetch(`${API}/historial-estado`).then(r => r.json()),
-        fetch(`${API}/estado-arbol`).then(r => r.json()),
-        fetch(`${API}/arbol`).then(r => r.json()),
+        apiFetch(`${API}/historial-estado`).then(r => r.json()),
+        apiFetch(`${API}/estado-arbol`).then(r => r.json()),
+        apiFetch(`${API}/arbol`).then(r => r.json()),
       ]);
       setHistorial(Array.isArray(rH.data) ? rH.data : []);
       setEstados(Array.isArray(rE.data) ? rE.data : []);

@@ -1,104 +1,116 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
-const API = 'http://localhost:3000/api';
+// URL central — cambia solo aquí para apuntar a producción
+const API = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
 const AuthCtx = createContext(null);
+
+// ── Helper fetch con token automático ────────────────────
+// Úsalo en lugar de fetch() directo en todos los componentes
+export async function apiFetch(url, options = {}) {
+  const token = sessionStorage.getItem('ga_token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+  const res = await fetch(url, { ...options, headers });
+
+  // Si el token expiró, limpiar sesión y recargar para ir al login
+  if (res.status === 401) {
+    sessionStorage.removeItem('ga_token');
+    sessionStorage.removeItem('ga_usuario');
+    window.location.reload();
+    return res;
+  }
+  return res;
+}
 
 export function AuthProvider({ children }) {
   const [loading,   setLoading]   = useState(false);
   const [iniciando, setIniciando] = useState(true);
 
-  // Restaurar sesión desde sessionStorage al iniciar
   const [usuario, setUsuario] = useState(() => {
     try {
       const token = sessionStorage.getItem('ga_token');
       const saved = sessionStorage.getItem('ga_usuario');
       if (token && saved) {
-        // Decodificar JWT sin librería (solo verificar expiración)
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.exp * 1000 > Date.now()) return JSON.parse(saved);
       }
-    } catch { /* ignore */ }
+    } catch {}
     return null;
   });
 
   useEffect(() => { setIniciando(false); }, []);
 
-  // ── Login ─────────────────────────────────────────
+  // ── Login ─────────────────────────────────────────────
   const login = useCallback(async (username, password) => {
     setLoading(true);
     try {
       const res = await fetch(`${API}/usuarios/login`, {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password }),
       });
       if (!res.ok && res.status !== 401)
         return { ok: false, mensaje: `Error del servidor (${res.status})` };
 
       const data = await res.json();
-      if (!data.ok)
-        return { ok: false, mensaje: data.mensaje || 'Credenciales incorrectas' };
+      if (!data.ok) return { ok: false, mensaje: data.mensaje || 'Credenciales incorrectas' };
 
-      // Login exitoso — obtener datos completos del usuario (incluye TELEFONO)
+      // Guardar token JWT
+      if (data.token) sessionStorage.setItem('ga_token', data.token);
+
+      // Obtener datos completos del usuario con token ya guardado
       const usuarioBase = data.data;
       const id = usuarioBase.ID_USUARIO ?? usuarioBase.id_usuario;
-
       let usuarioCompleto = usuarioBase;
       if (id) {
         try {
-          const r2   = await fetch(`${API}/usuarios/${id}`);
-          const d2   = await r2.json();
+          const r2 = await apiFetch(`${API}/usuarios/${id}`);
+          const d2 = await r2.json();
           if (d2.ok && d2.data) usuarioCompleto = d2.data;
-        } catch (_) {
-          // Si falla la segunda llamada usamos los datos del login
-        }
+        } catch (_) {}
       }
 
       setUsuario(usuarioCompleto);
-      try {
-        if (data.token) sessionStorage.setItem('ga_token', data.token);
-        sessionStorage.setItem('ga_usuario', JSON.stringify(usuarioCompleto));
-      } catch { /* ignore */ }
+      try { sessionStorage.setItem('ga_usuario', JSON.stringify(usuarioCompleto)); } catch {}
       return { ok: true };
-    } catch (e) {
+    } catch {
       return { ok: false, mensaje: 'Error de conexión con el servidor' };
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ── Registro ──────────────────────────────────────
+  // ── Registro ──────────────────────────────────────────
   const registrar = useCallback(async (datos) => {
     setLoading(true);
     try {
       const res  = await fetch(`${API}/usuarios`, {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(datos),
+        body: JSON.stringify(datos),
       });
       const data = await res.json();
-      return data.ok
-        ? { ok: true }
-        : { ok: false, mensaje: data.mensaje || 'Error al registrar' };
-    } catch (e) {
+      return data.ok ? { ok: true } : { ok: false, mensaje: data.mensaje || 'Error al registrar' };
+    } catch {
       return { ok: false, mensaje: 'Error de conexión con el servidor' };
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ── Actualizar perfil ─────────────────────────────
+  // ── Actualizar perfil ─────────────────────────────────
   const actualizarPerfil = useCallback(async (datos) => {
     if (!usuario) return { ok: false, mensaje: 'No hay sesión activa' };
     const id = usuario.ID_USUARIO ?? usuario.id_usuario;
     if (!id) return { ok: false, mensaje: 'No se pudo identificar el usuario' };
-
     setLoading(true);
     try {
-      const res = await fetch(`${API}/usuarios/${id}`, {
-        method:  'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await apiFetch(`${API}/usuarios/${id}`, {
+        method: 'PUT',
         body: JSON.stringify({
           rol_id:    usuario.ROL_ID   ?? usuario.rol_id   ?? 3,
           username:  usuario.USERNAME ?? usuario.username,
@@ -110,52 +122,40 @@ export function AuthProvider({ children }) {
         }),
       });
       const data = await res.json();
-
       if (data.ok || data.success) {
-        // Actualizar en memoria con los nuevos datos
         const updated = {
           ...usuario,
-          NOMBRES:   datos.nombres,
-          APELLIDOS: datos.apellidos,
-          EMAIL:     datos.email,
-          TELEFONO:  datos.telefono,
-          nombres:   datos.nombres,
-          apellidos: datos.apellidos,
-          email:     datos.email,
-          telefono:  datos.telefono,
+          NOMBRES: datos.nombres, APELLIDOS: datos.apellidos,
+          EMAIL: datos.email, TELEFONO: datos.telefono,
+          nombres: datos.nombres, apellidos: datos.apellidos,
+          email: datos.email, telefono: datos.telefono,
         };
         setUsuario(updated);
+        try { sessionStorage.setItem('ga_usuario', JSON.stringify(updated)); } catch {}
         return { ok: true };
       }
       return { ok: false, mensaje: data.mensaje || 'Error al actualizar' };
-    } catch (e) {
+    } catch {
       return { ok: false, mensaje: 'Error de conexión con el servidor' };
     } finally {
       setLoading(false);
     }
   }, [usuario]);
 
-  // ── Logout ────────────────────────────────────────
+  // ── Logout ────────────────────────────────────────────
   const logout = useCallback(() => {
     setUsuario(null);
     try {
       sessionStorage.removeItem('ga_usuario');
       sessionStorage.removeItem('ga_token');
-    } catch { /* ignore */ }
+    } catch {}
   }, []);
 
-  const getToken = () => {
-    try { return sessionStorage.getItem('ga_token') || null; } catch { return null; }
-  };
+  const getToken = () => { try { return sessionStorage.getItem('ga_token') || null; } catch { return null; } };
 
-  // ── Helpers ───────────────────────────────────────
-  const isAdmin = (usuario?.ROL_ID ?? usuario?.rol_id ?? 3) <= 2;
-
-  const displayName =
-    usuario?.NOMBRES  ?? usuario?.nombres  ??
-    usuario?.USERNAME ?? usuario?.username ?? 'Usuario';
-
-  const rolLabel = isAdmin ? 'Administrador' : 'Técnico de campo';
+  const isAdmin    = (usuario?.ROL_ID ?? usuario?.rol_id ?? 3) <= 2;
+  const displayName = usuario?.NOMBRES ?? usuario?.nombres ?? usuario?.USERNAME ?? usuario?.username ?? 'Usuario';
+  const rolLabel   = isAdmin ? 'Administrador' : 'Técnico de campo';
 
   return (
     <AuthCtx.Provider value={{

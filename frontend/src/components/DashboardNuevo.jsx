@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { NAV_SECTIONS } from '../config/modulesNuevo';
 import s from './DashboardNuevo.module.css';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 
 const QUICK_KEYS = ['arboles', 'fincas', 'plagas-enfermedades', 'tipos-tratamiento', 'mapa-plano'];
 
@@ -46,11 +46,11 @@ export default function DashboardNuevo({ onSelect }) {
     const fetchAll = async () => {
       try {
         const [rArb, rSec, rFin, rPla, rRegTrat] = await Promise.all([
-          fetch(`${API}/arbol`).then(r => r.json()),
-          fetch(`${API}/sector`).then(r => r.json()),
-          fetch(`${API}/finca`).then(r => r.json()),
-          fetch(`${API}/registro-plaga`).then(r => r.json()),
-          fetch(`${API}/registro-tratamiento`).then(r => r.json()),
+          apiFetch(`${API}/arbol`).then(r => r.json()),
+          apiFetch(`${API}/sector`).then(r => r.json()),
+          apiFetch(`${API}/finca`).then(r => r.json()),
+          apiFetch(`${API}/registro-plaga`).then(r => r.json()),
+          apiFetch(`${API}/registro-tratamiento`).then(r => r.json()),
         ]);
         if (!mounted) return;
         const rows = j => (j.ok || j.success) ? (Array.isArray(j.data) ? j.data : []) : [];

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import s from './HistorialCambios.module.css';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 
 const TABLAS = [
   { key:'',                   label:'Todas las tablas'   },
@@ -59,7 +59,7 @@ export default function HistorialCambios({ onBack }) {
       const url = filtroTabla
         ? `${API}/auditoria/tabla/${filtroTabla}`
         : `${API}/auditoria/recientes?limite=${limite}`;
-      const res  = await fetch(url);
+      const res  = await apiFetch(url);
       const json = await res.json();
       if (json.success || json.ok) {
         setData(Array.isArray(json.data) ? json.data : []);

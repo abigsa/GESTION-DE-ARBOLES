@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-
-const API = "http://localhost:3000/api";
+import { API, apiFetch } from '../context/AuthContext';
 
 const ESTADO_ESTILOS = {
   CRECIMIENTO: { color: "#2E7D32", bg: "#E8F5E9", icon: "🌱", desc: "En desarrollo" },
@@ -156,8 +154,9 @@ export default function MapaPlanoModule() {
 
   const cargarFincas = async () => {
     try {
-      const res = await axios.get(`${API}/finca`);
-      const lista = Array.isArray(res.data) ? res.data : res.data.data || res.data.rows || [];
+      const res = await apiFetch(`${API}/finca`);
+      const resJson = await res.json();
+      const lista = Array.isArray(resJson.data) ? resJson.data : resJson.data?.data || resJson.data?.rows || [];
       setFincas(lista);
 
       if (lista.length > 0) {
@@ -171,17 +170,17 @@ export default function MapaPlanoModule() {
   const cargarCatalogos = async () => {
     try {
       const [estadosRes, variedadesRes, plagasRes, sectoresRes] = await Promise.all([
-        axios.get(`${API}/estado-arbol`),
-        axios.get(`${API}/tipos-variedad`),
-        axios.get(`${API}/plaga-enfermedad`),
-        axios.get(`${API}/sector`),
+        apiFetch(`${API}/estado-arbol`).then(r => r.json()),
+        apiFetch(`${API}/tipos-variedad`).then(r => r.json()),
+        apiFetch(`${API}/plaga-enfermedad`).then(r => r.json()),
+        apiFetch(`${API}/sector`).then(r => r.json()),
       ]);
 
       setCatalogos({
-        estados: estadosRes.data?.data || [],
-        variedades: variedadesRes.data?.data || [],
-        plagas: plagasRes.data?.data || [],
-        sectores: sectoresRes.data?.data || [],
+        estados: estadosRes.data || [],
+        variedades: variedadesRes.data || [],
+        plagas: plagasRes.data || [],
+        sectores: sectoresRes.data || [],
       });
     } catch (e) {
       console.error("Error catálogos:", e);
@@ -191,13 +190,14 @@ export default function MapaPlanoModule() {
   const cargarPlano = async (idFinca) => {
     try {
       setCargando(true);
-      const res = await axios.get(`${API}/mapa-plano/${idFinca}`);
+      const res = await apiFetch(`${API}/mapa-plano/${idFinca}`);
+      const resJson = await res.json();
 
-      if (res.data.success) {
-        setDatosPlano(res.data);
+      if (resJson.success) {
+        setDatosPlano(resJson);
         setErrorMsg(null);
       } else {
-        setErrorMsg(res.data.message || "Error al cargar");
+        setErrorMsg(resJson.message || "Error al cargar");
         setDatosPlano(null);
       }
     } catch (e) {
@@ -449,13 +449,16 @@ export default function MapaPlanoModule() {
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await axios.post(`${API}/arbol`, {
-        id_sector: Number(nuevoArbolForm.id_sector),
-        id_tipo_variedad_arbol: Number(nuevoArbolForm.id_tipo_variedad_arbol),
-        id_estado: Number(nuevoArbolForm.id_estado),
-        numero_surco: nuevoArbolForm.numero_surco ? Number(nuevoArbolForm.numero_surco) : null,
-        posicion_x: nuevoArbolForm.posicion ? Number(nuevoArbolForm.posicion) : null,
-        descripcion: nuevoArbolForm.descripcion || null,
+      await apiFetch(`${API}/arbol`, {
+        method: 'POST',
+        body: JSON.stringify({
+          id_sector: Number(nuevoArbolForm.id_sector),
+          id_tipo_variedad_arbol: Number(nuevoArbolForm.id_tipo_variedad_arbol),
+          id_estado: Number(nuevoArbolForm.id_estado),
+          numero_surco: nuevoArbolForm.numero_surco ? Number(nuevoArbolForm.numero_surco) : null,
+          posicion_x: nuevoArbolForm.posicion ? Number(nuevoArbolForm.posicion) : null,
+          descripcion: nuevoArbolForm.descripcion || null,
+        }),
       });
 
       await refrescarTodo();
@@ -464,7 +467,7 @@ export default function MapaPlanoModule() {
       setModal((m) => ({
         ...m,
         loading: false,
-        error: err.response?.data?.message || "No se pudo crear el árbol.",
+        error: err.message || "No se pudo crear el árbol.",
       }));
     }
   };
@@ -476,11 +479,14 @@ export default function MapaPlanoModule() {
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await axios.post(`${API}/historial-estado`, {
-        id_arbol: Number(arbolSeleccionado.ID_ARBOL),
-        id_estado_nuevo: Number(estadoForm.id_estado_nuevo),
-        fecha_cambio: estadoForm.fecha_cambio,
-        observaciones: estadoForm.observaciones || null,
+      await apiFetch(`${API}/historial-estado`, {
+        method: 'POST',
+        body: JSON.stringify({
+          id_arbol: Number(arbolSeleccionado.ID_ARBOL),
+          id_estado_nuevo: Number(estadoForm.id_estado_nuevo),
+          fecha_cambio: estadoForm.fecha_cambio,
+          observaciones: estadoForm.observaciones || null,
+        }),
       });
 
       await refrescarTodo();
@@ -489,7 +495,7 @@ export default function MapaPlanoModule() {
       setModal((m) => ({
         ...m,
         loading: false,
-        error: err.response?.data?.message || "No se pudo actualizar el estado.",
+        error: err.message || "No se pudo actualizar el estado.",
       }));
     }
   };
@@ -501,12 +507,15 @@ export default function MapaPlanoModule() {
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await axios.post(`${API}/registro-plaga`, {
-        id_arbol: Number(arbolSeleccionado.ID_ARBOL),
-        id_plaga: Number(alertaForm.id_plaga),
-        fecha_deteccion: alertaForm.fecha_deteccion,
-        fecha_resolucion: alertaForm.fecha_resolucion || null,
-        observaciones: alertaForm.observaciones || null,
+      await apiFetch(`${API}/registro-plaga`, {
+        method: 'POST',
+        body: JSON.stringify({
+          id_arbol: Number(arbolSeleccionado.ID_ARBOL),
+          id_plaga: Number(alertaForm.id_plaga),
+          fecha_deteccion: alertaForm.fecha_deteccion,
+          fecha_resolucion: alertaForm.fecha_resolucion || null,
+          observaciones: alertaForm.observaciones || null,
+        }),
       });
 
       await refrescarTodo();
@@ -515,7 +524,7 @@ export default function MapaPlanoModule() {
       setModal((m) => ({
         ...m,
         loading: false,
-        error: err.response?.data?.message || "No se pudo registrar la alerta.",
+        error: err.message || "No se pudo registrar la alerta.",
       }));
     }
   };
@@ -527,10 +536,13 @@ export default function MapaPlanoModule() {
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await axios.post(`${API}/resiembra`, {
-        id_arbol_nuevo: Number(arbolSeleccionado.ID_ARBOL),
-        fecha_resiembra: resiembraForm.fecha_resiembra,
-        motivo: resiembraForm.motivo || null,
+      await apiFetch(`${API}/resiembra`, {
+        method: 'POST',
+        body: JSON.stringify({
+          id_arbol_nuevo: Number(arbolSeleccionado.ID_ARBOL),
+          fecha_resiembra: resiembraForm.fecha_resiembra,
+          motivo: resiembraForm.motivo || null,
+        }),
       });
 
       await refrescarTodo();
@@ -539,7 +551,7 @@ export default function MapaPlanoModule() {
       setModal((m) => ({
         ...m,
         loading: false,
-        error: err.response?.data?.message || "No se pudo registrar la resiembra.",
+        error: err.message || "No se pudo registrar la resiembra.",
       }));
     }
   };
