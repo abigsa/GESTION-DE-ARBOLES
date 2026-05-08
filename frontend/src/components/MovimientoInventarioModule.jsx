@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE = "http://localhost:3000/api";
+import { API, apiFetch } from '../context/AuthContext';
+const API_BASE = API;
 
 const C = {
   verdeProfundo:  '#1B4D2A',
@@ -118,10 +119,10 @@ export default function MovimientoInventarioModule() {
     setLoading(true);
     try {
       const [rM, rA, rS, rT] = await Promise.all([
-        fetch(`${API_BASE}/movimiento-inventario`).then(r => r.json()),
-        fetch(`${API_BASE}/arbol`).then(r => r.json()),
-        fetch(`${API_BASE}/sector`).then(r => r.json()),
-        fetch(`${API_BASE}/tipo-movimiento`).then(r => r.json()),
+        apiFetch(`${API_BASE}/movimiento-inventario`).then(r => r.json()),
+        apiFetch(`${API_BASE}/arbol`).then(r => r.json()),
+        apiFetch(`${API_BASE}/sector`).then(r => r.json()),
+        apiFetch(`${API_BASE}/tipo-movimiento`).then(r => r.json()),
       ]);
       setMovimientos(obtenerLista(rM));
       setArboles(obtenerLista(rA));
@@ -187,7 +188,7 @@ export default function MovimientoInventarioModule() {
       };
       const url    = editando ? `${API_BASE}/movimiento-inventario/${form.id_movimiento_inventario_arbol}` : `${API_BASE}/movimiento-inventario`;
       const method = editando ? 'PUT' : 'POST';
-      const res    = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+      const res    = await apiFetch(url, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
       const data   = await res.json();
       if (!res.ok) throw new Error(data?.message || data?.mensaje || 'Error al guardar');
       mostrarAlerta('success', editando ? 'Movimiento actualizado' : 'Movimiento registrado correctamente');
@@ -223,7 +224,7 @@ export default function MovimientoInventarioModule() {
   const handleEliminar = async (id) => {
     if (!window.confirm('¿Seguro que deseas eliminar este movimiento?')) return;
     try {
-      const res = await fetch(`${API_BASE}/movimiento-inventario/${id}`, { method:'DELETE' });
+      const res = await apiFetch(`${API_BASE}/movimiento-inventario/${id}`, { method:'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Error al eliminar');
       mostrarAlerta('success', 'Movimiento eliminado');

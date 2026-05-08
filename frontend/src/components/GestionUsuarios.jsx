@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import s from './GestionUsuarios.module.css';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 
 const ROLES = [
   { id: 1, label: 'Super Administrador', color: '#8B2E2E', bg: '#FFEBEE' },
@@ -33,7 +33,7 @@ export default function GestionUsuarios({ onBack }) {
   const fetchUsuarios = async () => {
     setLoading(true); setError('');
     try {
-      const res  = await fetch(`${API}/usuarios`);
+      const res  = await apiFetch(`${API}/usuarios`);
       const data = await res.json();
       if (data.ok || data.success) setUsuarios(Array.isArray(data.data) ? data.data : []);
       else setError(data.mensaje || 'Error al cargar usuarios');
@@ -45,7 +45,7 @@ export default function GestionUsuarios({ onBack }) {
 
   const handleEliminar = async (id) => {
     try {
-      const res  = await fetch(`${API}/usuarios/${id}`, { method: 'DELETE' });
+      const res  = await apiFetch(`${API}/usuarios/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.ok || data.success) { setConfirmId(null); fetchUsuarios(); }
       else alert(data.mensaje || 'Error al eliminar');
@@ -57,7 +57,7 @@ export default function GestionUsuarios({ onBack }) {
     try {
       const adminNombre = get(usuario, 'NOMBRES', 'nombres', 'USERNAME', 'username') || 'Admin';
       const adminId     = get(usuario, 'ID_USUARIO', 'id_usuario');
-      const res  = await fetch(`${API}/usuarios/${resetModal.id}/resetear-password`, {
+      const res  = await apiFetch(`${API}/usuarios/${resetModal.id}/resetear-password`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -385,7 +385,7 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
 
       const id  = isEdit ? (editItem?.ID_USUARIO ?? editItem?.id_usuario) : null;
       const url = isEdit ? `${API}/usuarios/${id}` : `${API}/usuarios`;
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method:  isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(body),
