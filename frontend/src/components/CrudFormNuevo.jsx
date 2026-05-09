@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import DatePickerField from './DatePickerField';
 import s from './CrudFormNuevo.module.css';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 
 export default function CrudFormNuevo({ config, editItem, editId, onClose, onSaved }) {
   const { fields, endpoint, title = 'Módulo' } = config;
@@ -209,7 +209,7 @@ url.searchParams.set(queryParam, parentValue);
       }
 
       try {
-        const res = await fetch(buildRemoteUrlLocal(field));
+        const res = await apiFetch(buildRemoteUrlLocal(field));
         const json = await res.json();
 
         const rows = Array.isArray(json?.data)
@@ -334,7 +334,7 @@ url.searchParams.set(queryParam, parentValue);
       const url = isEdit ? `${API}${endpoint}/${editId}` : `${API}${endpoint}`;
       const method = isEdit ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

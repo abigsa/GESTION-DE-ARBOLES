@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import s from './NotificacionesPanel.module.css';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 const DIAS_ALERTA  = 7;   // días sin tratar = alerta
 const DIAS_CRITICO = 21;  // días sin tratar = crítico
 
@@ -41,9 +41,9 @@ export default function NotificacionesPanel() {
       setLoading(true);
       try {
         const [rPlagas, rTrat, rArboles] = await Promise.all([
-          fetch(`${API}/registro-plaga`).then(r => r.json()),
-          fetch(`${API}/registro-tratamiento`).then(r => r.json()),
-          fetch(`${API}/arbol`).then(r => r.json()),
+          apiFetch(`${API}/registro-plaga`).then(r => r.json()),
+          apiFetch(`${API}/registro-tratamiento`).then(r => r.json()),
+          apiFetch(`${API}/arbol`).then(r => r.json()),
         ]);
         if (!mounted) return;
 

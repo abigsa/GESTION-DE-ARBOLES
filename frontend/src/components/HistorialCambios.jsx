@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import s from './HistorialCambios.module.css';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 
 const TABLAS = [
   { key:'',                   label:'Todas las tablas'   },
@@ -22,11 +22,20 @@ const OP_COLOR = {
 
 function formatFecha(val) {
   if (!val) return '—';
+  // Si viene como string puro de fecha (sin hora real), mostrar solo fecha
+  if (typeof val === 'string') {
+    // Extraer solo YYYY-MM-DD ignorando la parte de hora
+    const soloFecha = val.slice(0, 10); // "2024-04-22"
+    const [anio, mes, dia] = soloFecha.split('-');
+    if (anio && mes && dia) {
+      const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      return `${dia} ${meses[parseInt(mes,10)-1]} ${anio}`;
+    }
+  }
   const d = val instanceof Date ? val : new Date(val);
   if (isNaN(d)) return '—';
-  return d.toLocaleString('es-GT', {
-    day:'2-digit', month:'short', year:'numeric',
-    hour:'2-digit', minute:'2-digit'
+  return d.toLocaleDateString('es-GT', {
+    day:'2-digit', month:'short', year:'numeric'
   });
 }
 
@@ -50,7 +59,7 @@ export default function HistorialCambios({ onBack }) {
       const url = filtroTabla
         ? `${API}/auditoria/tabla/${filtroTabla}`
         : `${API}/auditoria/recientes?limite=${limite}`;
-      const res  = await fetch(url);
+      const res  = await apiFetch(url);
       const json = await res.json();
       if (json.success || json.ok) {
         setData(Array.isArray(json.data) ? json.data : []);

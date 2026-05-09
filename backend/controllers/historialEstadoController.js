@@ -2,6 +2,7 @@
 // controllers/historialEstadoController.js
 // ============================================================
 const oracledb = require('oracledb');
+const { registrar: registrarAuditoria } = require('./auditoriaController');
 const { getConnection, closeConnection } = require('../config/db');
 
 // ----------------------------------------------------------
@@ -109,6 +110,7 @@ const insertar = async (req, res) => {
       success: true,
       message: 'Historial de estado insertado correctamente y árbol actualizado.',
     });
+    await registrarAuditoria(conn, { tabla:'HISTORIAL_ESTADO', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en HISTORIAL_ESTADO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     if (conn) {
       try {
@@ -178,6 +180,7 @@ const actualizar = async (req, res) => {
       success: true,
       message: 'Historial de estado actualizado correctamente y árbol sincronizado.',
     });
+    await registrarAuditoria(conn, { tabla:'HISTORIAL_ESTADO', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en HISTORIAL_ESTADO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     if (conn) {
       try {
@@ -217,6 +220,7 @@ const eliminar = async (req, res) => {
       success: true,
       message: 'Historial de estado eliminado correctamente.',
     });
+    await registrarAuditoria(conn, { tabla:'HISTORIAL_ESTADO', operacion:'DELETE', idRegistro:null, descripcion:`Registro eliminado en HISTORIAL_ESTADO`, usuarioId: null, usuarioNombre: 'Sistema' });
   } catch (err) {
     res.status(500).json({
       success: false,

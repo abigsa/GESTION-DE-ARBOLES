@@ -4,7 +4,7 @@ import CrudFormNuevo from './CrudFormNuevo';
 import s from './CrudPageNuevo.module.css';
 import ExportarBtn from './ExportarBtn';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 export default function CrudPageNuevo({ moduleKey, onBack }) {
@@ -25,7 +25,7 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
   const fetchData = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res  = await fetch(`${API}${endpoint}`, {
+      const res  = await apiFetch(`${API}${endpoint}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -38,7 +38,7 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
         setError(json.mensaje ?? json.message ?? 'Error al cargar los datos');
       }
     } catch {
-      setError('No se pudo conectar con el servidor. Verifica que el backend esté activo en localhost:3000');
+      setError('No se pudo conectar con el servidor. Verifica que el backend esté activo.');
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
     const id = pkVal(row);
     if (!id) { alert('No se puede identificar el registro'); return; }
     try {
-      const res  = await fetch(`${API}${endpoint}/${id}`, { method: 'DELETE' });
+      const res  = await apiFetch(`${API}${endpoint}/${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.ok === true || json.success === true) {
   setConfirmRow(null);
