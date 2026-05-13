@@ -94,6 +94,7 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
     if (!id) { alert('No se puede identificar el registro'); return; }
     try {
       const res  = await apiFetch(`${API}${endpoint}/${id}`, { method: 'DELETE' });
+      window.dispatchEvent(new Event('plagas-actualizadas'));
       const json = await res.json();
       if (json.ok === true || json.success === true) {
   setConfirmRow(null);

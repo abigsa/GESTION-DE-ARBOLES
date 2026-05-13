@@ -296,18 +296,30 @@ url.searchParams.set(queryParam, parentValue);
   };
 
   const normalizeValueForSubmit = field => {
-    const v = form[field.name];
+  const v = form[field.name];
 
-    if (v === '' || v === null || v === undefined) return null;
+  if (v === '' || v === null || v === undefined) return null;
 
-    if (field.type === 'number') return Number(v);
+  if (field.type === 'number') return Number(v);
 
-    if (field.type === 'remote-select') {
-      return field.valueType === 'string' ? String(v) : Number(v);
+  if (field.type === 'remote-select') {
+    return field.valueType === 'string' ? String(v) : Number(v);
+  }
+
+  if (field.type === 'date') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(v))) return v;
+
+    const parts = String(v).split('/');
+    if (parts.length === 3) {
+      const [dd, mm, yyyy] = parts;
+      return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
     }
 
-    return v || null;
-  };
+    return v;
+  }
+
+  return v || null;
+};  
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -333,7 +345,7 @@ url.searchParams.set(queryParam, parentValue);
     try {
       const url = isEdit ? `${API}${endpoint}/${editId}` : `${API}${endpoint}`;
       const method = isEdit ? 'PUT' : 'POST';
-
+      console.log('BODY REGISTRO PLAGA:', body);
       const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -343,8 +355,12 @@ url.searchParams.set(queryParam, parentValue);
       const json = await res.json();
 
       if (json.ok === true || json.success === true) {
-        onSaved();
-      } else {
+  if (endpoint === '/registro-plaga') {
+    window.dispatchEvent(new Event('plagas-actualizadas'));
+  }
+
+  onSaved();
+} else {
         setError(json.mensaje ?? json.message ?? 'Error al guardar');
       }
     } catch {

@@ -77,7 +77,11 @@ export default function DashboardNuevo({ onSelect }) {
     return Object.entries(map)
       .map(([idSec, cnt]) => {
         const sec = sectores.find(s => String(get(s,'ID_SECTOR','id_sector')) === String(idSec));
-        return { nombre: get(sec,'NOMBRE_SECTOR','nombre_sector') || `Sector #${idSec}`, cnt };
+        return {
+          id: idSec,
+          nombre: get(sec,'NOMBRE_SECTOR','nombre_sector') || `Sector #${idSec}`,
+          cnt
+        };
       })
       .sort((a,b) => b.cnt - a.cnt)
       .slice(0, 4);
@@ -117,7 +121,11 @@ export default function DashboardNuevo({ onSelect }) {
     return Object.entries(map)
       .map(([idF, cnt]) => {
         const f = fincas.find(f => String(get(f,'ID_FINCA','id_finca')) === String(idF));
-        return { nombre: get(f,'NOMBRE_FINCA','nombre_finca') || `Finca #${idF}`, cnt };
+        return {
+  id: idF,
+  nombre: get(f,'NOMBRE_FINCA','nombre_finca') || `Finca #${idF}`,
+  cnt
+};
       })
       .sort((a,b) => b.cnt - a.cnt)
       .slice(0, 4);
@@ -181,8 +189,8 @@ export default function DashboardNuevo({ onSelect }) {
             <>
               <div className={s.kpiDivider} />
               <p className={s.kpiDetailTitle}>Por sector</p>
-              {arbolesPorSector.map(({ nombre, cnt }) => (
-                <div key={nombre} className={s.kpiRow}>
+              {arbolesPorSector.map(({ id, nombre, cnt }) => (
+            <div key={`sector-${id}`} className={s.kpiRow}>
                   <span className={s.kpiRowName}>{nombre}</span>
                   <div className={s.kpiBarWrap}>
                     <div className={s.kpiBarFill} style={{ width: `${Math.round((cnt/maxArb)*100)}%`, background: '#4CB968' }} />
@@ -261,8 +269,8 @@ export default function DashboardNuevo({ onSelect }) {
             <>
               <div className={s.kpiDivider} />
               <p className={s.kpiDetailTitle}>Sectores por finca</p>
-              {sectoresPorFinca.map(({ nombre, cnt }) => (
-                <div key={nombre} className={s.kpiRow}>
+              {sectoresPorFinca.map(({ id, nombre, cnt }) => (
+  <div key={`finca-${id}`} className={s.kpiRow}>
                   <span className={s.kpiRowName}>{nombre}</span>
                   <div className={s.kpiBarWrap}>
                     <div className={s.kpiBarFill} style={{ width: `${Math.round((cnt/maxSec)*100)}%`, background: '#1B4D2A' }} />
@@ -301,7 +309,7 @@ export default function DashboardNuevo({ onSelect }) {
                 const nombreDirecto = get(t,'NOMBRE_ARBOL','nombre_arbol');
                 const arbol   = !nombreDirecto ? arboles.find(a => String(get(a,'ID_ARBOL','id_arbol')) === String(idArbol)) : null;
                 const nombre  = nombreDirecto || get(arbol,'NOMBRE_ARBOL','nombre_arbol') || `Árbol #${idArbol}`;
-                const idTrat  = get(t,'ID_TIPO_TRATAMIENTO','id_tipo_tratamiento');
+                
                 // Nombre viene del JOIN en Oracle
                 const nomTrat = get(t,'NOMBRE_TRATAMIENTO','nombre_tratamiento') || 'Tratamiento';
                 return (

@@ -94,14 +94,14 @@ function MainLayout() {
               </div>
             </div>
             <div style={{marginLeft:'auto'}}>
-              <NotificacionesPanel />
+              <NotificacionesPanel onSelect={handleSelect} />
             </div>
           </div>
         )}
         {!isMobile && (
           <div className="desktopTopbar">
             <div style={{marginLeft:'auto'}}>
-              <NotificacionesPanel />
+              <NotificacionesPanel onSelect={handleSelect} />
             </div>
           </div>
         )}
