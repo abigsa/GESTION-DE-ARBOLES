@@ -69,6 +69,20 @@ const VISTA = { MAPA: "mapa", ALERTAS: "alertas", RESIEMBRA: "resiembra" };
 const HOY = () => new Date().toISOString().slice(0, 10);
 const AREA_POR_ARBOL_M2 = 4;
 
+const getPlagasActivas = (arbol) => {
+  return Array.isArray(arbol?.PLAGAS)
+    ? arbol.PLAGAS.filter((p) => {
+        const fechaResolucion =
+          p.FECHA_RESOLUCION ||
+          p.fecha_resolucion ||
+          p.FECHA_RESOLUCION_PLAGA ||
+          p.fecha_resolucion_plaga;
+
+        return !fechaResolucion;
+      })
+    : [];
+};
+
 export default function MapaPlanoModule() {
   const [fincas, setFincas] = useState([]);
   const [fincaSeleccionada, setFincaSeleccionada] = useState("");
@@ -279,9 +293,9 @@ export default function MapaPlanoModule() {
   }, [arboles]);
 
   const arbolesConPlagas = useMemo(
-    () => arboles.filter((a) => a.PLAGAS?.length > 0),
-    [arboles]
-  );
+  () => arboles.filter((a) => getPlagasActivas(a).length > 0),
+  [arboles]
+);
 
   const arbolesAlerta = useMemo(
     () =>
@@ -321,6 +335,7 @@ export default function MapaPlanoModule() {
     const d = new Date(f);
     return isNaN(d) ? String(f) : d.toLocaleDateString("es-GT");
   };
+
 
   const getSectorBox = (_sector, idx, total) => {
     const count = Math.max(Number(total || 1), 1);
@@ -994,7 +1009,7 @@ export default function MapaPlanoModule() {
                       const activo = arbolSeleccionado?.ID_ARBOL === arbol.ID_ARBOL;
                       const muerto =
                         String(arbol.NOMBRE_ESTADO || "").toUpperCase().trim() === "MUERTO";
-                      const conPlaga = arbol.PLAGAS?.length > 0;
+                      const conPlaga = getPlagasActivas(arbol).length > 0;
 
                       return (
                         <button
@@ -1529,6 +1544,7 @@ export default function MapaPlanoModule() {
                     arbolesFiltrados.map((a) => {
                       const est = getEstilo(a.NOMBRE_ESTADO);
                       const activo = arbolSeleccionado?.ID_ARBOL === a.ID_ARBOL;
+                      const plagasActivas = getPlagasActivas(a);
 
                       return (
                         <tr
@@ -1588,8 +1604,8 @@ export default function MapaPlanoModule() {
                             )}
                           </td>
                           <td style={s.td}>
-                            {a.PLAGAS?.length > 0 ? (
-                              a.PLAGAS.map((p, i) => (
+                            {plagasActivas.length > 0 ? (
+                              plagasActivas.map((p, i) => (
                                 <span
                                   key={i}
                                   style={{
@@ -1697,7 +1713,7 @@ export default function MapaPlanoModule() {
                       </div>
                     )}
 
-                    {arbolSeleccionado.PLAGAS?.length > 0 && (
+                    {getPlagasActivas(arbolSeleccionado).length > 0 && (
                       <div
                         style={{
                           marginTop: 8,
@@ -1707,9 +1723,9 @@ export default function MapaPlanoModule() {
                         }}
                       >
                         <div style={{ fontWeight: 700, color: "#F57F17", fontSize: 11, marginBottom: 4 }}>
-                          🦠 Plagas activas ({arbolSeleccionado.PLAGAS.length})
+                          🦠 Plagas activas ({getPlagasActivas(arbolSeleccionado).length})
                         </div>
-                        {arbolSeleccionado.PLAGAS.map((p, i) => (
+                        {getPlagasActivas(arbolSeleccionado).map((p, i) => (
                           <div key={i} style={{ fontSize: 10, color: "#795548", marginBottom: 3 }}>
                             <span
                               style={{
