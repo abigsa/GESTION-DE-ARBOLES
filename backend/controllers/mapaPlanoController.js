@@ -125,21 +125,26 @@ const obtenerPlanoFinca = async (req, res) => {
     // ==========================
     const plagasQuery = `
       SELECT
-        RP.ID_ARBOL,
-        PE.NOMBRE_PLAGA,
-        PE.TIPO_PLAGA,
-        PE.NIVEL_RIESGO,
-        RP.OBSERVACIONES
-      FROM REGISTRO_PLAGA RP
-      LEFT JOIN PLAGA_ENFERMEDAD PE
-        ON RP.ID_PLAGA = PE.ID_PLAGA
-      WHERE RP.ID_ARBOL IN (
-        SELECT A.ID_ARBOL
-        FROM ARBOL A
-        INNER JOIN SECTOR S ON A.ID_SECTOR = S.ID_SECTOR
-        WHERE S.ID_FINCA = :id
-      )
-      AND RP.ACTIVO = 'S'
+    RP.ID_REGISTRO,
+    RP.ID_ARBOL,
+    RP.ID_PLAGA,
+    PE.NOMBRE_PLAGA,
+    PE.TIPO_PLAGA,
+    PE.NIVEL_RIESGO,
+    RP.FECHA_DETECCION,
+    RP.FECHA_RESOLUCION,
+    RP.OBSERVACIONES
+  FROM REGISTRO_PLAGA RP
+  LEFT JOIN PLAGA_ENFERMEDAD PE
+    ON RP.ID_PLAGA = PE.ID_PLAGA
+  WHERE RP.ID_ARBOL IN (
+    SELECT A.ID_ARBOL
+    FROM ARBOL A
+    INNER JOIN SECTOR S ON A.ID_SECTOR = S.ID_SECTOR
+    WHERE S.ID_FINCA = :id
+  )
+  AND RP.ACTIVO = 'S'
+  AND RP.FECHA_RESOLUCION IS NULL
     `;
 
     const plagasResult = await connection.execute(

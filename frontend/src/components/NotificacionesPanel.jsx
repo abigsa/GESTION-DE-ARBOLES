@@ -25,10 +25,18 @@ function fechaValida(val) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function normalizarRows(json) {
+  if (!json) return [];
+  if (Array.isArray(json)) return json;
+  if (json.ok || json.success) return Array.isArray(json.data) ? json.data : [];
+  return [];
+}
+
 export default function NotificacionesPanel({ onSelect }) {
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const [leidas, setLeidas] = useState(() => {
     try {
       return new Set(JSON.parse(sessionStorage.getItem('notifs_leidas') || '[]'));
@@ -41,7 +49,9 @@ export default function NotificacionesPanel({ onSelect }) {
 
   useEffect(() => {
     const handler = e => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handler);
@@ -55,26 +65,26 @@ export default function NotificacionesPanel({ onSelect }) {
       setLoading(true);
 
       try {
-        const [rPlagas, rTrat, rArboles] = await Promise.all([
+        const [rPlagas, rTrat, rArboles, rSectores, rFincas] = await Promise.all([
           apiFetch(`${API}/registro-plaga`).then(r => r.json()),
           apiFetch(`${API}/registro-tratamiento`).then(r => r.json()),
           apiFetch(`${API}/arbol`).then(r => r.json()),
+          apiFetch(`${API}/sector`).then(r => r.json()),
+          apiFetch(`${API}/finca`).then(r => r.json()),
         ]);
 
         if (!mounted) return;
 
-        const rows = j => (j.ok || j.success) ? (Array.isArray(j.data) ? j.data : []) : [];
-
-        const plagas = rows(rPlagas);
-        const tratamientos = rows(rTrat);
-        const arboles = rows(rArboles);
+        const plagas = normalizarRows(rPlagas);
+        const tratamientos = normalizarRows(rTrat);
+        const arboles = normalizarRows(rArboles);
+        const sectores = normalizarRows(rSectores);
+        const fincas = normalizarRows(rFincas);
 
         const lista = [];
 
         plagas.forEach(p => {
           const fechaResolucion = get(p, 'FECHA_RESOLUCION', 'fecha_resolucion');
-
-          // Plaga activa = no tiene fecha de resolución
           if (fechaResolucion) return;
 
           const idRegistro = get(p, 'ID_REGISTRO', 'id_registro');
@@ -86,6 +96,46 @@ export default function NotificacionesPanel({ onSelect }) {
             String(get(a, 'ID_ARBOL', 'id_arbol')) === String(idArbol)
           );
 
+          const idSector =
+            get(p, 'ID_SECTOR', 'id_sector') ||
+            get(arbol, 'ID_SECTOR', 'id_sector');
+
+          const sectorEncontrado = sectores.find(sec =>
+            String(get(sec, 'ID_SECTOR', 'id_sector')) === String(idSector)
+          );
+
+          const idFinca =
+            get(p, 'ID_FINCA', 'id_finca') ||
+            get(arbol, 'ID_FINCA', 'id_finca') ||
+            get(sectorEncontrado, 'ID_FINCA', 'id_finca');
+
+          const fincaEncontrada = fincas.find(fin =>
+            String(get(fin, 'ID_FINCA', 'id_finca')) === String(idFinca)
+          );
+
+          const nomFinca =
+            get(p, 'NOMBRE_FINCA', 'nombre_finca') ||
+            get(arbol, 'NOMBRE_FINCA', 'nombre_finca') ||
+            get(fincaEncontrada, 'NOMBRE_FINCA', 'nombre_finca') ||
+            null;
+
+          const nomSector =
+            get(p, 'NOMBRE_SECTOR', 'nombre_sector') ||
+            get(arbol, 'NOMBRE_SECTOR', 'nombre_sector') ||
+            get(sectorEncontrado, 'NOMBRE_SECTOR', 'nombre_sector') ||
+            null;
+
+          const numeroSurco =
+            get(p, 'NUMERO_SURCO', 'numero_surco') ||
+            get(arbol, 'NUMERO_SURCO', 'numero_surco') ||
+            null;
+
+          const ubicacion = [
+            nomFinca,
+            nomSector,
+            numeroSurco ? `Surco ${numeroSurco}` : null,
+          ].filter(Boolean).join(' · ') || 'Ubicación no identificada';
+
           const tratamientosDelArbol = tratamientos.filter(t =>
             String(get(t, 'ID_ARBOL', 'id_arbol')) === String(idArbol)
           );
@@ -93,7 +143,9 @@ export default function NotificacionesPanel({ onSelect }) {
           const deteccionDate = fechaValida(fechaDeteccion);
 
           const tieneTratamientoPosterior = tratamientosDelArbol.some(t => {
-            const fechaTratamiento = fechaValida(get(t, 'FECHA_APLICACION', 'fecha_aplicacion'));
+            const fechaTratamiento = fechaValida(
+              get(t, 'FECHA_APLICACION', 'fecha_aplicacion')
+            );
 
             if (!fechaTratamiento) return tratamientosDelArbol.length > 0;
             if (!deteccionDate) return true;
@@ -105,11 +157,6 @@ export default function NotificacionesPanel({ onSelect }) {
             get(p, 'NOMBRE_ARBOL', 'nombre_arbol') ||
             get(arbol, 'NOMBRE_ARBOL', 'nombre_arbol') ||
             `Árbol #${idArbol}`;
-
-          const nomSector =
-            get(p, 'NOMBRE_SECTOR', 'nombre_sector') ||
-            get(arbol, 'NOMBRE_SECTOR', 'nombre_sector') ||
-            'Sector no identificado';
 
           const nomPlaga =
             get(p, 'NOMBRE_PLAGA', 'nombre_plaga') ||
@@ -134,7 +181,7 @@ export default function NotificacionesPanel({ onSelect }) {
           }
 
           lista.push({
-            id: `plaga-${idRegistro || idArbol}-${fechaDeteccion || 'sin-fecha'}`,
+            id: `plaga-${idRegistro || idArbol}-${fechaDeteccion || 'sin-fecha'}-${nomPlaga}`,
             tipo,
             icon,
             titulo: nomArbol,
@@ -143,7 +190,7 @@ export default function NotificacionesPanel({ onSelect }) {
               ? 'Tiene tratamiento posterior registrado'
               : 'Pendiente de tratamiento o seguimiento',
             tratado: tieneTratamientoPosterior,
-            sector: nomSector,
+            sector: ubicacion,
           });
         });
 
@@ -164,10 +211,17 @@ export default function NotificacionesPanel({ onSelect }) {
 
     const timer = setInterval(load, 60000);
 
-    return () => {
-      mounted = false;
-      clearInterval(timer);
-    };
+const actualizarNotificaciones = () => {
+  load();
+};
+
+window.addEventListener('plagas-actualizadas', actualizarNotificaciones);
+
+return () => {
+  mounted = false;
+  clearInterval(timer);
+  window.removeEventListener('plagas-actualizadas', actualizarNotificaciones);
+};
   }, []);
 
   const noLeidas = notifs.filter(n => !leidas.has(n.id)).length;
@@ -199,14 +253,14 @@ export default function NotificacionesPanel({ onSelect }) {
     });
   };
 
- const irSeguimiento = (id) => {
-  marcarLeida(id);
-  setOpen(false);
+  const irSeguimiento = id => {
+    marcarLeida(id);
+    setOpen(false);
 
-  if (typeof onSelect === 'function') {
-    onSelect('registros-plaga');
-  }
-};
+    if (typeof onSelect === 'function') {
+      onSelect('registros-plaga');
+    }
+  };
 
   return (
     <div className={s.wrap} ref={ref}>
@@ -306,15 +360,15 @@ export default function NotificacionesPanel({ onSelect }) {
                     </p>
 
                     <button
-                    type="button"
-                    className={s.followBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      irSeguimiento(n.id);
-                    }}
-                  >
-                    Ver seguimiento
-                  </button>
+                      type="button"
+                      className={s.followBtn}
+                      onClick={e => {
+                        e.stopPropagation();
+                        irSeguimiento(n.id);
+                      }}
+                    >
+                      Ver seguimiento
+                    </button>
                   </div>
 
                   {!leidas.has(n.id) && <div className={s.dot} />}
