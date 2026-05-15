@@ -374,9 +374,200 @@ export default function DashboardNuevo({ onSelect }) {
                   <ModCard key={m.key} label={m.label} icon={m.icon} compact onClick={() => onSelect(m.key)} />
                 ))}
               </div>
+              {section.title === 'Mapa' && (
+                <MiniMapaPreview
+                  arboles={arboles}
+                  sectores={sectores}
+                  fincas={fincas}
+                  loading={loading}
+                  onSelect={onSelect}
+                />
+              )}
             </section>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+
+// ── Mini Mapa Preview para el Dashboard ──────────
+const ESTADO_COLORS = {
+  CRECIMIENTO: '#2E7D32', PRODUCCION: '#1565C0', 'PRODUCCIÓN': '#1565C0',
+  ENFERMO: '#E65100', MUERTO: '#B71C1C', RESIEMBRA: '#6A1B9A',
+};
+const getColor = (est) => ESTADO_COLORS[String(est||'').toUpperCase().trim()] || '#78909C';
+
+function MiniMapaPreview({ arboles, sectores, fincas, loading, onSelect }) {
+  const canvasRef = useRef(null);
+
+  // Stats rápidos
+  const totalArboles = arboles.length;
+  const totalSectores = sectores.length;
+  const totalFincas = fincas.length;
+  const conAlerta = arboles.filter(a => ['ENFERMO','MUERTO'].includes(
+    String(a?.NOMBRE_ESTADO||a?.nombre_estado||'').toUpperCase().trim()
+  )).length;
+
+  // Dibujar mini mapa en canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || loading) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = rect.width  * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
+
+    // Fondo campo
+    ctx.fillStyle = '#6B9E5E';
+    ctx.beginPath(); ctx.roundRect(0,0,W,H,8); ctx.fill();
+
+    // Textura de campo
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 12) {
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+
+    if (sectores.length === 0 && arboles.length === 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Sin datos disponibles', W/2, H/2);
+      return;
+    }
+
+    // Dibujar sectores como bloques
+    const pad = 8;
+    const cols = Math.min(sectores.length, 3) || 1;
+    const rows = Math.ceil(sectores.length / cols) || 1;
+    const cellW = (W - pad*2 - (cols-1)*6) / cols;
+    const cellH = (H - pad*2 - (rows-1)*6) / rows;
+
+    sectores.slice(0,6).forEach((sec, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = pad + col * (cellW + 6);
+      const y = pad + row * (cellH + 6);
+
+      // Bloque sector
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath(); ctx.roundRect(x, y, cellW, cellH, 6); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(x, y, cellW, cellH, 6); ctx.stroke();
+
+      // Árboles del sector
+      const idSec = sec.ID_SECTOR ?? sec.id_sector;
+      const arbolesDelSector = arboles.filter(a =>
+        String(a.ID_SECTOR ?? a.id_sector) === String(idSec)
+      );
+
+      const maxPorFila = Math.floor((cellW - 8) / 8);
+      arbolesDelSector.slice(0, maxPorFila * Math.floor((cellH - 14) / 8)).forEach((arb, ai) => {
+        const ax = x + 4 + (ai % maxPorFila) * 8 + 4;
+        const ay = y + 12 + Math.floor(ai / maxPorFila) * 8 + 4;
+        if (ax > x + cellW - 4 || ay > y + cellH - 4) return;
+        const color = getColor(arb.NOMBRE_ESTADO ?? arb.nombre_estado);
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(ax, ay, 3, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(ax, ay, 2, 0, Math.PI*2); ctx.fill();
+      });
+
+      // Etiqueta sector
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.beginPath(); ctx.roundRect(x+3, y+3, cellW-6, 10, 3); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 7px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const nombre = (sec.NOMBRE_SECTOR ?? sec.nombre_sector ?? '').replace('Sector ','');
+      ctx.fillText(nombre.slice(0,10), x+6, y+8);
+    });
+  }, [arboles, sectores, loading]);
+
+  return (
+    <div style={{
+      marginTop: 14,
+      borderTop: '0.5px solid #e5e7eb',
+      paddingTop: 14,
+    }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+        <div>
+          <p style={{ fontSize:11, fontWeight:600, color:'#556b5e', margin:0, letterSpacing:'.3px' }}>VISTA GENERAL</p>
+          <p style={{ fontSize:13, fontWeight:600, color:'#1B4D2A', margin:'2px 0 0' }}>Distribución de árboles</p>
+        </div>
+        <button
+          onClick={() => onSelect('mapa-plano')}
+          style={{
+            display:'flex', alignItems:'center', gap:4,
+            background:'#1B4D2A', color:'#fff',
+            border:'none', borderRadius:8,
+            padding:'5px 10px', fontSize:11, fontWeight:600,
+            cursor:'pointer',
+          }}
+        >
+          <span className="material-icons" style={{fontSize:14}}>open_in_full</span>
+          Ver mapa
+        </button>
+      </div>
+
+      {/* KPIs rápidos */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6, marginBottom:10 }}>
+        {[
+          { label:'Fincas',   val: loading ? '…' : totalFincas,   color:'#1B4D2A', bg:'#e8f5e9' },
+          { label:'Sectores', val: loading ? '…' : totalSectores, color:'#1565C0', bg:'#e3f2fd' },
+          { label:'Árboles',  val: loading ? '…' : totalArboles,  color:'#2E7D32', bg:'#f1f8e9' },
+          { label:'Alertas',  val: loading ? '…' : conAlerta,     color: conAlerta > 0 ? '#B71C1C' : '#6B7280', bg: conAlerta > 0 ? '#ffebee' : '#f5f5f5' },
+        ].map(({ label, val, color, bg }) => (
+          <div key={label} style={{
+            background: bg, borderRadius:8, padding:'6px 8px', textAlign:'center',
+          }}>
+            <div style={{ fontSize:16, fontWeight:700, color, lineHeight:1 }}>{val}</div>
+            <div style={{ fontSize:9, color, opacity:.75, marginTop:2 }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Canvas mini mapa */}
+      <div style={{
+        borderRadius:10, overflow:'hidden',
+        border:'1px solid #c8ddc9',
+        height: 130,
+        background:'#6B9E5E',
+        position:'relative',
+      }}>
+        {loading ? (
+          <div style={{
+            height:'100%', display:'flex', alignItems:'center',
+            justifyContent:'center', color:'rgba(255,255,255,.7)', fontSize:12,
+          }}>
+            <span className="material-icons" style={{fontSize:16, marginRight:6}}>hourglass_top</span>
+            Cargando...
+          </div>
+        ) : (
+          <canvas ref={canvasRef} style={{ width:'100%', height:'100%', display:'block' }} />
+        )}
+      </div>
+
+      {/* Leyenda */}
+      <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
+        {[
+          { label:'Crecimiento', color:'#2E7D32' },
+          { label:'Producción',  color:'#1565C0' },
+          { label:'Enfermo',     color:'#E65100' },
+          { label:'Muerto',      color:'#B71C1C' },
+        ].map(({ label, color }) => (
+          <div key={label} style={{ display:'flex', alignItems:'center', gap:4, fontSize:10, color:'#6b7280' }}>
+            <div style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0 }} />
+            {label}
+          </div>
+        ))}
       </div>
     </div>
   );

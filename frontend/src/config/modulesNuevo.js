@@ -22,6 +22,8 @@ export const COL_LABELS = {
   fecha_aplicacion:'Fecha aplic.', id_arbol_nuevo:'Árbol',
   fecha_resiembra:'Fecha', motivo:'Motivo',
   id_tipo_movimiento:'Tipo movimiento', fecha_movimiento:'Fecha movimiento',
+  posicion_x:'Posición X (surco)', posicion_y:'Posición Y (lugar en surco)',
+  tipo_cultivo:'Tipo de cultivo',
 };
 
 export const colLabel = (key) =>
@@ -51,6 +53,61 @@ export const SECTOR_NAME_OPTIONS = [
   { value:'Sector Occidente', label:'Sector Occidente' },
 ];
 
+// ── Tipos de uso para variedades de árbol ─────────
+export const TIPO_USO_OPTIONS = [
+  { value:'Frutal',            label:'Frutal (consumo de fruto)' },
+  { value:'Maderable',         label:'Maderable (madera para construcción)' },
+  { value:'Ornamental',        label:'Ornamental (paisajismo y decoración)' },
+  { value:'Sombra',            label:'Sombra (protección de otros cultivos)' },
+  { value:'Medicinal',         label:'Medicinal (usos terapéuticos)' },
+  { value:'Forrajero',         label:'Forrajero (alimentación animal)' },
+  { value:'Industrial',        label:'Industrial (aceites, resinas, látex)' },
+  { value:'Agroforestal',      label:'Agroforestal (combinado con cultivos)' },
+  { value:'Barrera viva',      label:'Barrera viva (cortavientos, linderos)' },
+  { value:'Fijador nitrógeno', label:'Fijador de nitrógeno (mejora suelo)' },
+  { value:'Leña',              label:'Leña y carbón vegetal' },
+  { value:'Multipropósito',    label:'Multipropósito' },
+];
+
+// ── Tipos de fertilizante para árboles ───────────
+export const TIPO_FERTILIZANTE_OPTIONS = [
+  { value:'NPK',                  label:'NPK — Nitrógeno-Fósforo-Potasio' },
+  { value:'Nitrogenado',          label:'Nitrogenado (urea, sulfato de amonio)' },
+  { value:'Fosfatado',            label:'Fosfatado (superfosfato, fosfato diamónico)' },
+  { value:'Potásico',             label:'Potásico (cloruro, sulfato de potasio)' },
+  { value:'Orgánico compost',     label:'Orgánico — Compost' },
+  { value:'Orgánico bokashi',     label:'Orgánico — Bokashi' },
+  { value:'Orgánico humus',       label:'Orgánico — Humus de lombriz' },
+  { value:'Orgánico estiércol',   label:'Orgánico — Estiércol' },
+  { value:'Foliar',               label:'Foliar (aplicación en hoja)' },
+  { value:'Micronutrientes',      label:'Micronutrientes (zinc, boro, hierro…)' },
+  { value:'Enmienda calcárea',    label:'Enmienda calcárea (cal, yeso)' },
+  { value:'Biofertilizante',      label:'Biofertilizante (microorganismos)' },
+  { value:'Lento liberación',     label:'De lento liberación (controlado)' },
+  { value:'Fertirrigación',       label:'Fertirrigación (vía riego)' },
+  { value:'Otro',                 label:'Otro' },
+];
+
+// ── Tipos de cultivo para sectores ───────────────
+export const TIPO_CULTIVO_OPTIONS = [
+  { value:'Aguacate',       label:'Aguacate' },
+  { value:'Café',           label:'Café' },
+  { value:'Cacao',          label:'Cacao' },
+  { value:'Cítricos',       label:'Cítricos (naranja, limón, mandarina)' },
+  { value:'Mango',          label:'Mango' },
+  { value:'Banano',         label:'Banano / Plátano' },
+  { value:'Macadamia',      label:'Macadamia' },
+  { value:'Cardamomo',      label:'Cardamomo' },
+  { value:'Palma africana', label:'Palma africana' },
+  { value:'Hule',           label:'Hule / Caucho' },
+  { value:'Maíz',           label:'Maíz' },
+  { value:'Frijol',         label:'Frijol' },
+  { value:'Caña de azúcar', label:'Caña de azúcar' },
+  { value:'Forestal',       label:'Forestal (pino, ciprés, eucalipto)' },
+  { value:'Agroforestal',   label:'Agroforestal mixto' },
+  { value:'Otro',           label:'Otro' },
+];
+
 // ── Configuración de cada módulo CRUD ─────────────
 export const MODULES = {
   'tipos-variedad': {
@@ -59,7 +116,13 @@ export const MODULES = {
     icon:'category',
     fields:[
       { name:'nombre_arbol', label:'Nombre del árbol', type:'text', required:true },
-      { name:'tipo_uso',     label:'Tipo de uso',      type:'text', required:true },
+      {
+        name:'tipo_uso',
+        label:'Tipo de uso',
+        type:'select',
+        required:true,
+        options: TIPO_USO_OPTIONS,
+      },
       { name:'descripcion',  label:'Descripción',      type:'textarea' },
     ],
   },
@@ -70,7 +133,13 @@ export const MODULES = {
     icon:'science',
     fields:[
       { name:'nombre_fertilizante',    label:'Nombre',            type:'text', required:true },
-      { name:'tipo_fertilizante',      label:'Tipo',              type:'text', required:true },
+      {
+        name:'tipo_fertilizante',
+        label:'Tipo',
+        type:'select',
+        required:true,
+        options: TIPO_FERTILIZANTE_OPTIONS,
+      },
       { name:'nutrientes_principales', label:'Nutrientes',        type:'textarea' },
       { name:'metodo_aplicacion',      label:'Método aplicación', type:'text' },
       { name:'frecuencia',             label:'Frecuencia',        type:'text' },
@@ -175,6 +244,12 @@ export const MODULES = {
         required:true,
         options: SECTOR_NAME_OPTIONS
       },
+      {
+        name:'tipo_cultivo',
+        label:'Tipo de cultivo',
+        type:'select',
+        options: TIPO_CULTIVO_OPTIONS,
+      },
       { name:'area_hectareas',       label:'Área (ha)',      type:'number' },
       { name:'numero_surcos',        label:'Surcos',         type:'number' },
       { name:'posiciones_por_surco', label:'Pos. por surco', type:'number' },
@@ -226,7 +301,11 @@ export const MODULES = {
         optionValue:'id_estado',
         optionLabel:'nombre_estado',
       },
-      { name:'numero_surco', label:'Surco', type:'number' },
+      { name:'numero_surco', label:'Surco',              type:'number' },
+      { name:'posicion_x',   label:'Posición X (surco)', type:'number',
+        hint:'Número de surco donde se ubica el árbol' },
+      { name:'posicion_y',   label:'Posición Y (lugar en surco)', type:'number',
+        hint:'Lugar dentro del surco (1, 2, 3…)' },
       { name:'descripcion',  label:'Descripción', type:'textarea' },
     ],
   },
