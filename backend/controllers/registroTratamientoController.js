@@ -129,13 +129,44 @@ const listar = async (req, res) => {
   let conn;
   try {
     conn = await getConnection();
-    const result = await conn.execute(
-      `BEGIN PKG_REGISTRO_TRATAMIENTO.LISTAR(:cursor); END;`,
-      { cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR } }
-    );
-    const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows();
-    await cursor.close();
+   const result = await conn.execute(
+  `
+    SELECT
+      RT.ID_REGISTRO,
+      RT.ID_ARBOL,
+      A.ID_SECTOR,
+      S.NOMBRE_SECTOR AS nombre_sector,
+      F.NOMBRE_FINCA AS nombre_finca,
+      TA.NOMBRE_ARBOL AS nombre_arbol,
+      RT.ID_TIPO_TRATAMIENTO,
+      TT.NOMBRE_TRATAMIENTO AS nombre_tratamiento,
+      RT.ID_FERTILIZANTE,
+      TF.NOMBRE_FERTILIZANTE AS nombre_fertilizante,
+      RT.FECHA_APLICACION,
+      RT.OBSERVACIONES
+    FROM REGISTRO_TRATAMIENTO RT
+    INNER JOIN ARBOL A
+      ON A.ID_ARBOL = RT.ID_ARBOL
+    INNER JOIN SECTOR S
+      ON S.ID_SECTOR = A.ID_SECTOR
+    INNER JOIN FINCA F
+      ON F.ID_FINCA = S.ID_FINCA
+      LEFT JOIN TIPO_VARIEDAD_ARBOL TA
+    ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
+    LEFT JOIN TIPO_TRATAMIENTO TT
+      ON TT.ID_TIPO_TRATAMIENTO = RT.ID_TIPO_TRATAMIENTO
+    LEFT JOIN TIPO_FERTILIZANTE TF
+      ON TF.ID_FERTILIZANTE = RT.ID_FERTILIZANTE
+    WHERE NVL(A.ACTIVO, 'S') = 'S'
+      AND NVL(S.ACTIVO, 'S') = 'S'
+      AND NVL(F.ACTIVO, 'S') = 'S'
+    ORDER BY RT.ID_REGISTRO
+  `,
+  {},
+  { outFormat: oracledb.OUT_FORMAT_OBJECT }
+);
+
+const rows = result.rows;
     res.status(200).json({ success: true, data: rows });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

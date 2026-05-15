@@ -220,7 +220,8 @@ const listar = async (req, res) => {
         SELECT
           A.ID_ARBOL,
           A.ID_SECTOR,
-          S.NOMBRE_SECTOR,
+          S.NOMBRE_SECTOR AS nombre_sector,
+          F.NOMBRE_FINCA AS nombre_finca,
           A.ID_TIPO_VARIEDAD_ARBOL,
           TA.NOMBRE_ARBOL,
           A.ID_ESTADO,
@@ -232,12 +233,16 @@ const listar = async (req, res) => {
         FROM ARBOL A
         INNER JOIN SECTOR S
           ON S.ID_SECTOR = A.ID_SECTOR
+
+          INNER JOIN FINCA F
+  ON F.ID_FINCA = S.ID_FINCA
         LEFT JOIN TIPO_VARIEDAD_ARBOL TA
           ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
         LEFT JOIN ESTADO_ARBOL EA
           ON EA.ID_ESTADO = A.ID_ESTADO
         WHERE NVL(A.ACTIVO, 'S') = 'S'
           AND NVL(S.ACTIVO, 'S') = 'S'
+          AND NVL(F.ACTIVO, 'S') = 'S'
         ORDER BY A.ID_ARBOL
       `,
       {},

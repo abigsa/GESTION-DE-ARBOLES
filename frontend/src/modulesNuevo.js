@@ -14,7 +14,7 @@ export const COL_LABELS = {
   nombre_sector:'Sector', numero_surcos:'Surcos',
   posiciones_por_surco:'Pos/surco', id_sector:'ID Sector',
   id_tipo_variedad_arbol:'Variedad', id_estado:'Estado',
-  numero_surco:'Surco', id_arbol:'ID Árbol',
+  numero_surco:'Surco',
   id_estado_nuevo:'Nuevo estado', observaciones:'Observaciones',
   fecha_cambio:'Fecha cambio', id_plaga:'ID Plaga',
   fecha_deteccion:'Detección', fecha_resolucion:'Resolución',
@@ -31,6 +31,7 @@ export const colLabel = (key) =>
 export const HIDDEN_COLS = new Set([
   'fecha_creacion','fecha_actualizacion','created_at','updated_at',
   'FECHA_CREACION','FECHA_ACTUALIZACION','CREATED_AT','UPDATED_AT','ACTIVO',
+  'id_arbol','ID_ARBOL',
 ]);
 
 // ── Configuración de cada módulo CRUD ─────────────

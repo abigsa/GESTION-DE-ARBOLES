@@ -49,7 +49,6 @@ const obtenerPlanoFinca = async (req, res) => {
         ACTIVO
       FROM SECTOR
       WHERE ID_FINCA = :id
-        AND NVL(ACTIVO, 'S') = 'S'
       ORDER BY ID_SECTOR
     `;
 
@@ -61,7 +60,6 @@ const obtenerPlanoFinca = async (req, res) => {
 
     // ==========================
     // 3. ÁRBOLES + ESTADO + VARIEDAD
-    // SOLO ACTIVOS
     // ==========================
     const arbolesQuery = `
       SELECT 
@@ -77,15 +75,12 @@ const obtenerPlanoFinca = async (req, res) => {
         TV.NOMBRE_ARBOL,
         EA.NOMBRE_ESTADO
       FROM ARBOL A
-      INNER JOIN SECTOR S 
-        ON A.ID_SECTOR = S.ID_SECTOR
+      INNER JOIN SECTOR S ON A.ID_SECTOR = S.ID_SECTOR
       LEFT JOIN TIPO_VARIEDAD_ARBOL TV 
         ON A.ID_TIPO_VARIEDAD_ARBOL = TV.ID_TIPO_ARBOL
       LEFT JOIN ESTADO_ARBOL EA
         ON A.ID_ESTADO = EA.ID_ESTADO
       WHERE S.ID_FINCA = :id
-        AND NVL(S.ACTIVO, 'S') = 'S'
-        AND NVL(A.ACTIVO, 'S') = 'S'
       ORDER BY A.ID_ARBOL
     `;
 
@@ -97,7 +92,6 @@ const obtenerPlanoFinca = async (req, res) => {
 
     // ==========================
     // 4. ÚLTIMO TRATAMIENTO / FERTILIZANTE POR ÁRBOL
-    // SOLO ÁRBOLES ACTIVOS
     // ==========================
     const tratamientosQuery = `
       SELECT
@@ -116,8 +110,6 @@ const obtenerPlanoFinca = async (req, res) => {
         FROM ARBOL A
         INNER JOIN SECTOR S ON A.ID_SECTOR = S.ID_SECTOR
         WHERE S.ID_FINCA = :id
-          AND NVL(S.ACTIVO, 'S') = 'S'
-          AND NVL(A.ACTIVO, 'S') = 'S'
       )
       ORDER BY RT.FECHA_APLICACION DESC
     `;
@@ -130,27 +122,29 @@ const obtenerPlanoFinca = async (req, res) => {
 
     // ==========================
     // 5. PLAGAS POR ÁRBOL
-    // SOLO ÁRBOLES ACTIVOS
     // ==========================
     const plagasQuery = `
       SELECT
-        RP.ID_ARBOL,
-        PE.NOMBRE_PLAGA,
-        PE.TIPO_PLAGA,
-        PE.NIVEL_RIESGO,
-        RP.OBSERVACIONES
-      FROM REGISTRO_PLAGA RP
-      LEFT JOIN PLAGA_ENFERMEDAD PE
-        ON RP.ID_PLAGA = PE.ID_PLAGA
-      WHERE RP.ID_ARBOL IN (
-        SELECT A.ID_ARBOL
-        FROM ARBOL A
-        INNER JOIN SECTOR S ON A.ID_SECTOR = S.ID_SECTOR
-        WHERE S.ID_FINCA = :id
-          AND NVL(S.ACTIVO, 'S') = 'S'
-          AND NVL(A.ACTIVO, 'S') = 'S'
-      )
-      AND NVL(RP.ACTIVO, 'S') = 'S'
+    RP.ID_REGISTRO,
+    RP.ID_ARBOL,
+    RP.ID_PLAGA,
+    PE.NOMBRE_PLAGA,
+    PE.TIPO_PLAGA,
+    PE.NIVEL_RIESGO,
+    RP.FECHA_DETECCION,
+    RP.FECHA_RESOLUCION,
+    RP.OBSERVACIONES
+  FROM REGISTRO_PLAGA RP
+  LEFT JOIN PLAGA_ENFERMEDAD PE
+    ON RP.ID_PLAGA = PE.ID_PLAGA
+  WHERE RP.ID_ARBOL IN (
+    SELECT A.ID_ARBOL
+    FROM ARBOL A
+    INNER JOIN SECTOR S ON A.ID_SECTOR = S.ID_SECTOR
+    WHERE S.ID_FINCA = :id
+  )
+  AND RP.ACTIVO = 'S'
+  AND RP.FECHA_RESOLUCION IS NULL
     `;
 
     const plagasResult = await connection.execute(
@@ -270,7 +264,6 @@ const actualizarPosicionArbol = async (req, res) => {
       SET POSICION_X = :posicion_x,
           POSICION_Y = :posicion_y
       WHERE ID_ARBOL = :id
-        AND NVL(ACTIVO, 'S') = 'S'
       `,
       {
         posicion_x: Number(posicion_x),

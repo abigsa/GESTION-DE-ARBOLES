@@ -88,22 +88,22 @@ const listar = async (req, res) => {
 
     const result = await conn.execute(
       `
-      BEGIN
-        PKG_TIPO_VARIEDAD_ARBOL.LISTAR(:cursor);
-      END;
+      SELECT
+  TVA.ID_TIPO_ARBOL,
+  TVA.NOMBRE_ARBOL,
+  TVA.TIPO_USO,
+  TVA.DESCRIPCION
+FROM TIPO_VARIEDAD_ARBOL TVA
+WHERE NVL(TVA.ACTIVO, 'S') = 'S'
+ORDER BY TVA.ID_TIPO_ARBOL
       `,
-      {
-        cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR }
-      }
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
-
-    const resultSet = result.outBinds.cursor;
-    const rows = await resultSet.getRows(1000);
-    await resultSet.close();
 
     res.json({
       success: true,
-      data: rows
+      data: result.rows
     });
   } catch (error) {
     console.error("Error en listar:", error);
@@ -112,7 +112,7 @@ const listar = async (req, res) => {
       message: error.message
     });
   } finally {
-    if (conn) await conn.close();
+    await closeConnection(conn);
   }
 };
 

@@ -237,21 +237,35 @@ const listar = async (req, res) => {
     conn = await getConnection();
 
     const result = await conn.execute(
-      `BEGIN
-         PKG_HISTORIAL_ESTADO.LISTAR(:cursor);
-       END;`,
-      {
-        cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR },
-      }
+      `
+      SELECT
+        H.ID_HISTORIAL,
+        H.ID_ARBOL,
+        TA.NOMBRE_ARBOL AS nombre_arbol,
+        H.ID_ESTADO_ANTERIOR,
+        EA1.NOMBRE_ESTADO AS NOMBRE_ESTADO_ANTERIOR,
+        H.ID_ESTADO_NUEVO,
+        EA2.NOMBRE_ESTADO AS NOMBRE_ESTADO_NUEVO,
+        H.FECHA_CAMBIO,
+        H.OBSERVACIONES
+      FROM HISTORIAL_ESTADO H
+      INNER JOIN ARBOL A
+        ON A.ID_ARBOL = H.ID_ARBOL
+      LEFT JOIN TIPO_VARIEDAD_ARBOL TA
+        ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
+      LEFT JOIN ESTADO_ARBOL EA1
+        ON EA1.ID_ESTADO = H.ID_ESTADO_ANTERIOR
+      LEFT JOIN ESTADO_ARBOL EA2
+        ON EA2.ID_ESTADO = H.ID_ESTADO_NUEVO
+      ORDER BY H.FECHA_CAMBIO DESC, H.ID_HISTORIAL DESC
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
-
-    const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows();
-    await cursor.close();
 
     res.status(200).json({
       success: true,
-      data: rows,
+      data: result.rows,
     });
   } catch (err) {
     res.status(500).json({

@@ -91,12 +91,42 @@ const listar = async (req, res) => {
   try {
     conn = await getConnection();
     const result = await conn.execute(
-      `BEGIN PKG_REGISTRO_PLAGA.LISTAR(:cursor); END;`,
-      { cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR } }
-    );
-    const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows();
-    await cursor.close();
+  `
+    SELECT
+      RP.ID_REGISTRO,
+      RP.ID_ARBOL,
+      A.ID_SECTOR,
+      S.NOMBRE_SECTOR AS nombre_sector,
+      F.NOMBRE_FINCA AS nombre_finca,
+      TA.NOMBRE_ARBOL AS nombre_arbol,
+      RP.ID_PLAGA,
+      P.NOMBRE_PLAGA AS nombre_plaga,
+      P.NIVEL_RIESGO AS nivel_riesgo,
+      RP.FECHA_DETECCION,
+      RP.FECHA_RESOLUCION,
+      RP.OBSERVACIONES,
+      A.NUMERO_SURCO AS numero_surco
+    FROM REGISTRO_PLAGA RP
+    INNER JOIN ARBOL A
+      ON A.ID_ARBOL = RP.ID_ARBOL
+    INNER JOIN SECTOR S
+      ON S.ID_SECTOR = A.ID_SECTOR
+    INNER JOIN FINCA F
+      ON F.ID_FINCA = S.ID_FINCA
+    LEFT JOIN TIPO_VARIEDAD_ARBOL TA
+      ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
+    LEFT JOIN PLAGA_ENFERMEDAD P
+      ON P.ID_PLAGA = RP.ID_PLAGA
+    WHERE NVL(A.ACTIVO, 'S') = 'S'
+      AND NVL(S.ACTIVO, 'S') = 'S'
+      AND NVL(F.ACTIVO, 'S') = 'S'
+    ORDER BY RP.ID_REGISTRO
+  `,
+  {},
+  { outFormat: oracledb.OUT_FORMAT_OBJECT }
+);
+
+const rows = result.rows;
     res.status(200).json({ success: true, data: rows });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -114,15 +144,42 @@ const obtenerPorId = async (req, res) => {
   try {
     conn = await getConnection();
     const result = await conn.execute(
-      `BEGIN PKG_REGISTRO_PLAGA.OBTENER_POR_ID(:id_registro, :cursor); END;`,
-      {
-        id_registro: Number(id_registro),
-        cursor:      { dir: oracledb.BIND_OUT, type: oracledb.CURSOR },
-      }
-    );
-    const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows();
-    await cursor.close();
+  `
+    SELECT
+      RP.ID_REGISTRO,
+      RP.ID_ARBOL,
+      A.ID_SECTOR,
+      S.NOMBRE_SECTOR AS nombre_sector,
+      F.NOMBRE_FINCA AS nombre_finca,
+      TA.NOMBRE_ARBOL AS nombre_arbol,
+      RP.ID_PLAGA,
+      P.NOMBRE_PLAGA AS nombre_plaga,
+      P.NIVEL_RIESGO AS nivel_riesgo,
+      RP.FECHA_DETECCION,
+      RP.FECHA_RESOLUCION,
+      RP.OBSERVACIONES,
+      A.NUMERO_SURCO AS numero_surco
+    FROM REGISTRO_PLAGA RP
+    INNER JOIN ARBOL A
+      ON A.ID_ARBOL = RP.ID_ARBOL
+    INNER JOIN SECTOR S
+      ON S.ID_SECTOR = A.ID_SECTOR
+    INNER JOIN FINCA F
+      ON F.ID_FINCA = S.ID_FINCA
+    LEFT JOIN TIPO_VARIEDAD_ARBOL TA
+      ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
+    LEFT JOIN PLAGA_ENFERMEDAD P
+      ON P.ID_PLAGA = RP.ID_PLAGA
+    WHERE NVL(A.ACTIVO, 'S') = 'S'
+      AND NVL(S.ACTIVO, 'S') = 'S'
+      AND NVL(F.ACTIVO, 'S') = 'S'
+    ORDER BY RP.ID_REGISTRO
+  `,
+  {},
+  { outFormat: oracledb.OUT_FORMAT_OBJECT }
+);
+
+const rows = result.rows;
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Registro de plaga no encontrado.' });
     }
