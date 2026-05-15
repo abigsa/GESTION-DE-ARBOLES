@@ -1,5 +1,7 @@
 const oracledb = require('oracledb');
 const { getConnection, closeConnection } = require('../config/db');
+const { registrar: auditoria } = require('./auditoriaController');
+
 
 // ----------------------------------------------------------
 // Helpers
@@ -47,9 +49,9 @@ const insertar = async (req, res) => {
         posicion_x: toNullableNumber(posicion_x),
         descripcion: descripcion ?? null,
       },
-      { autoCommit: true }
-    );
-
+      );
+    await auditoria(conn, { tabla: 'ARBOL', operacion: 'INSERT', descripcion: 'Árbol registrado' });
+    await conn.commit();
     res.status(201).json({
       success: true,
       message: 'Árbol insertado correctamente.',
@@ -104,8 +106,9 @@ const actualizar = async (req, res) => {
         posicion_x: toNullableNumber(posicion_x),
         descripcion: descripcion ?? null,
       },
-      { autoCommit: true }
-    );
+);
+    await auditoria(conn, { tabla: 'ARBOL', operacion: 'UPDATE', descripcion: 'Árbol actualizado' });
+    await conn.commit();
 
     res.status(200).json({
       success: true,
@@ -134,8 +137,9 @@ const eliminar = async (req, res) => {
     await conn.execute(
       `BEGIN PKG_ARBOL.ELIMINAR(:id_arbol); END;`,
       { id_arbol: toNullableNumber(id_arbol) },
-      { autoCommit: true }
-    );
+);
+    await auditoria(conn, { tabla: 'ARBOL', operacion: 'DELETE', descripcion: 'Árbol eliminado' });
+    await conn.commit();
 
     res.status(200).json({
       success: true,

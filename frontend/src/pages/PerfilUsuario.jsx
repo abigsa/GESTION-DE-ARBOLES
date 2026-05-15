@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import s from './PerfilUsuario.module.css';
 
-const API = 'http://localhost:3000/api';
+import { API, apiFetch } from '../context/AuthContext';
 
 export default function PerfilUsuario({ onBack }) {
   const { usuario, actualizarPerfil, loading, displayName, rolLabel } = useAuth();
@@ -86,7 +86,7 @@ export default function PerfilUsuario({ onBack }) {
       }
 
       // Cambiar contraseña
-      const res  = await fetch(`${API}/usuarios/${id}/password`, {
+      const res  = await apiFetch(`${API}/usuarios/${id}/password`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password_nueva: pass.nueva }),

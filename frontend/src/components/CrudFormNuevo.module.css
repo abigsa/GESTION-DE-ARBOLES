@@ -390,3 +390,67 @@
   cursor: not-allowed;
 }
 }
+/* ── Hint text ──────────────────────────────────── */
+.hint {
+  display: block;
+  font-size: 11px;
+  color: #6b8c74;
+  margin-top: 4px;
+  padding-left: 2px;
+}
+
+/* ── Input con error de colisión ─────────────────── */
+.inputError {
+  border-color: #e53935 !important;
+  box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.15);
+}
+
+/* ── Indicadores de posición ─────────────────────── */
+.posConflict {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #e53935;
+  margin-top: 5px;
+  font-weight: 500;
+  background: #fdecea;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.posOk {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #2e7d32;
+  margin-top: 5px;
+  font-weight: 500;
+  background: #e8f5e9;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.posChecking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #556b5e;
+  margin-top: 5px;
+}
+
+.spinnerSm {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #c8ddc9;
+  border-top-color: #2d6a4f;
+  border-radius: 50%;
+  animation: spinSm 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spinSm {
+  to { transform: rotate(360deg); }
+}
