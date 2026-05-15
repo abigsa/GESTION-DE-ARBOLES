@@ -35,6 +35,9 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   const [error, setError] = useState('');
   const [remoteOptions, setRemoteOptions] = useState({});
   const [loadingOptions, setLoadingOptions] = useState({});
+  // ── Colisión de posición ──────────────────────────
+  const [posConflict, setPosConflict] = useState(false);
+  const [checkingPos, setCheckingPos] = useState(false);
 
   const requiredCount = useMemo(
     () => fields.filter(field => field.required).length,
@@ -284,6 +287,44 @@ url.searchParams.set(queryParam, parentValue);
     return remoteOptions[field.name] ?? [];
   };
 
+  // ── Validar colisión X/Y cuando cambian sector, posicion_x o posicion_y ──
+  const isArbolesEndpoint = endpoint === '/arbol';
+  useEffect(() => {
+    if (!isArbolesEndpoint) return;
+    const sector = form['id_sector'];
+    const px = form['posicion_x'];
+    const py = form['posicion_y'];
+    if (!sector || px === '' || py === '' || px === null || py === null) {
+      setPosConflict(false);
+      return;
+    }
+    let cancelled = false;
+    const check = async () => {
+      setCheckingPos(true);
+      try {
+        const url = `${API}/arbol?id_sector=${sector}&posicion_x=${px}&posicion_y=${py}`;
+        const res = await apiFetch(url);
+        const json = await res.json();
+        const rows = Array.isArray(json?.data) ? json.data
+          : Array.isArray(json?.rows) ? json.rows : [];
+        if (!cancelled) {
+          // En edición ignorar el árbol actual
+          const conflict = rows.some(r => {
+            const id = r?.ID_ARBOL ?? r?.id_arbol;
+            return isEdit ? String(id) !== String(editId) : true;
+          });
+          setPosConflict(conflict && rows.length > 0);
+        }
+      } catch {
+        if (!cancelled) setPosConflict(false);
+      } finally {
+        if (!cancelled) setCheckingPos(false);
+      }
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [form['id_sector'], form['posicion_x'], form['posicion_y'], isArbolesEndpoint, isEdit, editId]);
+
   const getRemotePlaceholder = field => {
     if (loadingOptions[field.name]) return 'Cargando opciones...';
 
@@ -335,6 +376,13 @@ url.searchParams.set(queryParam, parentValue);
 
     setError('');
     setSaving(true);
+
+    // Bloquear si hay conflicto de posición
+    if (isArbolesEndpoint && posConflict) {
+      setError('Ya existe un árbol en esa posición X/Y dentro del sector. Elige una posición diferente.');
+      setSaving(false);
+      return;
+    }
 
     const body = {};
     fields.forEach(field => {
@@ -471,9 +519,38 @@ url.searchParams.set(queryParam, parentValue);
                     type={field.type === 'number' ? 'number' : 'text'}
                     value={form[field.name]}
                     onChange={e => set(field.name, e.target.value)}
-                    className={s.input}
+                    className={`${s.input} ${
+                      (field.name === 'posicion_x' || field.name === 'posicion_y') && posConflict
+                        ? s.inputError : ''}`}
                     placeholder={`Ingresa ${field.label.toLowerCase()}`}
+                    min={field.type === 'number' ? 1 : undefined}
                   />
+                )}
+
+                {/* Hint text */}
+                {field.hint && (
+                  <span className={s.hint}>{field.hint}</span>
+                )}
+
+                {/* Indicador de colisión en campos X/Y */}
+                {(field.name === 'posicion_x' || field.name === 'posicion_y') && (
+                  checkingPos ? (
+                    <span className={s.posChecking}>
+                      <span className={s.spinnerSm} /> Verificando posición…
+                    </span>
+                  ) : posConflict ? (
+                    <span className={s.posConflict}>
+                      <span className="material-icons" style={{fontSize:'14px',verticalAlign:'middle'}}>warning</span>
+                      {' '}¡Posición ocupada! Ya hay un árbol en X={form['posicion_x']} Y={form['posicion_y']} en este sector.
+                    </span>
+                  ) : (form['posicion_x'] !== '' && form['posicion_y'] !== '' &&
+                       form['posicion_x'] !== null && form['posicion_y'] !== null &&
+                       form['id_sector']) ? (
+                    <span className={s.posOk}>
+                      <span className="material-icons" style={{fontSize:'14px',verticalAlign:'middle'}}>check_circle</span>
+                      {' '}Posición disponible
+                    </span>
+                  ) : null
                 )}
               </div>
             ))}
