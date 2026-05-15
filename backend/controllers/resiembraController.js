@@ -83,18 +83,43 @@ const eliminar = async (req, res) => {
 // ----------------------------------------------------------
 const listar = async (req, res) => {
   let conn;
+
   try {
     conn = await getConnection();
+
     const result = await conn.execute(
-      `BEGIN PKG_RESIEMBRA.LISTAR(:cursor); END;`,
-      { cursor: { dir: oracledb.BIND_OUT, type: oracledb.CURSOR } }
+      `
+      SELECT
+  R.ID_RESIEMBRA,
+  R.ID_ARBOL_NUEVO,
+  TA.NOMBRE_ARBOL AS nombre_arbol,
+  NVL(F.NOMBRE_FINCA, 'Sin finca') AS nombre_finca,
+  R.FECHA_RESIEMBRA,
+  R.MOTIVO
+FROM RESIEMBRA R
+INNER JOIN ARBOL A
+  ON A.ID_ARBOL = R.ID_ARBOL_NUEVO
+LEFT JOIN TIPO_VARIEDAD_ARBOL TA
+  ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
+LEFT JOIN SECTOR S
+  ON S.ID_SECTOR = A.ID_SECTOR
+LEFT JOIN FINCA F
+  ON F.ID_FINCA = S.ID_FINCA
+ORDER BY R.ID_RESIEMBRA
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
-    const cursor = result.outBinds.cursor;
-    const rows = await cursor.getRows(1000);
-    await cursor.close();
-    res.status(200).json({ success: true, data: rows });
+
+    res.status(200).json({
+      success: true,
+      data: result.rows
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   } finally {
     await closeConnection(conn);
   }

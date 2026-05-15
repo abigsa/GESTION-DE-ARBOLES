@@ -833,7 +833,7 @@ export default function MapaPlanoModule() {
                   border: "1px solid #C7D8C8",
                 }}
               >
-                
+               
                {mostrarAlertaEspacios && (
     <div
       style={{

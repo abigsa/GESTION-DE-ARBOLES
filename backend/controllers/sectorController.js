@@ -299,18 +299,22 @@ const listar = async (req, res) => {
     // Listado general de sectores activos
     const result = await conn.execute(
       `
-        SELECT
-          ID_SECTOR,
-          ID_FINCA,
-          NOMBRE_SECTOR,
-          AREA_HECTAREAS,
-          NUMERO_SURCOS,
-          POSICIONES_POR_SURCO,
-          TIPO_CULTIVO,
-          ACTIVO
-        FROM SECTOR
-        WHERE NVL(ACTIVO, 'S') = 'S'
-        ORDER BY ID_FINCA, NOMBRE_SECTOR
+       SELECT
+  S.ID_SECTOR,
+  S.ID_FINCA,
+  F.NOMBRE_FINCA,
+  S.NOMBRE_SECTOR,
+  S.AREA_HECTAREAS,
+  S.NUMERO_SURCOS,
+  S.POSICIONES_POR_SURCO,
+  S.TIPO_CULTIVO,
+  S.ACTIVO
+FROM SECTOR S
+INNER JOIN FINCA F
+  ON F.ID_FINCA = S.ID_FINCA
+WHERE NVL(S.ACTIVO, 'S') = 'S'
+  AND NVL(F.ACTIVO, 'S') = 'S'
+ORDER BY F.NOMBRE_FINCA, S.NOMBRE_SECTOR
       `,
       {},
       { outFormat: oracledb.OUT_FORMAT_OBJECT }

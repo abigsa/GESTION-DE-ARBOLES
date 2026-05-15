@@ -49,9 +49,11 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
   // Reset página al buscar
   useEffect(() => { setPage(1); }, [search]);
 
-  const cols = data.length > 0
-    ? Object.keys(data[0]).filter(k => !HIDDEN_COLS.has(k))
-    : [];
+ const cols = data.length > 0
+  ? Object.keys(data[0]).filter(
+      k => !HIDDEN_COLS.has(k) && !HIDDEN_COLS.has(k.toLowerCase())
+    )
+  : [];
 
   const pkVal = row => {
     const pkField = MODULE_PK[moduleKey];
