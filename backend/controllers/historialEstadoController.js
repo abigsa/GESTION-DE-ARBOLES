@@ -253,6 +253,8 @@ const listar = async (req, res) => {
 
         H.ID_ARBOL,
         TA.NOMBRE_ARBOL AS nombre_arbol,
+        A.NUMERO_SURCO,
+        A.POSICION_Y,
 
         H.ID_ESTADO_ANTERIOR,
         EA1.NOMBRE_ESTADO AS NOMBRE_ESTADO_ANTERIOR,
