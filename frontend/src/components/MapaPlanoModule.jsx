@@ -387,6 +387,7 @@ export default function MapaPlanoModule() {
     };
   };
 
+ 
   const getArbolPositionByMatriz = (arbol) => {
     const idxSector = sectores.findIndex(
       (s) => String(s.ID_SECTOR) === String(arbol.ID_SECTOR)
@@ -400,20 +401,60 @@ export default function MapaPlanoModule() {
 
     const box = getSectorBox(sector, idxSector, sectores.length);
 
-    const totalSurcos = Math.max(Number(sector.NUMERO_SURCOS || 1), 1);
-    const posicionesPorSurco = Math.max(Number(sector.POSICIONES_POR_SURCO || 1), 1);
-
+    // Surco / posición del árbol (índices base 1)
     const numeroSurco = Math.max(Number(arbol.NUMERO_SURCO || 1), 1);
     const numeroPosicion = Math.max(Number(arbol.POSICION_Y || 1), 1);
 
-    const relX = ((numeroSurco - 0.5) / totalSurcos) * 100;
-    const relY = ((numeroPosicion - 0.5) / posicionesPorSurco) * 100;
+    // Padding interno (en % del box). Deja espacio a la etiqueta del sector
+    // y a los bordes del recuadro.
+    const PADDING_LEFT = 12;
+    const PADDING_RIGHT = 8;
+    const PADDING_TOP = 24;
+    const PADDING_BOTTOM = 10;
 
-    const safeX = Math.max(8, Math.min(relX, 92));
-    const safeY = Math.max(10, Math.min(relY, 90));
+    const usableW = Math.max(100 - PADDING_LEFT - PADDING_RIGHT, 1);
+    const usableH = Math.max(100 - PADDING_TOP - PADDING_BOTTOM, 1);
 
-    const left = box.left + (box.width * safeX) / 100;
-    const top = box.top + (box.height * safeY) / 100;
+    // Grid lógico = máximo entre lo declarado y lo realmente usado por los
+    // árboles del sector. Garantiza consistencia incluso si los datos no
+    // coinciden con la configuración del sector.
+    const arbolesDelSector = arboles.filter(
+      (a) => String(a.ID_SECTOR) === String(sector.ID_SECTOR)
+    );
+    const maxSurcoArboles = arbolesDelSector.reduce(
+      (mx, a) => Math.max(mx, Number(a.NUMERO_SURCO || 1)),
+      1
+    );
+    const maxPosArboles = arbolesDelSector.reduce(
+      (mx, a) => Math.max(mx, Number(a.POSICION_Y || 1)),
+      1
+    );
+    const declaradoSurcos = Math.max(Number(sector.NUMERO_SURCOS || 1), 1);
+    const declaradoPos = Math.max(Number(sector.POSICIONES_POR_SURCO || 1), 1);
+
+    // Total de surcos/posiciones a representar en el grid
+    const totalSurcos = Math.max(declaradoSurcos, maxSurcoArboles);
+    const totalPosiciones = Math.max(declaradoPos, maxPosArboles);
+
+    // Paso entre celdas (en % del box). Como es constante > 0, dos pares
+    // (surco, pos) distintos SIEMPRE caen en celdas distintas → puntos
+    // distintos del mapa. No hay wrap ni colisiones.
+    const stepX = usableW / totalSurcos;
+    const stepY = usableH / totalPosiciones;
+
+    // Celda lógica (base 0)
+    const surcoIdx = numeroSurco - 1;
+    const posIdx = numeroPosicion - 1;
+
+    // Coordenadas dentro del área usable, centradas en la celda
+    const relX = surcoIdx * stepX + stepX / 2;
+    const relY = posIdx * stepY + stepY / 2;
+
+    // Coordenadas absolutas dentro del mapa
+    const xPctInBox = PADDING_LEFT + relX;
+    const yPctInBox = PADDING_TOP + relY;
+    const left = box.left + (box.width * xPctInBox) / 100;
+    const top = box.top + (box.height * yPctInBox) / 100;
 
     return { left, top };
   };
@@ -983,9 +1024,33 @@ export default function MapaPlanoModule() {
                     {sectores.map((sector, i) => {
                       const pos = getSectorBox(sector, i, sectores.length);
                       const activo = String(sectorFiltro) === String(sector.ID_SECTOR);
-                      const cnt = arboles.filter(
+                      const arbolesEnSector = arboles.filter(
                         (a) => String(a.ID_SECTOR) === String(sector.ID_SECTOR)
-                      ).length;
+                      );
+                      const cnt = arbolesEnSector.length;
+
+                      // Líneas guía de surcos: usan EXACTAMENTE la misma
+                      // lógica de paso que getArbolPositionByMatriz, así
+                      // las líneas coinciden con las columnas donde caen
+                      // los árboles.
+                      const maxSurcoArboles = arbolesEnSector.reduce(
+                        (mx, a) => Math.max(mx, Number(a.NUMERO_SURCO || 1)),
+                        1
+                      );
+                      const totalSurcos = Math.max(
+                        Number(sector.NUMERO_SURCOS || 1),
+                        maxSurcoArboles,
+                        1
+                      );
+                      const PADDING_LEFT_PCT = 12;
+                      const PADDING_RIGHT_PCT = 8;
+                      const usableW_PCT = 100 - PADDING_LEFT_PCT - PADDING_RIGHT_PCT;
+                      const stepXpct = usableW_PCT / totalSurcos;
+                      // Dibujamos hasta 24 líneas como máximo para no saturar
+                      // visualmente sectores con muchos surcos.
+                      const surcosDibujables = Math.min(totalSurcos, 24);
+                      const stepDibujo = usableW_PCT / surcosDibujables;
+                      const surcosBg = activo ? "rgba(27,77,42,.12)" : "rgba(255,255,255,.10)";
 
                       return (
                         <div
@@ -998,11 +1063,34 @@ export default function MapaPlanoModule() {
                             width: `${pos.width}%`,
                             height: `${pos.height}%`,
                             borderColor: activo ? "#1B4D2A" : "rgba(255,255,255,.55)",
-                            background: activo ? "rgba(27,77,42,.12)" : "rgba(255,255,255,.10)",
+                            background: surcosBg,
                             boxShadow: activo ? "inset 0 0 0 1px rgba(27,77,42,.08)" : "none",
                             cursor: "pointer",
+                            overflow: "hidden",
                           }}
                         >
+                          {/* Líneas verticales que representan los surcos */}
+                          {cnt > 0 &&
+                            Array.from({ length: surcosDibujables }).map((_, k) => {
+                              const xPct =
+                                PADDING_LEFT_PCT + k * stepDibujo + stepDibujo / 2;
+                              return (
+                                <div
+                                  key={`surco-${k}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: `${xPct}%`,
+                                    top: "24%",
+                                    bottom: "10%",
+                                    width: 1,
+                                    background: activo
+                                      ? "rgba(27,77,42,.18)"
+                                      : "rgba(27,77,42,.08)",
+                                    pointerEvents: "none",
+                                  }}
+                                />
+                              );
+                            })}
                           <div style={s.sectorLabel}>
                             <strong style={{ fontSize: 10, color: "#1B4D2A" }}>
                               {sector.NOMBRE_SECTOR}
