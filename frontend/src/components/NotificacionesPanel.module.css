@@ -1,16 +1,39 @@
-.wrap { position: relative; }
+.wrap {
+  position: relative;
+  z-index: 9999;
+}
 
 /* ── Campana ── */
 .bell {
   position: relative;
-  width: 40px; height: 40px;
+  z-index: 10000;
+  cursor: pointer;
+
+  width: 40px;
+  height: 40px;
+
   border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   color: rgba(255,255,255,.8);
-  transition: background var(--transition), color var(--transition);
+
+  transition:
+    background var(--transition),
+    color var(--transition);
 }
-.bell:hover, .bellOpen { background: rgba(255,255,255,.12); color: #fff; }
-.bell .material-icons { font-size: 22px; }
+
+.bell:hover,
+.bellOpen {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+}
+
+.bell .material-icons {
+  font-size: 22px;
+}
 
 .badge {
   position: absolute; top: 4px; right: 4px;
@@ -24,16 +47,24 @@
 
 /* ── Panel ── */
 .panel {
-  position: absolute; top: calc(100% + 10px); right: 0;
-  width: 340px; max-height: 480px;
+  position: fixed;
+  top: 72px;
+  right: 24px;
+
+  width: 360px;
+  max-height: 70vh;
+
+  overflow-y: auto;
+
   background: #fff;
-  border: 1px solid var(--pergamino-verde);
-  border-radius: 20px;
-  box-shadow: 0 16px 48px rgba(0,0,0,.16);
-  z-index: 1000;
-  display: flex; flex-direction: column;
-  overflow: hidden;
-  animation: panelIn .18s cubic-bezier(.22,.68,0,1.2) both;
+
+  border-radius: 18px;
+
+  box-shadow: 0 20px 60px rgba(0,0,0,.22);
+
+  border: 1px solid #dcebdd;
+
+  z-index: 99999;
 }
 @keyframes panelIn {
   from { opacity:0; transform: translateY(-8px) scale(.97); }
@@ -108,4 +139,40 @@
 /* Responsive */
 @media (max-width: 480px) {
   .panel { width: calc(100vw - 24px); right: -8px; }
+}
+
+.itemSeguimiento {
+  background: #F7FBF8;
+}
+
+.iconSeguimiento {
+  background: #E8F5E9;
+  color: #1B4D2A;
+}
+
+.tipoSeguimiento {
+  background: #E8F5E9;
+  color: #1B4D2A;
+}
+
+.itemSector {
+  font-size: 10px;
+  color: var(--tierra-calida);
+  margin-bottom: 3px;
+}
+
+.followBtn {
+  margin-top: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--verde-profundo);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+}
+
+.followBtn:hover {
+  background: var(--verde-medio);
 }

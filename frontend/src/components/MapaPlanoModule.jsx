@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-
-const API = "http://localhost:3000/api";
+import { API, apiFetch } from '../context/AuthContext';
 
 const ESTADO_ESTILOS = {
   CRECIMIENTO: { color: "#2E7D32", bg: "#E8F5E9", icon: "🌱", desc: "En desarrollo" },
@@ -69,6 +67,21 @@ const RIESGO_COLOR = { ALTO: "#B71C1C", MEDIO: "#E65100", BAJO: "#F57F17" };
 const VISTA = { MAPA: "mapa", ALERTAS: "alertas", RESIEMBRA: "resiembra" };
 
 const HOY = () => new Date().toISOString().slice(0, 10);
+const AREA_POR_ARBOL_M2 = 4;
+
+const getPlagasActivas = (arbol) => {
+  return Array.isArray(arbol?.PLAGAS)
+    ? arbol.PLAGAS.filter((p) => {
+        const fechaResolucion =
+          p.FECHA_RESOLUCION ||
+          p.fecha_resolucion ||
+          p.FECHA_RESOLUCION_PLAGA ||
+          p.fecha_resolucion_plaga;
+
+        return !fechaResolucion;
+      })
+    : [];
+};
 
 export default function MapaPlanoModule() {
   const [fincas, setFincas] = useState([]);
@@ -82,6 +95,7 @@ export default function MapaPlanoModule() {
   const [tooltip, setTooltip] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [mostrarAlertaEspacios, setMostrarAlertaEspacios] = useState(false);
 
   const [catalogos, setCatalogos] = useState({
     estados: [],
@@ -139,23 +153,27 @@ export default function MapaPlanoModule() {
   }, [fincaSeleccionada]);
 
   useEffect(() => {
-  const handleUpdate = () => {
-    if (fincaSeleccionada) {
-      cargarPlano(fincaSeleccionada);
-    }
-  };
+    const handleUpdate = () => {
+      if (fincaSeleccionada) {
+        cargarPlano(fincaSeleccionada);
+      }
+    };
 
-  window.addEventListener('arbol_actualizado', handleUpdate);
+    window.addEventListener('arbol_actualizado', handleUpdate);
 
-  return () => {
-    window.removeEventListener('arbol_actualizado', handleUpdate);
-  };
-}, [fincaSeleccionada]);
+    return () => {
+      window.removeEventListener('arbol_actualizado', handleUpdate);
+    };
+  }, [fincaSeleccionada]);
 
   const cargarFincas = async () => {
     try {
-      const res = await axios.get(`${API}/finca`);
-      const lista = Array.isArray(res.data) ? res.data : res.data.data || res.data.rows || [];
+      const res = await apiFetch(`${API}/finca`);
+      const resJson = await res.json();
+      const lista = Array.isArray(resJson.data)
+        ? resJson.data
+        : resJson.data?.data || resJson.data?.rows || [];
+
       setFincas(lista);
 
       if (lista.length > 0) {
@@ -169,17 +187,17 @@ export default function MapaPlanoModule() {
   const cargarCatalogos = async () => {
     try {
       const [estadosRes, variedadesRes, plagasRes, sectoresRes] = await Promise.all([
-        axios.get(`${API}/estado-arbol`),
-        axios.get(`${API}/tipos-variedad`),
-        axios.get(`${API}/plaga-enfermedad`),
-        axios.get(`${API}/sector`),
+        apiFetch(`${API}/estado-arbol`).then(r => r.json()),
+        apiFetch(`${API}/tipos-variedad`).then(r => r.json()),
+        apiFetch(`${API}/plaga-enfermedad`).then(r => r.json()),
+        apiFetch(`${API}/sector`).then(r => r.json()),
       ]);
 
       setCatalogos({
-        estados: estadosRes.data?.data || [],
-        variedades: variedadesRes.data?.data || [],
-        plagas: plagasRes.data?.data || [],
-        sectores: sectoresRes.data?.data || [],
+        estados: estadosRes.data || [],
+        variedades: variedadesRes.data || [],
+        plagas: plagasRes.data || [],
+        sectores: sectoresRes.data || [],
       });
     } catch (e) {
       console.error("Error catálogos:", e);
@@ -189,13 +207,14 @@ export default function MapaPlanoModule() {
   const cargarPlano = async (idFinca) => {
     try {
       setCargando(true);
-      const res = await axios.get(`${API}/mapa-plano/${idFinca}`);
+      const res = await apiFetch(`${API}/mapa-plano/${idFinca}`);
+      const resJson = await res.json();
 
-      if (res.data.success) {
-        setDatosPlano(res.data);
+      if (resJson.success) {
+        setDatosPlano(resJson);
         setErrorMsg(null);
       } else {
-        setErrorMsg(res.data.message || "Error al cargar");
+        setErrorMsg(resJson.message || "Error al cargar");
         setDatosPlano(null);
       }
     } catch (e) {
@@ -222,6 +241,24 @@ export default function MapaPlanoModule() {
 
   const anchoFinca = Number(finca?.ANCHO || 100);
   const largoFinca = Number(finca?.LARGO || 200);
+
+  const resumenEspacio = useMemo(() => {
+    const areaTotal = anchoFinca * largoFinca;
+    const arbolesSembrados = arboles.length;
+    const metrosOcupados = arbolesSembrados * AREA_POR_ARBOL_M2;
+    const metrosDisponibles = Math.max(areaTotal - metrosOcupados, 0);
+    const capacidadTotal = Math.floor(areaTotal / AREA_POR_ARBOL_M2);
+    const espaciosDisponibles = Math.max(capacidadTotal - arbolesSembrados, 0);
+
+    return {
+      areaTotal,
+      arbolesSembrados,
+      metrosOcupados,
+      metrosDisponibles,
+      capacidadTotal,
+      espaciosDisponibles,
+    };
+  }, [anchoFinca, largoFinca, arboles.length]);
 
   const estadosUnicos = useMemo(
     () => [...new Set(arboles.map((a) => a.NOMBRE_ESTADO).filter(Boolean))],
@@ -259,7 +296,7 @@ export default function MapaPlanoModule() {
   }, [arboles]);
 
   const arbolesConPlagas = useMemo(
-    () => arboles.filter((a) => a.PLAGAS?.length > 0),
+    () => arboles.filter((a) => getPlagasActivas(a).length > 0),
     [arboles]
   );
 
@@ -293,7 +330,7 @@ export default function MapaPlanoModule() {
   );
 
   const getNumeroPosicionArbol = (arbol) => {
-    return Math.max(Number(arbol?.POSICION_X || 1), 1);
+    return Math.max(Number(arbol?.POSICION_Y || 1), 1);
   };
 
   const formatFecha = (f) => {
@@ -367,10 +404,10 @@ export default function MapaPlanoModule() {
     const posicionesPorSurco = Math.max(Number(sector.POSICIONES_POR_SURCO || 1), 1);
 
     const numeroSurco = Math.max(Number(arbol.NUMERO_SURCO || 1), 1);
-    const numeroPosicion = getNumeroPosicionArbol(arbol);
+    const numeroPosicion = Math.max(Number(arbol.POSICION_Y || 1), 1);
 
-    const relX = ((numeroPosicion - 0.5) / posicionesPorSurco) * 100;
-    const relY = ((numeroSurco - 0.5) / totalSurcos) * 100;
+    const relX = ((numeroSurco - 0.5) / totalSurcos) * 100;
+    const relY = ((numeroPosicion - 0.5) / posicionesPorSurco) * 100;
 
     const safeX = Math.max(8, Math.min(relX, 92));
     const safeY = Math.max(10, Math.min(relY, 90));
@@ -426,17 +463,35 @@ export default function MapaPlanoModule() {
 
   const submitNuevoArbol = async (e) => {
     e.preventDefault();
+
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await axios.post(`${API}/arbol`, {
-        id_sector: Number(nuevoArbolForm.id_sector),
-        id_tipo_variedad_arbol: Number(nuevoArbolForm.id_tipo_variedad_arbol),
-        id_estado: Number(nuevoArbolForm.id_estado),
-        numero_surco: nuevoArbolForm.numero_surco ? Number(nuevoArbolForm.numero_surco) : null,
-        posicion_x: nuevoArbolForm.posicion ? Number(nuevoArbolForm.posicion) : null,
-        descripcion: nuevoArbolForm.descripcion || null,
+      const res = await apiFetch(`${API}/arbol`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_sector: Number(nuevoArbolForm.id_sector),
+          id_tipo_variedad_arbol: Number(nuevoArbolForm.id_tipo_variedad_arbol),
+          id_estado: Number(nuevoArbolForm.id_estado),
+          numero_surco: nuevoArbolForm.numero_surco
+            ? Number(nuevoArbolForm.numero_surco)
+            : null,
+          posicion_x: nuevoArbolForm.numero_surco
+            ? Number(nuevoArbolForm.numero_surco)
+            : null,
+          posicion_y: nuevoArbolForm.posicion
+            ? Number(nuevoArbolForm.posicion)
+            : null,
+          descripcion: nuevoArbolForm.descripcion || null,
+        }),
       });
+
+      const json = await res.json();
+
+      if (!(json.success === true || json.ok === true)) {
+        throw new Error(json.message || json.mensaje || "No se pudo crear el árbol.");
+      }
 
       await refrescarTodo();
       closeModal();
@@ -444,7 +499,7 @@ export default function MapaPlanoModule() {
       setModal((m) => ({
         ...m,
         loading: false,
-        error: err.response?.data?.message || "No se pudo crear el árbol.",
+        error: err.message || "No se pudo crear el árbol.",
       }));
     }
   };
@@ -456,11 +511,15 @@ export default function MapaPlanoModule() {
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await axios.post(`${API}/historial-estado`, {
-        id_arbol: Number(arbolSeleccionado.ID_ARBOL),
-        id_estado_nuevo: Number(estadoForm.id_estado_nuevo),
-        fecha_cambio: estadoForm.fecha_cambio,
-        observaciones: estadoForm.observaciones || null,
+      await apiFetch(`${API}/historial-estado`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_arbol: Number(arbolSeleccionado.ID_ARBOL),
+          id_estado_nuevo: Number(estadoForm.id_estado_nuevo),
+          fecha_cambio: estadoForm.fecha_cambio,
+          observaciones: estadoForm.observaciones || null,
+        }),
       });
 
       await refrescarTodo();
@@ -469,7 +528,7 @@ export default function MapaPlanoModule() {
       setModal((m) => ({
         ...m,
         loading: false,
-        error: err.response?.data?.message || "No se pudo actualizar el estado.",
+        error: err.message || "No se pudo actualizar el estado.",
       }));
     }
   };
@@ -481,12 +540,16 @@ export default function MapaPlanoModule() {
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await axios.post(`${API}/registro-plaga`, {
-        id_arbol: Number(arbolSeleccionado.ID_ARBOL),
-        id_plaga: Number(alertaForm.id_plaga),
-        fecha_deteccion: alertaForm.fecha_deteccion,
-        fecha_resolucion: alertaForm.fecha_resolucion || null,
-        observaciones: alertaForm.observaciones || null,
+      await apiFetch(`${API}/registro-plaga`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_arbol: Number(arbolSeleccionado.ID_ARBOL),
+          id_plaga: Number(alertaForm.id_plaga),
+          fecha_deteccion: alertaForm.fecha_deteccion,
+          fecha_resolucion: alertaForm.fecha_resolucion || null,
+          observaciones: alertaForm.observaciones || null,
+        }),
       });
 
       await refrescarTodo();
@@ -495,7 +558,7 @@ export default function MapaPlanoModule() {
       setModal((m) => ({
         ...m,
         loading: false,
-        error: err.response?.data?.message || "No se pudo registrar la alerta.",
+        error: err.message || "No se pudo registrar la alerta.",
       }));
     }
   };
@@ -507,10 +570,14 @@ export default function MapaPlanoModule() {
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await axios.post(`${API}/resiembra`, {
-        id_arbol_nuevo: Number(arbolSeleccionado.ID_ARBOL),
-        fecha_resiembra: resiembraForm.fecha_resiembra,
-        motivo: resiembraForm.motivo || null,
+      await apiFetch(`${API}/resiembra`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_arbol_nuevo: Number(arbolSeleccionado.ID_ARBOL),
+          fecha_resiembra: resiembraForm.fecha_resiembra,
+          motivo: resiembraForm.motivo || null,
+        }),
       });
 
       await refrescarTodo();
@@ -519,7 +586,7 @@ export default function MapaPlanoModule() {
       setModal((m) => ({
         ...m,
         loading: false,
-        error: err.response?.data?.message || "No se pudo registrar la resiembra.",
+        error: err.message || "No se pudo registrar la resiembra.",
       }));
     }
   };
@@ -661,8 +728,12 @@ export default function MapaPlanoModule() {
             {[
               { l: "Finca", v: finca?.NOMBRE_FINCA || "—" },
               { l: "Área", v: finca ? `${anchoFinca}m × ${largoFinca}m` : "—" },
+              { l: "Área total", v: `${resumenEspacio.areaTotal} m²` },
+              { l: "Metros ocupados", v: `${resumenEspacio.metrosOcupados} m²` },
+              { l: "Metros disponibles", v: `${resumenEspacio.metrosDisponibles} m²` },
               { l: "Sectores", v: sectores.length },
               { l: "Árboles", v: arboles.length },
+              { l: "Espacios disponibles", v: resumenEspacio.espaciosDisponibles },
               { l: "Con alertas", v: stats.alertas, warn: stats.alertas > 0 },
               { l: "Con plagas", v: arbolesConPlagas.length, warn: arbolesConPlagas.length > 0 },
             ].map(({ l, v, warn }) => (
@@ -724,6 +795,33 @@ export default function MapaPlanoModule() {
                       {finca.NOMBRE_FINCA} · {anchoFinca}m × {largoFinca}m
                     </span>
                   )}
+
+                  <div style={{ marginTop: 10 }}>
+                    <button
+                      style={{
+                        background: "#1B4D2A",
+                        color: "#FFFFFF",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+                      }}
+                      onClick={() => setMostrarAlertaEspacios(true)}
+                    >
+                      🌱 Espacios dispo.
+                    </button>
+                  </div>
+
+                  <div style={{ marginTop: 6, fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
+                    Área total: {resumenEspacio.areaTotal} m² · Ocupados: {resumenEspacio.metrosOcupados} m² · Disponibles: {resumenEspacio.metrosDisponibles} m²
+                  </div>
+
+                  <div style={{ fontSize: 11, color: "#1B4D2A", fontWeight: 700, lineHeight: 1.5 }}>
+                    Árboles sembrados: {resumenEspacio.arbolesSembrados} · Espacios disponibles: {resumenEspacio.espaciosDisponibles}
+                  </div>
                 </div>
 
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -755,6 +853,107 @@ export default function MapaPlanoModule() {
                   border: "1px solid #C7D8C8",
                 }}
               >
+                {mostrarAlertaEspacios && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 14,
+                      right: 14,
+                      zIndex: 40,
+                      width: 320,
+                      background: "linear-gradient(135deg, #1B4D2A 0%, #2E7D32 100%)",
+                      color: "#FFFFFF",
+                      borderRadius: 14,
+                      padding: "14px 16px",
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+                      border: "1px solid rgba(255,255,255,0.16)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        gap: 10,
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 4 }}>
+                          🌱 Espacios disponibles
+                        </div>
+                        <div style={{ fontSize: 11, opacity: 0.9, lineHeight: 1.5 }}>
+                          Capacidad actual de siembra en esta finca.
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setMostrarAlertaEspacios(false)}
+                        style={{
+                          background: "rgba(255,255,255,0.16)",
+                          color: "#fff",
+                          border: "none",
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          cursor: "pointer",
+                          fontWeight: 700,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 10,
+                        marginTop: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: "rgba(255,255,255,0.12)",
+                          borderRadius: 10,
+                          padding: "10px 12px",
+                        }}
+                      >
+                        <div style={{ fontSize: 10, opacity: 0.85 }}>Espacios libres</div>
+                        <div style={{ fontSize: 22, fontWeight: 800 }}>
+                          {resumenEspacio.espaciosDisponibles}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          background: "rgba(255,255,255,0.12)",
+                          borderRadius: 10,
+                          padding: "10px 12px",
+                        }}
+                      >
+                        <div style={{ fontSize: 10, opacity: 0.85 }}>Capacidad total</div>
+                        <div style={{ fontSize: 22, fontWeight: 800 }}>
+                          {resumenEspacio.capacidadTotal}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          background: "rgba(255,255,255,0.12)",
+                          borderRadius: 10,
+                          padding: "10px 12px",
+                          gridColumn: "1 / -1",
+                        }}
+                      >
+                        <div style={{ fontSize: 10, opacity: 0.85 }}>Metros disponibles</div>
+                        <div style={{ fontSize: 20, fontWeight: 800 }}>
+                          {resumenEspacio.metrosDisponibles} m²
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {cargando ? (
                   <div style={s.mapCenter}>
                     <span style={{ fontSize: 22 }}>🌿</span> Cargando mapa agrícola...
@@ -829,7 +1028,7 @@ export default function MapaPlanoModule() {
                       const activo = arbolSeleccionado?.ID_ARBOL === arbol.ID_ARBOL;
                       const muerto =
                         String(arbol.NOMBRE_ESTADO || "").toUpperCase().trim() === "MUERTO";
-                      const conPlaga = arbol.PLAGAS?.length > 0;
+                      const conPlaga = getPlagasActivas(arbol).length > 0;
 
                       return (
                         <button
@@ -1364,6 +1563,7 @@ export default function MapaPlanoModule() {
                     arbolesFiltrados.map((a) => {
                       const est = getEstilo(a.NOMBRE_ESTADO);
                       const activo = arbolSeleccionado?.ID_ARBOL === a.ID_ARBOL;
+                      const plagasActivas = getPlagasActivas(a);
 
                       return (
                         <tr
@@ -1423,8 +1623,8 @@ export default function MapaPlanoModule() {
                             )}
                           </td>
                           <td style={s.td}>
-                            {a.PLAGAS?.length > 0 ? (
-                              a.PLAGAS.map((p, i) => (
+                            {plagasActivas.length > 0 ? (
+                              plagasActivas.map((p, i) => (
                                 <span
                                   key={i}
                                   style={{
@@ -1532,7 +1732,7 @@ export default function MapaPlanoModule() {
                       </div>
                     )}
 
-                    {arbolSeleccionado.PLAGAS?.length > 0 && (
+                    {getPlagasActivas(arbolSeleccionado).length > 0 && (
                       <div
                         style={{
                           marginTop: 8,
@@ -1542,9 +1742,9 @@ export default function MapaPlanoModule() {
                         }}
                       >
                         <div style={{ fontWeight: 700, color: "#F57F17", fontSize: 11, marginBottom: 4 }}>
-                          🦠 Plagas activas ({arbolSeleccionado.PLAGAS.length})
+                          🦠 Plagas activas ({getPlagasActivas(arbolSeleccionado).length})
                         </div>
-                        {arbolSeleccionado.PLAGAS.map((p, i) => (
+                        {getPlagasActivas(arbolSeleccionado).map((p, i) => (
                           <div key={i} style={{ fontSize: 10, color: "#795548", marginBottom: 3 }}>
                             <span
                               style={{
@@ -1696,6 +1896,7 @@ export default function MapaPlanoModule() {
                   min="1"
                   value={nuevoArbolForm.numero_surco}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, numero_surco: e.target.value }))}
+                  required
                 />
 
                 <label style={modalStyles.label}>Posición en surco</label>
@@ -1706,6 +1907,7 @@ export default function MapaPlanoModule() {
                   value={nuevoArbolForm.posicion}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, posicion: e.target.value }))}
                   placeholder="Número de posición dentro del surco"
+                  required
                 />
 
                 <label style={modalStyles.label}>Descripción</label>

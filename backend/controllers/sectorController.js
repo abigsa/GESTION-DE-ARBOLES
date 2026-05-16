@@ -3,6 +3,8 @@
 // ============================================================
 const oracledb = require('oracledb');
 const { getConnection, closeConnection } = require('../config/db');
+const { registrar: auditoria } = require('./auditoriaController');
+
 
 // ----------------------------------------------------------
 // Helpers
@@ -119,9 +121,9 @@ const insertar = async (req, res) => {
         posiciones_por_surco: toNullableNumber(posiciones_por_surco),
         tipo_cultivo:         tipo_cultivo ?? null,
       },
-      { autoCommit: true }
-    );
-
+      );
+    await auditoria(conn, { tabla: 'SECTOR', operacion: 'INSERT', descripcion: 'Sector creado' });
+    await conn.commit();
     res.status(201).json({
       success: true,
       message: 'Sector insertado correctamente.',
@@ -203,8 +205,9 @@ const actualizar = async (req, res) => {
         posiciones_por_surco: toNullableNumber(posiciones_por_surco),
         tipo_cultivo:         tipo_cultivo ?? null,
       },
-      { autoCommit: true }
-    );
+);
+    await auditoria(conn, { tabla: 'SECTOR', operacion: 'UPDATE', descripcion: 'Sector actualizado' });
+    await conn.commit();
 
     res.status(200).json({
       success: true,
@@ -233,8 +236,9 @@ const eliminar = async (req, res) => {
     await conn.execute(
       `BEGIN PKG_SECTOR.ELIMINAR(:id_sector); END;`,
       { id_sector: toNullableNumber(id_sector) },
-      { autoCommit: true }
-    );
+);
+    await auditoria(conn, { tabla: 'SECTOR', operacion: 'DELETE', descripcion: 'Sector eliminado' });
+    await conn.commit();
 
     res.status(200).json({
       success: true,
@@ -295,18 +299,22 @@ const listar = async (req, res) => {
     // Listado general de sectores activos
     const result = await conn.execute(
       `
-        SELECT
-          ID_SECTOR,
-          ID_FINCA,
-          NOMBRE_SECTOR,
-          AREA_HECTAREAS,
-          NUMERO_SURCOS,
-          POSICIONES_POR_SURCO,
-          TIPO_CULTIVO,
-          ACTIVO
-        FROM SECTOR
-        WHERE NVL(ACTIVO, 'S') = 'S'
-        ORDER BY ID_FINCA, NOMBRE_SECTOR
+       SELECT
+  S.ID_SECTOR,
+  S.ID_FINCA,
+  F.NOMBRE_FINCA,
+  S.NOMBRE_SECTOR,
+  S.AREA_HECTAREAS,
+  S.NUMERO_SURCOS,
+  S.POSICIONES_POR_SURCO,
+  S.TIPO_CULTIVO,
+  S.ACTIVO
+FROM SECTOR S
+INNER JOIN FINCA F
+  ON F.ID_FINCA = S.ID_FINCA
+WHERE NVL(S.ACTIVO, 'S') = 'S'
+  AND NVL(F.ACTIVO, 'S') = 'S'
+ORDER BY F.NOMBRE_FINCA, S.NOMBRE_SECTOR
       `,
       {},
       { outFormat: oracledb.OUT_FORMAT_OBJECT }

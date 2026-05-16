@@ -14,7 +14,7 @@ export const COL_LABELS = {
   nombre_sector:'Sector', numero_surcos:'Surcos',
   posiciones_por_surco:'Pos/surco', id_sector:'ID Sector',
   id_tipo_variedad_arbol:'Variedad', id_estado:'Estado',
-  numero_surco:'Surco', id_arbol:'ID Árbol',
+  numero_surco:'Surco',
   id_estado_nuevo:'Nuevo estado', observaciones:'Observaciones',
   fecha_cambio:'Fecha cambio', id_plaga:'ID Plaga',
   fecha_deteccion:'Detección', fecha_resolucion:'Resolución',
@@ -31,6 +31,7 @@ export const colLabel = (key) =>
 export const HIDDEN_COLS = new Set([
   'fecha_creacion','fecha_actualizacion','created_at','updated_at',
   'FECHA_CREACION','FECHA_ACTUALIZACION','CREATED_AT','UPDATED_AT','ACTIVO',
+  'id_arbol','ID_ARBOL',
 ]);
 
 // ── Configuración de cada módulo CRUD ─────────────
@@ -135,15 +136,38 @@ export const MODULES = {
     ],
   },
   'registros-tratamiento': {
-    title:'Registros de Tratamiento', endpoint:'/registro-tratamiento', icon:'assignment',
-    fields:[
-      { name:'id_arbol',             label:'ID Árbol',     type:'number', required:true },
-      { name:'id_tipo_tratamiento',  label:'Tratamiento',  type:'number', required:true },
-      { name:'id_fertilizante',      label:'Fertilizante', type:'number' },
-      { name:'fecha_aplicacion',     label:'Fecha aplic.', type:'date',   required:true },
-      { name:'observaciones',        label:'Observaciones',type:'textarea' },
-    ],
-  },
+  title:'Registros de Tratamiento', endpoint:'/registro-tratamiento', icon:'assignment',
+  fields:[
+    {
+      name:'id_arbol',
+      label:'Árbol',
+      type:'select',
+      required:true,
+      source:'/arbol',
+      valueKey:'ID_ARBOL',
+      labelKey:'NOMBRE_ARBOL'
+    },
+    {
+      name:'id_tipo_tratamiento',
+      label:'Tratamiento',
+      type:'select',
+      required:true,
+      source:'/tipo-tratamiento',
+      valueKey:'ID_TIPO_TRATAMIENTO',
+      labelKey:'NOMBRE_TRATAMIENTO'
+    },
+    {
+      name:'id_fertilizante',
+      label:'Fertilizante',
+      type:'select',
+      source:'/tipo-fertilizante',
+      valueKey:'ID_FERTILIZANTE',
+      labelKey:'NOMBRE_FERTILIZANTE'
+    },
+    { name:'fecha_aplicacion', label:'Fecha aplic.', type:'date', required:true },
+    { name:'observaciones', label:'Observaciones', type:'textarea' },
+  ],
+},
   resiembras: {
     title:'Resiembras', endpoint:'/resiembra', icon:'restart_alt',
     fields:[
