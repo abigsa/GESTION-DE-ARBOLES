@@ -161,19 +161,21 @@ const insertar = async (req, res) => {
     await conn.execute(
       `
       INSERT INTO MOVIMIENTO_INVENTARIO_ARBOL (
-        ID_ARBOL,
-        ID_TIPO_MOVIMIENTO,
-        FECHA_MOVIMIENTO,
-        OBSERVACION,
-        USUARIO_REGISTRO
-      )
-      VALUES (
-        :id_arbol,
-        :id_tipo_movimiento,
-        TO_DATE(:fecha_movimiento, 'YYYY-MM-DD'),
-        :observaciones,
-        :usuario_registro
-      )
+  ID_MOVIMIENTO,
+  ID_ARBOL,
+  ID_TIPO_MOVIMIENTO,
+  FECHA_MOVIMIENTO,
+  OBSERVACION,
+  USUARIO_REGISTRO
+)
+VALUES (
+  SEQ_MOVIMIENTO_INVENTARIO.NEXTVAL,
+  :id_arbol,
+  :id_tipo_movimiento,
+  TO_DATE(:fecha_movimiento, 'YYYY-MM-DD'),
+  :observaciones,
+  :usuario_registro
+)
       `,
       {
         id_arbol: Number(id_arbol),

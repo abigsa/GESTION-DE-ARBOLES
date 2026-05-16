@@ -29,7 +29,9 @@ const baseResiembraQuery = `
     ON F.ID_FINCA = S.ID_FINCA
   LEFT JOIN TIPO_VARIEDAD_ARBOL TA
     ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
-  WHERE 1 = 1
+  WHERE NVL(A.ACTIVO, 'S') = 'S'
+  AND NVL(S.ACTIVO, 'S') = 'S'
+  AND NVL(F.ACTIVO, 'S') = 'S'
 `;
 
 // WHERE NVL(A.ACTIVO, 'S') = 'S'
