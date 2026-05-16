@@ -35,7 +35,7 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   const [error, setError] = useState('');
   const [remoteOptions, setRemoteOptions] = useState({});
   const [loadingOptions, setLoadingOptions] = useState({});
-  // ── Colisión de posición ──────────────────────────
+
   const [posConflict, setPosConflict] = useState(false);
   const [checkingPos, setCheckingPos] = useState(false);
 
@@ -62,6 +62,10 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
 
     if (key === 'numero_surco' || key === 'NUMERO_SURCO') {
       return `Surco ${rawValue}`;
+    }
+
+    if (key === 'posicion_y' || key === 'POSICION_Y') {
+      return `Posición ${rawValue}`;
     }
 
     if (key === 'posicion_x' || key === 'POSICION_X') {
@@ -120,11 +124,11 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
 
         if (parentValue !== undefined && parentValue !== null && parentValue !== '') {
           const queryParam =
-  field.dependsOn.queryParam ||
-  field.dependsOn.optionField ||
-  field.dependsOn.field;
+            field.dependsOn.queryParam ||
+            field.dependsOn.optionField ||
+            field.dependsOn.field;
 
-url.searchParams.set(queryParam, parentValue);
+          url.searchParams.set(queryParam, parentValue);
         }
       }
 
@@ -287,43 +291,92 @@ url.searchParams.set(queryParam, parentValue);
     return remoteOptions[field.name] ?? [];
   };
 
-  // ── Validar colisión X/Y cuando cambian sector, posicion_x o posicion_y ──
   const isArbolesEndpoint = endpoint === '/arbol';
+
+
+  const sector = form['id_sector'];
+const surco = form['numero_surco'];
+const posicionY = form['posicion_y'];
+
+  // Validar colisión por Sector + Surco + Posición Y
   useEffect(() => {
     if (!isArbolesEndpoint) return;
-    const sector = form['id_sector'];
-    const px = form['posicion_x'];
-    const py = form['posicion_y'];
-    if (!sector || px === '' || py === '' || px === null || py === null) {
+
+    const py = posicionY;
+
+    if (
+      !sector ||
+      surco === '' ||
+      py === '' ||
+      surco === null ||
+      py === null
+    ) {
       setPosConflict(false);
       return;
     }
+
     let cancelled = false;
+
     const check = async () => {
       setCheckingPos(true);
+
       try {
-        const url = `${API}/arbol?id_sector=${sector}&posicion_x=${px}&posicion_y=${py}`;
-        const res = await apiFetch(url);
+        const res = await apiFetch(`${API}/arbol`);
         const json = await res.json();
-        const rows = Array.isArray(json?.data) ? json.data
-          : Array.isArray(json?.rows) ? json.rows : [];
+
+        const rows = Array.isArray(json?.data)
+          ? json.data
+          : Array.isArray(json?.rows)
+            ? json.rows
+            : [];
+
+        const conflict = rows.some(r => {
+          const sameSector =
+            String(r.ID_SECTOR ?? r.id_sector) === String(sector);
+
+          const sameSurco =
+            Number(r.NUMERO_SURCO ?? r.numero_surco) === Number(surco);
+
+          const samePosY =
+            Number(r.POSICION_Y ?? r.posicion_y) === Number(py);
+
+          const sameId =
+            String(r.ID_ARBOL ?? r.id_arbol) === String(editId);
+
+          if (isEdit) {
+            return sameSector && sameSurco && samePosY && !sameId;
+          }
+
+          return sameSector && sameSurco && samePosY;
+        });
+
         if (!cancelled) {
-          // En edición ignorar el árbol actual
-          const conflict = rows.some(r => {
-            const id = r?.ID_ARBOL ?? r?.id_arbol;
-            return isEdit ? String(id) !== String(editId) : true;
-          });
-          setPosConflict(conflict && rows.length > 0);
+          setPosConflict(conflict);
         }
       } catch {
-        if (!cancelled) setPosConflict(false);
+        if (!cancelled) {
+          setPosConflict(false);
+        }
       } finally {
-        if (!cancelled) setCheckingPos(false);
+        if (!cancelled) {
+          setCheckingPos(false);
+        }
       }
     };
+
     check();
-    return () => { cancelled = true; };
-  }, [form['id_sector'], form['posicion_x'], form['posicion_y'], isArbolesEndpoint, isEdit, editId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+  sector,
+  surco,
+  posicionY,
+  isArbolesEndpoint,
+  isEdit,
+  editId,
+]);
 
   const getRemotePlaceholder = field => {
     if (loadingOptions[field.name]) return 'Cargando opciones...';
@@ -337,30 +390,30 @@ url.searchParams.set(queryParam, parentValue);
   };
 
   const normalizeValueForSubmit = field => {
-  const v = form[field.name];
+    const v = form[field.name];
 
-  if (v === '' || v === null || v === undefined) return null;
+    if (v === '' || v === null || v === undefined) return null;
 
-  if (field.type === 'number') return Number(v);
+    if (field.type === 'number') return Number(v);
 
-  if (field.type === 'remote-select') {
-    return field.valueType === 'string' ? String(v) : Number(v);
-  }
-
-  if (field.type === 'date') {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(String(v))) return v;
-
-    const parts = String(v).split('/');
-    if (parts.length === 3) {
-      const [dd, mm, yyyy] = parts;
-      return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+    if (field.type === 'remote-select') {
+      return field.valueType === 'string' ? String(v) : Number(v);
     }
 
-    return v;
-  }
+    if (field.type === 'date') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(v))) return v;
 
-  return v || null;
-};  
+      const parts = String(v).split('/');
+      if (parts.length === 3) {
+        const [dd, mm, yyyy] = parts;
+        return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+      }
+
+      return v;
+    }
+
+    return v || null;
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -374,15 +427,13 @@ url.searchParams.set(queryParam, parentValue);
       }
     }
 
-    setError('');
-    setSaving(true);
-
-    // Bloquear si hay conflicto de posición
     if (isArbolesEndpoint && posConflict) {
-      setError('Ya existe un árbol en esa posición X/Y dentro del sector. Elige una posición diferente.');
-      setSaving(false);
+      setError('Ya existe un árbol en ese sector, surco y posición. Elige una posición diferente.');
       return;
     }
+
+    setError('');
+    setSaving(true);
 
     const body = {};
     fields.forEach(field => {
@@ -393,7 +444,7 @@ url.searchParams.set(queryParam, parentValue);
     try {
       const url = isEdit ? `${API}${endpoint}/${editId}` : `${API}${endpoint}`;
       const method = isEdit ? 'PUT' : 'POST';
-      console.log('BODY REGISTRO PLAGA:', body);
+
       const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -403,12 +454,16 @@ url.searchParams.set(queryParam, parentValue);
       const json = await res.json();
 
       if (json.ok === true || json.success === true) {
-  if (endpoint === '/registro-plaga') {
-    window.dispatchEvent(new Event('plagas-actualizadas'));
-  }
+        if (endpoint === '/registro-plaga') {
+          window.dispatchEvent(new Event('plagas-actualizadas'));
+        }
 
-  onSaved();
-} else {
+        if (endpoint === '/arbol') {
+          window.dispatchEvent(new Event('arbol_actualizado'));
+        }
+
+        onSaved();
+      } else {
         setError(json.mensaje ?? json.message ?? 'Error al guardar');
       }
     } catch {
@@ -417,6 +472,17 @@ url.searchParams.set(queryParam, parentValue);
       setSaving(false);
     }
   };
+
+  const shouldShowPositionStatus = fieldName =>
+    isArbolesEndpoint &&
+    (fieldName === 'numero_surco' || fieldName === 'posicion_y');
+
+  const hasPositionData =
+    form['id_sector'] &&
+    form['numero_surco'] !== '' &&
+    form['numero_surco'] !== null &&
+    form['posicion_y'] !== '' &&
+    form['posicion_y'] !== null;
 
   return (
     <div
@@ -520,35 +586,45 @@ url.searchParams.set(queryParam, parentValue);
                     value={form[field.name]}
                     onChange={e => set(field.name, e.target.value)}
                     className={`${s.input} ${
-                      (field.name === 'posicion_x' || field.name === 'posicion_y') && posConflict
-                        ? s.inputError : ''}`}
+                      shouldShowPositionStatus(field.name) && posConflict
+                        ? s.inputError
+                        : ''
+                    }`}
                     placeholder={`Ingresa ${field.label.toLowerCase()}`}
                     min={field.type === 'number' ? 1 : undefined}
                   />
                 )}
 
-                {/* Hint text */}
                 {field.hint && (
                   <span className={s.hint}>{field.hint}</span>
                 )}
 
-                {/* Indicador de colisión en campos X/Y */}
-                {(field.name === 'posicion_x' || field.name === 'posicion_y') && (
+                {shouldShowPositionStatus(field.name) && field.name === 'posicion_y' && (
                   checkingPos ? (
                     <span className={s.posChecking}>
                       <span className={s.spinnerSm} /> Verificando posición…
                     </span>
                   ) : posConflict ? (
                     <span className={s.posConflict}>
-                      <span className="material-icons" style={{fontSize:'14px',verticalAlign:'middle'}}>warning</span>
-                      {' '}¡Posición ocupada! Ya hay un árbol en X={form['posicion_x']} Y={form['posicion_y']} en este sector.
+                      <span
+                        className="material-icons"
+                        style={{ fontSize: '14px', verticalAlign: 'middle' }}
+                      >
+                        warning
+                      </span>
+                      {' '}
+                      ¡Posición ocupada! Ya existe un árbol en el surco {form['numero_surco']} y posición {form['posicion_y']}.
                     </span>
-                  ) : (form['posicion_x'] !== '' && form['posicion_y'] !== '' &&
-                       form['posicion_x'] !== null && form['posicion_y'] !== null &&
-                       form['id_sector']) ? (
+                  ) : hasPositionData ? (
                     <span className={s.posOk}>
-                      <span className="material-icons" style={{fontSize:'14px',verticalAlign:'middle'}}>check_circle</span>
-                      {' '}Posición disponible
+                      <span
+                        className="material-icons"
+                        style={{ fontSize: '14px', verticalAlign: 'middle' }}
+                      >
+                        check_circle
+                      </span>
+                      {' '}
+                      Posición disponible
                     </span>
                   ) : null
                 )}
