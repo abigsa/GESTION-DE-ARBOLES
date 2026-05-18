@@ -36,6 +36,27 @@ const verificarToken = (req, res, next) => {
   }
 };
 
+// Middleware opcional: si hay token valido, carga req.usuario; si no hay token, deja continuar.
+const verificarTokenOpcional = (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (!auth) return next();
+
+  if (!auth.startsWith('Bearer ')) {
+    return res.status(401).json({ ok: false, mensaje: 'Token inválido' });
+  }
+
+  try {
+    const token = auth.split(' ')[1];
+    req.usuario = jwt.verify(token, SECRET);
+    return next();
+  } catch (err) {
+    const msg = err.name === 'TokenExpiredError'
+      ? 'Sesión expirada, inicia sesión nuevamente'
+      : 'Token inválido';
+    return res.status(401).json({ ok: false, mensaje: msg });
+  }
+};
+
 // Middleware verificar rol mínimo
 const requiereRol = (rolMinimo) => (req, res, next) => {
   if (!req.usuario) return res.status(401).json({ ok: false, mensaje: 'No autenticado' });
@@ -45,4 +66,4 @@ const requiereRol = (rolMinimo) => (req, res, next) => {
   next();
 };
 
-module.exports = { generarToken, verificarToken, requiereRol };
+module.exports = { generarToken, verificarToken, verificarTokenOpcional, requiereRol };
