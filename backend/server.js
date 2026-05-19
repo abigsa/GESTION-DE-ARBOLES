@@ -44,8 +44,9 @@ app.use(express.json({ limit: '2mb' }));
 // ── Ruta pública de health check ─────────────────────────
 app.get('/', (req, res) => res.json({ ok: true, message: 'API Gestión de Árboles activa' }));
 
-// ── Rutas públicas (sin JWT) ─────────────────────────────
-app.use('/api/usuarios', usuarioRoutes);   // login está aquí
+// ── Rutas de usuarios ───────────────────────────────────
+// usuarioRoutes protege internamente todo excepto login y registro.
+app.use('/api/usuarios', usuarioRoutes);
 
 // ── Middleware JWT — protege todo lo de abajo ────────────
 app.use(verificarToken);

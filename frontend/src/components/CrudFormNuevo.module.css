@@ -454,3 +454,15 @@
 @keyframes spinSm {
   to { transform: rotate(360deg); }
 }
+
+.fieldError {
+  display: block;
+  margin-top: 6px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.inputError {
+  border-color: #b91c1c !important;
+}
