@@ -33,6 +33,7 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   const [form, setForm] = useState(initForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [remoteOptions, setRemoteOptions] = useState({});
   const [loadingOptions, setLoadingOptions] = useState({});
 
@@ -91,6 +92,16 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   };
 
   const set = (k, v) => {
+    const field = fieldMap[k];
+
+    if (field?.onlyLetters && v && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/.test(v)) {
+      return;
+    }
+
+    if (field?.onlyNumbers && v && !/^\d*$/.test(v)) {
+      return;
+    }
+
     setForm(prev => {
       const next = { ...prev, [k]: v };
 
@@ -103,11 +114,21 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
       return next;
     });
 
+    setFieldErrors(prev => ({
+      ...prev,
+      [k]: ''
+    }));
+
     fields.forEach(field => {
       if (field.dependsOn?.field === k) {
         setRemoteOptions(prev => ({
           ...prev,
           [field.name]: [],
+        }));
+
+        setFieldErrors(prev => ({
+          ...prev,
+          [field.name]: ''
         }));
       }
     });
@@ -200,11 +221,13 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
             ...prev,
             [field.name]: [],
           }));
+
           setLoadingOptions(prev => ({
             ...prev,
             [field.name]: false,
           }));
         }
+
         return;
       }
 
@@ -293,12 +316,10 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
 
   const isArbolesEndpoint = endpoint === '/arbol';
 
-
   const sector = form['id_sector'];
-const surco = form['numero_surco'];
-const posicionY = form['posicion_y'];
+  const surco = form['numero_surco'];
+  const posicionY = form['posicion_y'];
 
-  // Validar colisión por Sector + Surco + Posición Y
   useEffect(() => {
     if (!isArbolesEndpoint) return;
 
@@ -370,13 +391,13 @@ const posicionY = form['posicion_y'];
       cancelled = true;
     };
   }, [
-  sector,
-  surco,
-  posicionY,
-  isArbolesEndpoint,
-  isEdit,
-  editId,
-]);
+    sector,
+    surco,
+    posicionY,
+    isArbolesEndpoint,
+    isEdit,
+    editId,
+  ]);
 
   const getRemotePlaceholder = field => {
     if (loadingOptions[field.name]) return 'Cargando opciones...';
@@ -412,19 +433,100 @@ const posicionY = form['posicion_y'];
       return v;
     }
 
-    return v || null;
+    return String(v).trim() || null;
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    const today = new Date().toISOString().slice(0, 10);
+
+    for (const field of fields) {
+      if (field.omitOnSubmit) continue;
+
+      const value = form[field.name];
+      const isEmpty =
+        value === '' ||
+        value === null ||
+        value === undefined;
+
+      if (field.required && isEmpty) {
+        errors[field.name] = `El campo "${field.label}" es obligatorio`;
+        continue;
+      }
+
+      if (isEmpty) continue;
+
+      const textValue = String(value).trim();
+
+      if (field.onlyLetters && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(textValue)) {
+        errors[field.name] = `El campo "${field.label}" solo permite letras`;
+        continue;
+      }
+
+      if (field.onlyNumbers && !/^\d+$/.test(textValue)) {
+        errors[field.name] = `El campo "${field.label}" solo permite números`;
+        continue;
+      }
+
+      if (field.minLength && textValue.length < field.minLength) {
+        errors[field.name] = `El campo "${field.label}" debe tener al menos ${field.minLength} caracteres`;
+        continue;
+      }
+
+      if (field.maxLength && textValue.length > field.maxLength) {
+        errors[field.name] = `El campo "${field.label}" no debe superar ${field.maxLength} caracteres`;
+        continue;
+      }
+
+      if (field.type === 'number') {
+        const numberValue = Number(value);
+
+        if (Number.isNaN(numberValue)) {
+          errors[field.name] = `El campo "${field.label}" debe ser numérico`;
+          continue;
+        }
+
+        if (field.min !== undefined && numberValue < field.min) {
+          errors[field.name] = `El campo "${field.label}" debe ser mayor o igual a ${field.min}`;
+          continue;
+        }
+
+        if (field.max !== undefined && numberValue > field.max) {
+          errors[field.name] = `El campo "${field.label}" debe ser menor o igual a ${field.max}`;
+          continue;
+        }
+      }
+
+      if (field.type === 'date') {
+        if (field.noFutureDate && textValue > today) {
+          errors[field.name] = `El campo "${field.label}" no puede ser una fecha futura`;
+          continue;
+        }
+
+        if (field.minDateField) {
+          const minDate = form[field.minDateField];
+
+          if (minDate && textValue < String(minDate)) {
+            const minFieldLabel = fieldMap[field.minDateField]?.label ?? 'fecha inicial';
+            errors[field.name] = `"${field.label}" no puede ser menor que "${minFieldLabel}"`;
+            continue;
+          }
+        }
+      }
+    }
+
+    return errors;
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
 
-    for (const field of fields) {
-      if (field.omitOnSubmit) continue;
+    const validationErrors = validateForm();
 
-      if (field.required && !form[field.name] && form[field.name] !== 0) {
-        setError(`El campo "${field.label}" es obligatorio`);
-        return;
-      }
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setError('Revisa los campos marcados antes de guardar.');
+      return;
     }
 
     if (isArbolesEndpoint && posConflict) {
@@ -432,6 +534,7 @@ const posicionY = form['posicion_y'];
       return;
     }
 
+    setFieldErrors({});
     setError('');
     setSaving(true);
 
@@ -497,7 +600,9 @@ const posicionY = form['posicion_y'];
             </div>
 
             <div className={s.headerText}>
-              <p className={s.eyebrow}>{isEdit ? 'EDICIÓN DE REGISTRO' : 'NUEVO REGISTRO'}</p>
+              <p className={s.eyebrow}>
+                {isEdit ? 'EDICIÓN DE REGISTRO' : 'NUEVO REGISTRO'}
+              </p>
               <h3>{isEdit ? 'Editar registro' : 'Crear registro'}</h3>
               <p className={s.headerDesc}>
                 {isEdit
@@ -540,7 +645,7 @@ const posicionY = form['posicion_y'];
                   <select
                     value={form[field.name]}
                     onChange={e => set(field.name, e.target.value)}
-                    className={s.input}
+                    className={`${s.input} ${fieldErrors[field.name] ? s.inputError : ''}`}
                   >
                     <option value="">Selecciona...</option>
                     {field.options?.map(o => (
@@ -553,7 +658,7 @@ const posicionY = form['posicion_y'];
                   <select
                     value={form[field.name] === null ? '' : String(form[field.name] ?? '')}
                     onChange={e => set(field.name, e.target.value)}
-                    className={s.input}
+                    className={`${s.input} ${fieldErrors[field.name] ? s.inputError : ''}`}
                     disabled={
                       loadingOptions[field.name] ||
                       (field.dependsOn?.field && !form[field.dependsOn.field])
@@ -570,29 +675,45 @@ const posicionY = form['posicion_y'];
                   <textarea
                     value={form[field.name]}
                     onChange={e => set(field.name, e.target.value)}
-                    className={`${s.input} ${s.textarea}`}
+                    className={`${s.input} ${s.textarea} ${fieldErrors[field.name] ? s.inputError : ''}`}
                     rows={4}
                     placeholder={`Ingresa ${field.label.toLowerCase()}`}
                   />
                 ) : field.type === 'date' ? (
-                  <DatePickerField
-                    value={form[field.name]}
-                    onChange={val => set(field.name, val)}
-                    placeholder="dd/mm/aaaa"
-                  />
+                  <div className={fieldErrors[field.name] ? s.dateErrorWrap : ''}>
+                    <DatePickerField
+                      value={form[field.name]}
+                      onChange={val => set(field.name, val)}
+                      placeholder="dd/mm/aaaa"
+                    />
+                  </div>
                 ) : (
                   <input
                     type={field.type === 'number' ? 'number' : 'text'}
+                    inputMode={
+                      field.onlyNumbers || field.type === 'number'
+                        ? 'numeric'
+                        : undefined
+                    }
                     value={form[field.name]}
                     onChange={e => set(field.name, e.target.value)}
                     className={`${s.input} ${
-                      shouldShowPositionStatus(field.name) && posConflict
+                      fieldErrors[field.name] ||
+                      (shouldShowPositionStatus(field.name) && posConflict)
                         ? s.inputError
                         : ''
                     }`}
                     placeholder={`Ingresa ${field.label.toLowerCase()}`}
-                    min={field.type === 'number' ? 1 : undefined}
+                    min={field.type === 'number' ? field.min ?? 1 : undefined}
+                    max={field.type === 'number' ? field.max : undefined}
+                    maxLength={field.maxLength}
                   />
+                )}
+
+                {fieldErrors[field.name] && (
+                  <span className={s.fieldError}>
+                    {fieldErrors[field.name]}
+                  </span>
                 )}
 
                 {field.hint && (
