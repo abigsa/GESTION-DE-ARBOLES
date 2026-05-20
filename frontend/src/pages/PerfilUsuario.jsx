@@ -35,10 +35,26 @@ export default function PerfilUsuario({ onBack }) {
     setExitoPass(''); setErrorPass('');
   };
 
-  const setF = (k, v) => {
-    setForm(f => ({ ...f, [k]: v }));
-    setExitoInfo(''); setErrorInfo('');
-  };
+const setF = (k, v) => {
+
+  // Teléfono: solo números
+  if (k === 'telefono' && !/^\d*$/.test(v)) return;
+
+  // Correo: solo caracteres válidos
+  if (k === 'email' && !/^[A-Za-z0-9@._-]*$/.test(v)) return;
+
+  setForm(f => ({ ...f, [k]: v }));
+
+  if (
+  form.email &&
+  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
+) {
+  setErrorInfo('Ingresa un correo electrónico válido');
+  return;
+}
+  setExitoInfo('');
+  setErrorInfo('');
+};
 
   // ── Submit datos personales ───────────────────────
   const handleInfoSubmit = async (e) => {
