@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../context/AuthContext';
+
 
 import { API, apiFetch } from '../context/AuthContext';
 
@@ -205,7 +205,7 @@ function generarPDFHistorial(datos, estadosMap, arbolesMap) {
 
 // ── Componente principal ──────────────────────────────────────
 export default function ReporteHistorialEstados({ onBack }) {
-  const { usuario } = useAuth();
+
   const [historial, setHistorial] = useState([]);
   const [estados,   setEstados]   = useState([]);
   const [arboles,   setArboles]   = useState([]);

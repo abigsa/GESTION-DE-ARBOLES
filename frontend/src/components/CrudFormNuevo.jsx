@@ -94,9 +94,35 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   const set = (k, v) => {
     const field = fieldMap[k];
 
+    if (field?.type === 'number') {
+  if (v === '') {
+    setForm(prev => ({
+      ...prev,
+      [k]: v
+    }));
+    return;
+  }
+
+  const numberValue = Number(v);
+
+  if (Number.isNaN(numberValue)) return;
+
+  if (field.min !== undefined && numberValue < field.min) return;
+
+  if (field.max !== undefined && numberValue > field.max) return;
+}
+
     if (field?.onlyLetters && v && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/.test(v)) {
       return;
     }
+
+    if (
+  field?.onlyText &&
+  v &&
+  !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s.,;:]*$/.test(v)
+) {
+  return;
+}
 
     if (field?.onlyNumbers && v && !/^\d*$/.test(v)) {
       return;
@@ -437,86 +463,103 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   };
 
   const validateForm = () => {
-    const errors = {};
-    const today = new Date().toISOString().slice(0, 10);
+  const errors = {};
+  const today = new Date().toISOString().slice(0, 10);
 
-    for (const field of fields) {
-      if (field.omitOnSubmit) continue;
+  for (const field of fields) {
+    if (field.omitOnSubmit) continue;
 
-      const value = form[field.name];
-      const isEmpty =
-        value === '' ||
-        value === null ||
-        value === undefined;
+    const value = form[field.name];
+    const isEmpty =
+      value === '' ||
+      value === null ||
+      value === undefined;
 
-      if (field.required && isEmpty) {
-        errors[field.name] = `El campo "${field.label}" es obligatorio`;
+    if (field.required && isEmpty) {
+      errors[field.name] = `El campo "${field.label}" es obligatorio`;
+      continue;
+    }
+
+    if (isEmpty) continue;
+
+    const textValue = String(value).trim();
+
+    if (field.onlyLetters && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(textValue)) {
+      errors[field.name] = `El campo "${field.label}" solo permite letras`;
+      continue;
+    }
+
+    if (
+      field.onlyText &&
+      !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s.,;:]+$/.test(textValue)
+    ) {
+      errors[field.name] = `El campo "${field.label}" solo permite texto`;
+      continue;
+    }
+
+    if (field.onlyNumbers && !/^\d+$/.test(textValue)) {
+      errors[field.name] = `El campo "${field.label}" solo permite números`;
+      continue;
+    }
+
+    if (field.minLength && textValue.length < field.minLength) {
+      errors[field.name] = `El campo "${field.label}" debe tener al menos ${field.minLength} caracteres`;
+      continue;
+    }
+
+    if (field.maxLength && textValue.length > field.maxLength) {
+      errors[field.name] = `El campo "${field.label}" no debe superar ${field.maxLength} caracteres`;
+      continue;
+    }
+
+    if (field.type === 'number') {
+      const numberValue = Number(value);
+
+      if (Number.isNaN(numberValue)) {
+        errors[field.name] = `El campo "${field.label}" debe ser numérico`;
         continue;
       }
 
-      if (isEmpty) continue;
-
-      const textValue = String(value).trim();
-
-      if (field.onlyLetters && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(textValue)) {
-        errors[field.name] = `El campo "${field.label}" solo permite letras`;
+      if (field.min !== undefined && numberValue < field.min) {
+        errors[field.name] = `El campo "${field.label}" debe ser mayor o igual a ${field.min}`;
         continue;
       }
 
-      if (field.onlyNumbers && !/^\d+$/.test(textValue)) {
-        errors[field.name] = `El campo "${field.label}" solo permite números`;
+      if (field.max !== undefined && numberValue > field.max) {
+        errors[field.name] = `El campo "${field.label}" debe ser menor o igual a ${field.max}`;
         continue;
-      }
-
-      if (field.minLength && textValue.length < field.minLength) {
-        errors[field.name] = `El campo "${field.label}" debe tener al menos ${field.minLength} caracteres`;
-        continue;
-      }
-
-      if (field.maxLength && textValue.length > field.maxLength) {
-        errors[field.name] = `El campo "${field.label}" no debe superar ${field.maxLength} caracteres`;
-        continue;
-      }
-
-      if (field.type === 'number') {
-        const numberValue = Number(value);
-
-        if (Number.isNaN(numberValue)) {
-          errors[field.name] = `El campo "${field.label}" debe ser numérico`;
-          continue;
-        }
-
-        if (field.min !== undefined && numberValue < field.min) {
-          errors[field.name] = `El campo "${field.label}" debe ser mayor o igual a ${field.min}`;
-          continue;
-        }
-
-        if (field.max !== undefined && numberValue > field.max) {
-          errors[field.name] = `El campo "${field.label}" debe ser menor o igual a ${field.max}`;
-          continue;
-        }
-      }
-
-      if (field.type === 'date') {
-        if (field.noFutureDate && textValue > today) {
-          errors[field.name] = `El campo "${field.label}" no puede ser una fecha futura`;
-          continue;
-        }
-
-        if (field.minDateField) {
-          const minDate = form[field.minDateField];
-
-          if (minDate && textValue < String(minDate)) {
-            const minFieldLabel = fieldMap[field.minDateField]?.label ?? 'fecha inicial';
-            errors[field.name] = `"${field.label}" no puede ser menor que "${minFieldLabel}"`;
-            continue;
-          }
-        }
       }
     }
 
-    return errors;
-  };
+    if (field.type === 'date') {
+      if (field.noFutureDate && textValue > today) {
+        errors[field.name] = `El campo "${field.label}" no puede ser una fecha futura`;
+        continue;
+      }
+
+      if (field.minDateField) {
+        const minDate = form[field.minDateField];
+
+        if (minDate) {
+  const currentDate = new Date(textValue);
+  const baseDate = new Date(minDate);
+
+  if (currentDate < baseDate) {
+    const minFieldLabel =
+      fieldMap[field.minDateField]?.label ?? 'fecha inicial';
+
+    errors[field.name] =
+      `"${field.label}" no puede ser menor que "${minFieldLabel}"`;
+
+    continue;
+  }
+}
+      }
+    }
+  }
+
+  return errors;
+};
 
   const handleSubmit = async e => {
     e.preventDefault();
