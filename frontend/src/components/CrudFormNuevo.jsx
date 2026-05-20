@@ -94,7 +94,7 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   const set = (k, v) => {
     const field = fieldMap[k];
 
-    if (field?.type === 'number') {
+  if (field?.type === 'number') {
   if (v === '') {
     setForm(prev => ({
       ...prev,
@@ -102,6 +102,8 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
     }));
     return;
   }
+
+  if (!/^\d*\.?\d*$/.test(v)) return;
 
   const numberValue = Number(v);
 
@@ -732,7 +734,7 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
                   </div>
                 ) : (
                   <input
-                    type={field.type === 'number' ? 'number' : 'text'}
+                    type="text"
                     inputMode={
                       field.onlyNumbers || field.type === 'number'
                         ? 'numeric'
