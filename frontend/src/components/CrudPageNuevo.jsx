@@ -214,14 +214,18 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
 
             <div className={s.titleActions}>
               <button className={s.refreshBtn} onClick={fetchData} title="Actualizar" type="button">
-                <span className="material-icons">refresh</span>
+                <span className={s.iconCircle}>
+                  <span className="material-icons">refresh</span>
+                </span>
                 <span className={s.btnLabel}>Actualizar</span>
               </button>
 
               <ExportarBtn data={filtered} cols={cols} title={title} />
 
               <button className={s.btnAdd} onClick={() => setModal('new')} type="button">
-                <span className="material-icons">add</span>
+                <span className={s.iconCircle}>
+                  <span className="material-icons">add</span>
+                </span>
                 <span className={s.btnLabel}>Agregar registro</span>
               </button>
             </div>
@@ -272,7 +276,10 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
                 <p className={s.errMsg}>{error}</p>
               </div>
               <button className={s.btnRetry} onClick={fetchData} type="button">
-                <span className="material-icons">refresh</span> Reintentar
+                <span className={s.iconCircle}>
+                  <span className="material-icons">refresh</span>
+                </span>
+                Reintentar
               </button>
             </div>
           ) : filtered.length === 0 ? (
@@ -290,7 +297,10 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
               </p>
               {!search && (
                 <button className={s.emptyBtn} onClick={() => setModal('new')} type="button">
-                  <span className="material-icons">add</span> Crear primer registro
+                  <span className={s.iconCircle}>
+                    <span className="material-icons">add</span>
+                  </span>
+                  Crear primer registro
                 </button>
               )}
             </div>
@@ -416,10 +426,16 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
             <p className={s.confirmMsg}>Esta acción no se puede deshacer.</p>
             <div className={s.confirmBtns}>
               <button className={s.confirmCancel} onClick={() => setConfirmRow(null)} type="button">
+                <span className={s.iconCircle}>
+                  <span className="material-icons">close</span>
+                </span>
                 Cancelar
               </button>
               <button className={s.confirmDelete} onClick={() => handleDelete(confirmRow)} type="button">
-                <span className="material-icons">delete</span> Eliminar
+                <span className={s.iconCircle}>
+                  <span className="material-icons">delete</span>
+                </span>
+                Eliminar
               </button>
             </div>
           </div>

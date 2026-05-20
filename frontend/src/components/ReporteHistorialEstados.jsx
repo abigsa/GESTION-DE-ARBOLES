@@ -380,14 +380,20 @@ export default function ReporteHistorialEstados({ onBack }) {
           </div>
           <div style={{display:'flex',gap:8}}>
             <button style={st.refreshBtn} onClick={cargar} type="button">
-              <span className="material-icons">refresh</span> Actualizar
+              <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-icons" style={{fontSize:14}}>refresh</span>
+              </span>
+              Actualizar
             </button>
             <button
               style={{...st.refreshBtn, background:C.oroForestal}}
               onClick={() => generarPDFHistorial(filtrado, estadosMap, arbolesMap)}
               type="button"
             >
-              <span className="material-icons">picture_as_pdf</span> Exportar PDF
+              <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-icons" style={{fontSize:14}}>picture_as_pdf</span>
+              </span>
+              Exportar PDF
             </button>
           </div>
         </div>
@@ -457,7 +463,12 @@ export default function ReporteHistorialEstados({ onBack }) {
           <div style={st.errBox}>
             <span className="material-icons">wifi_off</span>
             <p>{error}</p>
-            <button onClick={cargar} style={st.refreshBtn}>Reintentar</button>
+            <button onClick={cargar} style={st.refreshBtn}>
+              <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-icons" style={{fontSize:14}}>refresh</span>
+              </span>
+              Reintentar
+            </button>
           </div>
         ) : filtrado.length === 0 ? (
           <div style={st.empty}>

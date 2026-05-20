@@ -649,6 +649,9 @@ const posicionY = form['posicion_y'];
 
           <div className={s.ftBtns}>
             <button type="button" className={s.btnCancel} onClick={onClose}>
+              <span className={s.iconCircle}>
+                <span className="material-icons">close</span>
+              </span>
               Cancelar
             </button>
 
@@ -659,9 +662,19 @@ const posicionY = form['posicion_y'];
                   Guardando...
                 </>
               ) : isEdit ? (
-                'Guardar cambios'
+                <>
+                  <span className={s.iconCircle}>
+                    <span className="material-icons">save</span>
+                  </span>
+                  Guardar cambios
+                </>
               ) : (
-                'Crear registro'
+                <>
+                  <span className={s.iconCircle}>
+                    <span className="material-icons">add</span>
+                  </span>
+                  Crear registro
+                </>
               )}
             </button>
           </div>

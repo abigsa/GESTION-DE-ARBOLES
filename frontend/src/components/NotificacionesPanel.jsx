@@ -293,6 +293,9 @@ return () => {
 
             {noLeidas > 0 && (
               <button className={s.markAll} onClick={marcarTodas} type="button">
+                <span className={s.iconCircle}>
+                  <span className="material-icons">done_all</span>
+                </span>
                 Marcar todas
               </button>
             )}
@@ -367,6 +370,9 @@ return () => {
                         irSeguimiento(n.id);
                       }}
                     >
+                      <span className={s.iconCircle}>
+                        <span className="material-icons">visibility</span>
+                      </span>
                       Ver seguimiento
                     </button>
                   </div>

@@ -20,6 +20,12 @@
 .refreshBtn:hover { background:var(--fondo-claro); }
 .refreshBtn .material-icons { font-size:18px; }
 
+/* ── Círculo decorativo del ícono ── */
+.iconCircle { width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.iconCircle .material-icons { font-size:15px !important; font-weight:700; }
+.refreshBtn .iconCircle { background:rgba(27,77,42,0.10); }
+.btnRetry .iconCircle { background:rgba(255,255,255,0.22); }
+
 .filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
 .searchWrap { flex:1; min-width:200px; display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--pergamino-verde); border-radius:14px; padding:0 14px; height:44px; }
 .searchWrap:focus-within { border-color:rgba(27,77,42,.35); box-shadow:0 0 0 3px rgba(27,77,42,.07); }

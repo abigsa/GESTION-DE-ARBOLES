@@ -1004,6 +1004,9 @@ export default function MapaPlanoModule() {
                     <span style={{ fontSize: 28 }}>⚠️</span>
                     <span style={{ color: "#E65100" }}>{errorMsg}</span>
                     <button style={s.btnSecondary} onClick={() => cargarPlano(fincaSeleccionada)}>
+                      <span style={{ width:20, height:20, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                        <span className="material-icons" style={{fontSize:12}}>refresh</span>
+                      </span>
                       Reintentar
                     </button>
                   </div>
@@ -2007,9 +2010,15 @@ export default function MapaPlanoModule() {
 
                 <div style={modalStyles.footer}>
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>close</span>
+                    </span>
                     Cancelar
                   </button>
                   <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>{modal.loading ? "hourglass_empty" : "park"}</span>
+                    </span>
                     {modal.loading ? "Guardando..." : "Guardar árbol"}
                   </button>
                 </div>
@@ -2055,9 +2064,15 @@ export default function MapaPlanoModule() {
 
                 <div style={modalStyles.footer}>
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>close</span>
+                    </span>
                     Cancelar
                   </button>
                   <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>{modal.loading ? "hourglass_empty" : "update"}</span>
+                    </span>
                     {modal.loading ? "Guardando..." : "Actualizar estado"}
                   </button>
                 </div>
@@ -2111,9 +2126,15 @@ export default function MapaPlanoModule() {
 
                 <div style={modalStyles.footer}>
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>close</span>
+                    </span>
                     Cancelar
                   </button>
                   <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>{modal.loading ? "hourglass_empty" : "warning"}</span>
+                    </span>
                     {modal.loading ? "Guardando..." : "Registrar alerta"}
                   </button>
                 </div>
@@ -2144,9 +2165,15 @@ export default function MapaPlanoModule() {
 
                 <div style={modalStyles.footer}>
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>close</span>
+                    </span>
                     Cancelar
                   </button>
                   <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>{modal.loading ? "hourglass_empty" : "yard"}</span>
+                    </span>
                     {modal.loading ? "Guardando..." : "Registrar resiembra"}
                   </button>
                 </div>
@@ -2469,6 +2496,9 @@ const modalStyles = {
     fontSize: 13,
     fontWeight: 700,
     cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
   },
   btnSecondary: {
     background: "#fff",
@@ -2479,6 +2509,9 @@ const modalStyles = {
     fontSize: 13,
     fontWeight: 700,
     cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
   },
   error: {
     margin: 16,

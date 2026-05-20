@@ -79,7 +79,8 @@
 }
 .panelTitle { font-size: 14px; font-weight: 800; color: var(--verde-profundo); margin-bottom: 2px; }
 .panelSub   { font-size: 11px; color: var(--tierra-calida); }
-.markAll    { font-size: 11px; font-weight: 700; color: var(--verde-medio); padding: 4px 8px; border-radius: 8px; transition: background var(--transition); }
+.markAll    { font-size: 11px; font-weight: 700; color: var(--verde-medio); padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; transition: background var(--transition); }
+.markAll .material-icons { font-size: 14px; }
 .markAll:hover { background: var(--verde-menta); }
 
 /* ── Lista ── */
@@ -171,7 +172,18 @@
   font-weight: 800;
   cursor: pointer;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
+
+.followBtn .material-icons { font-size: 13px; }
+
+/* ── Círculo decorativo del ícono ── */
+.iconCircle { width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.iconCircle .material-icons { font-size:11px !important; font-weight:700; }
+.markAll .iconCircle { background:rgba(27,77,42,0.10); }
+.followBtn .iconCircle { background:rgba(255,255,255,0.22); }
 
 .followBtn:hover {
   background: var(--verde-medio);
