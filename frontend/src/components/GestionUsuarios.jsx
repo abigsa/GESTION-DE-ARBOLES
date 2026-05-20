@@ -110,11 +110,15 @@ export default function GestionUsuarios({ onBack }) {
           </div>
           <div className={s.titleActions}>
             <button className={s.refreshBtn} onClick={fetchUsuarios} type="button" title="Actualizar">
-              <span className="material-icons">refresh</span>
+              <span className={s.iconCircle}>
+                <span className="material-icons">refresh</span>
+              </span>
               <span>Actualizar</span>
             </button>
             <button className={s.btnAdd} onClick={() => setModal('new')} type="button">
-              <span className="material-icons">person_add</span>
+              <span className={s.iconCircle}>
+                <span className="material-icons">person_add</span>
+              </span>
               Nuevo usuario
             </button>
           </div>
@@ -171,7 +175,10 @@ export default function GestionUsuarios({ onBack }) {
               <p className={s.errMsg}>{error}</p>
             </div>
             <button className={s.btnRetry} onClick={fetchUsuarios} type="button">
-              <span className="material-icons">refresh</span> Reintentar
+              <span className={s.iconCircle}>
+                <span className="material-icons">refresh</span>
+              </span>
+              Reintentar
             </button>
           </div>
         ) : filtered.length === 0 ? (
@@ -279,9 +286,17 @@ export default function GestionUsuarios({ onBack }) {
             <h3>¿Eliminar usuario?</h3>
             <p>Esta acción desactivará el acceso del usuario al sistema.</p>
             <div className={s.confirmBtns}>
-              <button className={s.confirmCancel} onClick={() => setConfirmId(null)} type="button">Cancelar</button>
+              <button className={s.confirmCancel} onClick={() => setConfirmId(null)} type="button">
+                <span className={s.iconCircle}>
+                  <span className="material-icons">close</span>
+                </span>
+                Cancelar
+              </button>
               <button className={s.confirmDelete} onClick={() => handleEliminar(confirmId)} type="button">
-                <span className="material-icons">delete</span> Eliminar
+                <span className={s.iconCircle}>
+                  <span className="material-icons">delete</span>
+                </span>
+                Eliminar
               </button>
             </div>
           </div>
@@ -298,13 +313,20 @@ export default function GestionUsuarios({ onBack }) {
             <h3>Resetear contraseña</h3>
             <p>Se generará una contraseña temporal para <strong>{resetModal.username}</strong>. La contraseña actual quedará invalidada.</p>
             <div className={s.confirmBtns}>
-              <button className={s.confirmCancel} onClick={() => setResetModal(null)} type="button">Cancelar</button>
+              <button className={s.confirmCancel} onClick={() => setResetModal(null)} type="button">
+                <span className={s.iconCircle}>
+                  <span className="material-icons">close</span>
+                </span>
+                Cancelar
+              </button>
               <button
                 onClick={handleResetPassword}
                 type="button"
                 style={{ background:'#D4A853', color:'#fff', border:'none', borderRadius:10, padding:'9px 16px', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}
               >
-                <span className="material-icons" style={{ fontSize:16 }}>lock_reset</span>
+                <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                  <span className="material-icons" style={{ fontSize:14 }}>lock_reset</span>
+                </span>
                 Generar contraseña
               </button>
             </div>
@@ -332,13 +354,19 @@ export default function GestionUsuarios({ onBack }) {
                 style={{ background:'#E8F5E9', color:'#1B4D2A', border:'1px solid #DCEDDF', borderRadius:10, padding:'9px 14px', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}
                 onClick={() => { try { navigator.clipboard.writeText(resetResult.password_temporal); } catch(_) {} }}
               >
-                <span className="material-icons" style={{ fontSize:16 }}>content_copy</span> Copiar
+                <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                  <span className="material-icons" style={{ fontSize:14 }}>content_copy</span>
+                </span>
+                Copiar
               </button>
               <button
                 type="button"
-                style={{ background:'#2D7A3E', color:'#fff', border:'none', borderRadius:10, padding:'9px 16px', cursor:'pointer', fontWeight:700 }}
+                style={{ background:'#2D7A3E', color:'#fff', border:'none', borderRadius:10, padding:'9px 16px', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}
                 onClick={() => setResetResult(null)}
               >
+                <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                  <span className="material-icons" style={{ fontSize:14 }}>check</span>
+                </span>
                 Cerrar
               </button>
             </div>
@@ -530,9 +558,30 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
             <p className={s.helperText}>Los campos con <span>*</span> son obligatorios.</p>
           )}
           <div className={s.modalBtns}>
-            <button type="button" className={s.btnCancel} onClick={onClose}>Cancelar</button>
+            <button type="button" className={s.btnCancel} onClick={onClose}>
+              <span className={s.iconCircle}>
+                <span className="material-icons">close</span>
+              </span>
+              Cancelar
+            </button>
             <button type="submit" form="userForm" className={s.btnSave} disabled={saving}>
-              {saving ? <span className={s.spinner} /> : isEdit ? 'Guardar cambios' : 'Crear usuario'}
+              {saving ? (
+                <span className={s.spinner} />
+              ) : isEdit ? (
+                <>
+                  <span className={s.iconCircle}>
+                    <span className="material-icons">save</span>
+                  </span>
+                  Guardar cambios
+                </>
+              ) : (
+                <>
+                  <span className={s.iconCircle}>
+                    <span className="material-icons">person_add</span>
+                  </span>
+                  Crear usuario
+                </>
+              )}
             </button>
           </div>
         </div>

@@ -770,6 +770,9 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
 
           <div className={s.ftBtns}>
             <button type="button" className={s.btnCancel} onClick={onClose}>
+              <span className={s.iconCircle}>
+                <span className="material-icons">close</span>
+              </span>
               Cancelar
             </button>
 
@@ -780,9 +783,19 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
                   Guardando...
                 </>
               ) : isEdit ? (
-                'Guardar cambios'
+                <>
+                  <span className={s.iconCircle}>
+                    <span className="material-icons">save</span>
+                  </span>
+                  Guardar cambios
+                </>
               ) : (
-                'Crear registro'
+                <>
+                  <span className={s.iconCircle}>
+                    <span className="material-icons">add</span>
+                  </span>
+                  Crear registro
+                </>
               )}
             </button>
           </div>

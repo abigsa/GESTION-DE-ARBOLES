@@ -116,7 +116,9 @@ export default function HistorialCambios({ onBack }) {
             </div>
           </div>
           <button className={s.refreshBtn} onClick={fetchData} type="button">
-            <span className="material-icons">refresh</span>
+            <span className={s.iconCircle}>
+              <span className="material-icons">refresh</span>
+            </span>
             <span>Actualizar</span>
           </button>
         </div>
@@ -188,7 +190,10 @@ export default function HistorialCambios({ onBack }) {
               <p className={s.errMsg}>{error}</p>
             </div>
             <button className={s.btnRetry} onClick={fetchData} type="button">
-              <span className="material-icons">refresh</span> Reintentar
+              <span className={s.iconCircle}>
+                <span className="material-icons">refresh</span>
+              </span>
+              Reintentar
             </button>
           </div>
         ) : filtered.length === 0 ? (
