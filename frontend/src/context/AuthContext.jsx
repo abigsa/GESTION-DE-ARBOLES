@@ -1,12 +1,10 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
-// URL central — cambia solo aquí para apuntar a producción
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
 const AuthCtx = createContext(null);
 
-// ── Helper fetch con token automático ────────────────────
-// Úsalo en lugar de fetch() directo en todos los componentes
+// ── Helper fetch con token automatico ────────────────────
 export async function apiFetch(url, options = {}) {
   const token = sessionStorage.getItem('ga_token');
   const headers = {
@@ -14,16 +12,38 @@ export async function apiFetch(url, options = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
-  const res = await fetch(url, { ...options, headers });
 
-  // Si el token expiró, limpiar sesión y recargar para ir al login
+  let res;
+  try {
+    res = await fetch(url, { ...options, headers });
+  } catch (err) {
+    // Sin conexion al servidor
+    throw new Error('No se pudo conectar con el servidor. Verifica tu conexion a internet.');
+  }
+
+  // Sesion expirada o token invalido
   if (res.status === 401) {
     sessionStorage.removeItem('ga_token');
     sessionStorage.removeItem('ga_usuario');
     window.location.reload();
     return res;
   }
+
   return res;
+}
+
+// ── Helper: extraer mensaje de error de una respuesta ────
+// Intenta leer el JSON, si falla devuelve un mensaje generico
+export async function extraerMensajeError(res, mensajePorDefecto = 'Ocurrio un error inesperado') {
+  try {
+    const data = await res.json();
+    return data.mensaje || data.error || data.message || mensajePorDefecto;
+  } catch {
+    if (res.status === 404) return 'El recurso solicitado no existe';
+    if (res.status === 403) return 'No tienes permisos para realizar esta accion';
+    if (res.status === 500) return 'Error interno del servidor. Intenta de nuevo mas tarde';
+    return mensajePorDefecto;
+  }
 }
 
 export function AuthProvider({ children }) {
@@ -53,16 +73,24 @@ export function AuthProvider({ children }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      if (!res.ok && res.status !== 401)
-        return { ok: false, mensaje: `Error del servidor (${res.status})` };
+
+      // Manejar rate limiting
+      if (res.status === 429) {
+        return { ok: false, mensaje: 'Demasiados intentos fallidos. Espera 15 minutos antes de intentar de nuevo.' };
+      }
 
       const data = await res.json();
-      if (!data.ok) return { ok: false, mensaje: data.mensaje || 'Credenciales incorrectas' };
 
-      // Guardar token JWT
+      if (!res.ok) {
+        return { ok: false, mensaje: data.mensaje || data.error || 'Credenciales incorrectas' };
+      }
+
+      if (!data.ok) {
+        return { ok: false, mensaje: data.mensaje || 'Credenciales incorrectas' };
+      }
+
       if (data.token) sessionStorage.setItem('ga_token', data.token);
 
-      // Obtener datos completos del usuario con token ya guardado
       const usuarioBase = data.data;
       const id = usuarioBase.ID_USUARIO ?? usuarioBase.id_usuario;
       let usuarioCompleto = usuarioBase;
@@ -77,8 +105,9 @@ export function AuthProvider({ children }) {
       setUsuario(usuarioCompleto);
       try { sessionStorage.setItem('ga_usuario', JSON.stringify(usuarioCompleto)); } catch {}
       return { ok: true };
-    } catch {
-      return { ok: false, mensaje: 'Error de conexión con el servidor' };
+
+    } catch (err) {
+      return { ok: false, mensaje: err.message || 'Error de conexion con el servidor' };
     } finally {
       setLoading(false);
     }
@@ -94,9 +123,13 @@ export function AuthProvider({ children }) {
         body: JSON.stringify(datos),
       });
       const data = await res.json();
-      return data.ok ? { ok: true } : { ok: false, mensaje: data.mensaje || 'Error al registrar' };
-    } catch {
-      return { ok: false, mensaje: 'Error de conexión con el servidor' };
+
+      if (!res.ok || !data.ok) {
+        return { ok: false, mensaje: data.mensaje || data.error || 'Error al registrar usuario' };
+      }
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, mensaje: err.message || 'Error de conexion con el servidor' };
     } finally {
       setLoading(false);
     }
@@ -104,9 +137,10 @@ export function AuthProvider({ children }) {
 
   // ── Actualizar perfil ─────────────────────────────────
   const actualizarPerfil = useCallback(async (datos) => {
-    if (!usuario) return { ok: false, mensaje: 'No hay sesión activa' };
+    if (!usuario) return { ok: false, mensaje: 'No hay sesion activa' };
     const id = usuario.ID_USUARIO ?? usuario.id_usuario;
     if (!id) return { ok: false, mensaje: 'No se pudo identificar el usuario' };
+
     setLoading(true);
     try {
       const res = await apiFetch(`${API}/usuarios/${id}`, {
@@ -122,21 +156,24 @@ export function AuthProvider({ children }) {
         }),
       });
       const data = await res.json();
-      if (data.ok || data.success) {
-        const updated = {
-          ...usuario,
-          NOMBRES: datos.nombres, APELLIDOS: datos.apellidos,
-          EMAIL: datos.email, TELEFONO: datos.telefono,
-          nombres: datos.nombres, apellidos: datos.apellidos,
-          email: datos.email, telefono: datos.telefono,
-        };
-        setUsuario(updated);
-        try { sessionStorage.setItem('ga_usuario', JSON.stringify(updated)); } catch {}
-        return { ok: true };
+
+      if (!res.ok || (!data.ok && !data.success)) {
+        return { ok: false, mensaje: data.mensaje || data.error || 'Error al actualizar perfil' };
       }
-      return { ok: false, mensaje: data.mensaje || 'Error al actualizar' };
-    } catch {
-      return { ok: false, mensaje: 'Error de conexión con el servidor' };
+
+      const updated = {
+        ...usuario,
+        NOMBRES: datos.nombres,   APELLIDOS: datos.apellidos,
+        EMAIL:   datos.email,     TELEFONO:  datos.telefono,
+        nombres: datos.nombres,   apellidos: datos.apellidos,
+        email:   datos.email,     telefono:  datos.telefono,
+      };
+      setUsuario(updated);
+      try { sessionStorage.setItem('ga_usuario', JSON.stringify(updated)); } catch {}
+      return { ok: true };
+
+    } catch (err) {
+      return { ok: false, mensaje: err.message || 'Error de conexion con el servidor' };
     } finally {
       setLoading(false);
     }
@@ -151,11 +188,13 @@ export function AuthProvider({ children }) {
     } catch {}
   }, []);
 
-  const getToken = () => { try { return sessionStorage.getItem('ga_token') || null; } catch { return null; } };
+  const getToken = () => {
+    try { return sessionStorage.getItem('ga_token') || null; } catch { return null; }
+  };
 
-  const isAdmin    = (usuario?.ROL_ID ?? usuario?.rol_id ?? 3) <= 2;
+  const isAdmin     = (usuario?.ROL_ID ?? usuario?.rol_id ?? 3) <= 2;
   const displayName = usuario?.NOMBRES ?? usuario?.nombres ?? usuario?.USERNAME ?? usuario?.username ?? 'Usuario';
-  const rolLabel   = isAdmin ? 'Administrador' : 'Técnico de campo';
+  const rolLabel    = isAdmin ? 'Administrador' : 'Tecnico de campo';
 
   return (
     <AuthCtx.Provider value={{
@@ -164,6 +203,8 @@ export function AuthProvider({ children }) {
       isAdmin, displayName, rolLabel,
       login, registrar, logout, actualizarPerfil, getToken,
       API,
+      // Helper exportado para que cualquier componente pueda usarlo
+      extraerMensajeError,
     }}>
       {children}
     </AuthCtx.Provider>

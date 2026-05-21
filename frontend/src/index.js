@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './mejoras.css';   // ← Mejoras visuales (skeletons, hover, contraste). Debe ir después de index.css
 import App from './AppNuevo';
 import reportWebVitals from './reportWebVitals';
 

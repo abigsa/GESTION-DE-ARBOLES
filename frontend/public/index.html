@@ -6,8 +6,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#1B4D2A" />
     <title>Gestión de Árboles</title>
-    <!-- Material Icons — necesario para el nuevo diseño -->
+
+    <!-- ============================================================ -->
+    <!-- Material Icons LOCAL (no depende de internet)                -->
+    <!-- La fuente vive en public/fonts/material-icons.woff2          -->
+    <!-- ============================================================ -->
+    <style>
+      @font-face {
+        font-family: 'Material Icons';
+        font-style: normal;
+        font-weight: 400;
+        font-display: block;
+        src: url('%PUBLIC_URL%/fonts/material-icons.woff2') format('woff2');
+      }
+      .material-icons {
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+    </style>
+
+    <!-- Fallback opcional al CDN (si la fuente local no estuviera disponible). -->
+    <!-- Si quieres 100% offline, puedes borrar esta línea sin problema.        -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
   </head>
