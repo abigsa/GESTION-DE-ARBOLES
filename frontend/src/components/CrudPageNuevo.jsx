@@ -3,7 +3,7 @@ import { MODULES, MODULE_PK, colLabel, HIDDEN_COLS } from '../config/modulesNuev
 import CrudFormNuevo from './CrudFormNuevo';
 import s from './CrudPageNuevo.module.css';
 import ExportarBtn from './ExportarBtn';
-
+import { Joyride } from 'react-joyride';
 import { API, apiFetch } from '../context/AuthContext';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
@@ -46,9 +46,49 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null);
   const [confirmRow, setConfirmRow] = useState(null);
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [pageTourRun, setPageTourRun] = useState(false);
+
+  const TOUR_MODULES = [
+    'tipos-variedad',
+    'tipos-fertilizante',
+    'tipos-tratamiento',
+    'estados-arbol',
+    'plagas-enfermedades',
+    'fincas',
+    'sectores',
+    'arboles',
+    'historial-estados',
+    'registros-plaga',
+    'registros-tratamiento',
+    'resiembras',
+    'movimiento-inventario',
+  ];
+
+  const runTour = TOUR_MODULES.includes(moduleKey);
+
+  useEffect(() => {
+    if (runTour && modal === null) {
+      setPageTourRun(false);
+      setTimeout(() => setPageTourRun(true), 800);
+    }
+  }, [moduleKey, runTour, modal]);
+
+  const tourSteps = [
+    {
+      target: '.tour-buscar',
+      content: `Aquí puedes buscar registros de ${title.toLowerCase()}.`,
+    },
+    {
+      target: '.tour-agregar',
+      content: `Haz clic aquí para agregar un nuevo registro de ${title.toLowerCase()}.`,
+    },
+    {
+      target: '.tour-tabla',
+      content: `Aquí aparecerán los registros de ${title.toLowerCase()}.`,
+    },
+  ];
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -187,6 +227,36 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
 
   return (
     <div className={s.root}>
+      {runTour && (
+        <Joyride
+          key={`${moduleKey}-${pageTourRun}`}
+          steps={tourSteps}
+          run={pageTourRun && modal === null}
+          continuous
+          showSkipButton
+          showProgress
+          disableScrolling
+          callback={(data) => {
+            if (data.status === 'finished' || data.status === 'skipped') {
+              setPageTourRun(false);
+            }
+          }}
+          locale={{
+            back: 'Atrás',
+            close: 'Cerrar',
+            last: 'Finalizar',
+            next: 'Siguiente',
+            skip: 'Saltar',
+          }}
+          styles={{
+            options: {
+              zIndex: 10000,
+              primaryColor: '#14532d',
+            },
+          }}
+        />
+      )}
+
       <div className={s.pageShell}>
         <header className={s.headerCard}>
           <div className={s.breadcrumb}>
@@ -212,6 +282,18 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
               </div>
             </div>
 
+            <button
+              className={s.refreshBtn}
+              onClick={() => {
+                setPageTourRun(false);
+                setTimeout(() => setPageTourRun(true), 100);
+              }}
+              type="button"
+            >
+              <span className="material-icons">help_outline</span>
+              <span className={s.btnLabel}>Mini tutorial</span>
+            </button>
+
             <div className={s.titleActions}>
               <button className={s.refreshBtn} onClick={fetchData} title="Actualizar" type="button">
                 <span className={s.iconCircle}>
@@ -222,7 +304,7 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
 
               <ExportarBtn data={filtered} cols={cols} title={title} />
 
-              <button className={s.btnAdd} onClick={() => setModal('new')} type="button">
+              <button className={`${s.btnAdd} tour-agregar`} onClick={() => setModal('new')} type="button">
                 <span className={s.iconCircle}>
                   <span className="material-icons">add</span>
                 </span>
@@ -232,7 +314,7 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
           </div>
 
           <div className={s.toolbar}>
-            <div className={s.searchWrap}>
+            <div className={`${s.searchWrap} tour-buscar`}>
               <span className="material-icons">search</span>
               <input
                 placeholder={`Buscar en ${title.toLowerCase()}...`}
@@ -306,7 +388,7 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
             </div>
           ) : (
             <>
-              <div className={s.tableWrap}>
+              <div className={`${s.tableWrap} tour-tabla`}>
                 <table className={s.table}>
                   <thead>
                     <tr>
