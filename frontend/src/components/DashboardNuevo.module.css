@@ -217,8 +217,9 @@
 
 .sectionsGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  align-items: stretch;
 }
 
 .groupCard {
@@ -496,4 +497,114 @@
 
 @media (max-width: 900px) {
   .chartsGrid { grid-template-columns: 1fr; }
+}
+
+.alertSummaryCard {
+  background: #fff;
+  border: 1px solid var(--pergamino-verde);
+  border-radius: 22px;
+  padding: 22px;
+  margin-bottom: 22px;
+  box-shadow: 0 8px 24px rgba(27, 77, 42, 0.05);
+
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.alertHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.alertHeader .material-icons {
+  color: #d4a853;
+  font-size: 30px;
+}
+
+.alertGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.alertItem {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #f6faf7;
+  border: 1px solid var(--pergamino-verde);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.alertItem span {
+  font-size: 24px;
+}
+
+.alertItem strong {
+  display: block;
+  font-size: 24px;
+  color: var(--verde-profundo);
+  line-height: 1;
+}
+
+.alertItem p {
+  font-size: 12px;
+  color: rgba(27, 77, 42, 0.72);
+  margin-top: 4px;
+}
+
+.alertList {
+  border-top: 1px solid var(--pergamino-verde);
+  padding-top: 14px;
+}
+
+.alertList h4 {
+  font-size: 14px;
+  color: var(--verde-profundo);
+  margin-bottom: 10px;
+}
+
+.alertRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff8e6;
+  border: 1px solid rgba(212, 168, 83, 0.35);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.alertRow .material-icons {
+  color: #d4a853;
+  font-size: 18px;
+}
+
+.alertRow p {
+  font-size: 13px;
+  color: var(--verde-profundo);
+}
+
+.alertOk {
+  font-size: 13px;
+  color: var(--tierra-calida);
+  font-style: italic;
+}
+
+@media (max-width: 900px) {
+  .alertGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .alertGrid {
+    grid-template-columns: 1fr;
+  }
 }

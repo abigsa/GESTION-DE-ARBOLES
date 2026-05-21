@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../context/AuthContext';
+
 
 import { API, apiFetch } from '../context/AuthContext';
 
@@ -40,10 +40,25 @@ function fmt(val) {
 function generarPDFHistorial(datos, estadosMap, arbolesMap) {
   const fecha = new Date().toLocaleDateString('es-GT', { year:'numeric', month:'long', day:'numeric' });
 
+  // Helper: nombre legible del árbol a partir del propio registro de historial,
+  // con respaldo en arbolesMap. Igual que el helper del componente.
+  const nombreArbol = (r) => {
+    const id       = get(r,'ID_ARBOL','id_arbol');
+    const variedad = get(r,'NOMBRE_ARBOL','nombre_arbol');
+    const surco    = get(r,'NUMERO_SURCO','numero_surco');
+    const posY     = get(r,'POSICION_Y','posicion_y');
+    const partes = [];
+    if (variedad) partes.push(variedad);
+    if (surco != null) partes.push(`Surco ${surco}`);
+    if (posY != null) partes.push(`Pos ${posY}`);
+    if (partes.length > 0) return partes.join(' · ');
+    return arbolesMap[id] || `Árbol #${id}`;
+  };
+
   // Estadísticas del top 5
   const conteos = {};
   datos.forEach(r => {
-    const arbol = arbolesMap[get(r,'ID_ARBOL','id_arbol')] || `Árbol #${get(r,'ID_ARBOL','id_arbol')}`;
+    const arbol = nombreArbol(r);
     conteos[arbol] = (conteos[arbol] || 0) + 1;
   });
   const top5 = Object.entries(conteos)
@@ -93,7 +108,7 @@ function generarPDFHistorial(datos, estadosMap, arbolesMap) {
   const arbolTop  = top5[0];
 
   const filas = datos.map((r, idx) => {
-    const arbol    = arbolesMap[get(r,'ID_ARBOL','id_arbol')] || `#${get(r,'ID_ARBOL','id_arbol')}`;
+    const arbol    = nombreArbol(r);
     const estAnt   = estadosMap[get(r,'ID_ESTADO_ANTERIOR','id_estado_anterior')] || '—';
     const estNuevo = estadosMap[get(r,'ID_ESTADO_NUEVO','id_estado_nuevo')] || '—';
     const fechaCam = fmt(get(r,'FECHA_CAMBIO','fecha_cambio'));
@@ -190,7 +205,7 @@ function generarPDFHistorial(datos, estadosMap, arbolesMap) {
 
 // ── Componente principal ──────────────────────────────────────
 export default function ReporteHistorialEstados({ onBack }) {
-  const { usuario } = useAuth();
+
   const [historial, setHistorial] = useState([]);
   const [estados,   setEstados]   = useState([]);
   const [arboles,   setArboles]   = useState([]);
@@ -238,11 +253,40 @@ export default function ReporteHistorialEstados({ onBack }) {
     const m = {};
     arboles.forEach(a => {
       const id  = get(a,'ID_ARBOL','id_arbol');
-      const nom = get(a,'CODIGO_ARBOL','codigo_arbol','NOMBRE_ARBOL','nombre_arbol') || `#${id}`;
+      // Nombre legible: "Variedad · Surco X · Pos Y" para identificar
+      // al árbol de forma única, ya que pueden existir varios árboles
+      // con la misma variedad.
+      const variedad = get(a,'NOMBRE_ARBOL','nombre_arbol');
+      const surco    = get(a,'NUMERO_SURCO','numero_surco');
+      const posY     = get(a,'POSICION_Y','posicion_y');
+      const partes = [];
+      if (variedad) partes.push(variedad);
+      if (surco != null) partes.push(`Surco ${surco}`);
+      if (posY != null) partes.push(`Pos ${posY}`);
+      const nom = partes.length > 0 ? partes.join(' · ') : `Árbol #${id}`;
       if (id != null) m[id] = nom;
     });
     return m;
   }, [arboles]);
+
+  // Construye el nombre legible de un árbol a partir de un registro de
+  // historial. Usa primero los datos que el propio registro trae
+  // (NOMBRE_ARBOL, NUMERO_SURCO, POSICION_Y) y, como respaldo, busca en
+  // arbolesMap. Esto cubre el caso de árboles que ya no aparecen en
+  // /arbol (porque están inactivos o fueron resembrados) pero sí tienen
+  // historial.
+  const nombreArbolDeRegistro = (r) => {
+    const id       = get(r,'ID_ARBOL','id_arbol');
+    const variedad = get(r,'NOMBRE_ARBOL','nombre_arbol');
+    const surco    = get(r,'NUMERO_SURCO','numero_surco');
+    const posY     = get(r,'POSICION_Y','posicion_y');
+    const partes = [];
+    if (variedad) partes.push(variedad);
+    if (surco != null) partes.push(`Surco ${surco}`);
+    if (posY != null) partes.push(`Pos ${posY}`);
+    if (partes.length > 0) return partes.join(' · ');
+    return arbolesMap[id] || `Árbol #${id}`;
+  };
 
   const filtrado = useMemo(() => {
     let rows = historial;
@@ -263,29 +307,52 @@ export default function ReporteHistorialEstados({ onBack }) {
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(r =>
-        [arbolesMap[get(r,'ID_ARBOL','id_arbol')],
+        [nombreArbolDeRegistro(r),
          estadosMap[get(r,'ID_ESTADO_NUEVO','id_estado_nuevo')],
          get(r,'OBSERVACIONES','observaciones')]
           .some(v => String(v||'').toLowerCase().includes(q))
       );
     }
     return rows;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historial, filtroArbol, filtroEstado, search, fechaDesde, fechaHasta, arbolesMap, estadosMap]);
 
-  // Top 5 árboles con más cambios
+  // Top 5 árboles con más cambios — el nombre se obtiene del primer
+  // registro de cada árbol (todos los registros del mismo ID traen la
+  // misma variedad/surco/pos del árbol).
   const top5 = useMemo(() => {
     const c = {};
+    const nombres = {};
     historial.forEach(r => {
       const id = get(r,'ID_ARBOL','id_arbol');
       c[id] = (c[id] || 0) + 1;
+      if (!nombres[id]) nombres[id] = nombreArbolDeRegistro(r);
     });
     return Object.entries(c)
       .sort((a,b) => b[1] - a[1])
       .slice(0,5)
-      .map(([id, count]) => ({ nombre: arbolesMap[id] || `#${id}`, count }));
+      .map(([id, count]) => ({ nombre: nombres[id] || arbolesMap[id] || `#${id}`, count }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historial, arbolesMap]);
 
   const maxTop = Math.max(...top5.map(t => t.count), 1);
+
+  // Lista única de árboles que aparecen en el historial (ordenada alfabéticamente
+  // por nombre). Esta lista alimenta el dropdown del filtro y siempre incluye
+  // árboles que existieron alguna vez, aunque ya estén inactivos.
+  const arbolesDelHistorial = useMemo(() => {
+    const vistos = new Map();
+    historial.forEach(r => {
+      const id = get(r,'ID_ARBOL','id_arbol');
+      if (id != null && !vistos.has(id)) {
+        vistos.set(id, nombreArbolDeRegistro(r));
+      }
+    });
+    return Array.from(vistos.entries())
+      .map(([id, nombre]) => ({ id, nombre }))
+      .sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historial, arbolesMap]);
 
   const st = styles;
 
@@ -313,14 +380,20 @@ export default function ReporteHistorialEstados({ onBack }) {
           </div>
           <div style={{display:'flex',gap:8}}>
             <button style={st.refreshBtn} onClick={cargar} type="button">
-              <span className="material-icons">refresh</span> Actualizar
+              <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-icons" style={{fontSize:14}}>refresh</span>
+              </span>
+              Actualizar
             </button>
             <button
               style={{...st.refreshBtn, background:C.oroForestal}}
               onClick={() => generarPDFHistorial(filtrado, estadosMap, arbolesMap)}
               type="button"
             >
-              <span className="material-icons">picture_as_pdf</span> Exportar PDF
+              <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-icons" style={{fontSize:14}}>picture_as_pdf</span>
+              </span>
+              Exportar PDF
             </button>
           </div>
         </div>
@@ -338,10 +411,9 @@ export default function ReporteHistorialEstados({ onBack }) {
           </div>
           <select style={st.sel} value={filtroArbol} onChange={e => setFiltroArbol(e.target.value)}>
             <option value="">Todos los árboles</option>
-            {arboles.map(a => {
-              const id = get(a,'ID_ARBOL','id_arbol');
-              return <option key={id} value={id}>{arbolesMap[id]}</option>;
-            })}
+            {arbolesDelHistorial.map(({ id, nombre }) => (
+              <option key={id} value={id}>{nombre}</option>
+            ))}
           </select>
           <select style={st.sel} value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
             <option value="">Todos los estados</option>
@@ -391,7 +463,12 @@ export default function ReporteHistorialEstados({ onBack }) {
           <div style={st.errBox}>
             <span className="material-icons">wifi_off</span>
             <p>{error}</p>
-            <button onClick={cargar} style={st.refreshBtn}>Reintentar</button>
+            <button onClick={cargar} style={st.refreshBtn}>
+              <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-icons" style={{fontSize:14}}>refresh</span>
+              </span>
+              Reintentar
+            </button>
           </div>
         ) : filtrado.length === 0 ? (
           <div style={st.empty}>
@@ -410,7 +487,7 @@ export default function ReporteHistorialEstados({ onBack }) {
               </thead>
               <tbody>
                 {filtrado.map((row, i) => {
-                  const arbol   = arbolesMap[get(row,'ID_ARBOL','id_arbol')] || `#${get(row,'ID_ARBOL','id_arbol')}`;
+                  const arbol   = nombreArbolDeRegistro(row);
                   const estAnt  = estadosMap[get(row,'ID_ESTADO_ANTERIOR','id_estado_anterior')] || '—';
                   const estNuevo= estadosMap[get(row,'ID_ESTADO_NUEVO','id_estado_nuevo')] || '—';
                   const fCambio = fmt(get(row,'FECHA_CAMBIO','fecha_cambio'));

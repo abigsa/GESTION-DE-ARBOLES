@@ -430,10 +430,15 @@ export default function MovimientoInventarioModule() {
 
           <div style={st.actions}>
             <button type="submit" style={st.btnPrimary} disabled={saving}>
-              <span className="material-icons" style={{fontSize:16}}>{saving?'hourglass_empty':editando?'save':'add'}</span>
+              <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-icons" style={{fontSize:14}}>{saving?'hourglass_empty':editando?'save':'add'}</span>
+              </span>
               {saving ? 'Guardando…' : editando ? 'Actualizar' : 'Registrar movimiento'}
             </button>
-            <button type="button" style={st.btnSecondary} onClick={limpiar}>
+            <button type="button" style={{...st.btnSecondary, display:'inline-flex', alignItems:'center', gap:6}} onClick={limpiar}>
+              <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                <span className="material-icons" style={{fontSize:14}}>refresh</span>
+              </span>
               Limpiar
             </button>
           </div>

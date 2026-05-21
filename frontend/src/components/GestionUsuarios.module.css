@@ -119,9 +119,11 @@
 .errorMsg { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--rojo-alerta); background:rgba(139,46,46,.06); border:1px solid rgba(139,46,46,.18); padding:8px 12px; border-radius:10px; }
 .errorMsg .material-icons { font-size:15px; }
 .modalBtns { display:flex; gap:10px; flex-shrink:0; }
-.btnCancel { height:44px; padding:0 18px; border:1.5px solid var(--verde-profundo); color:var(--verde-profundo); background:#fff; border-radius:12px; font-size:13px; font-weight:700; transition:background var(--transition); }
+.btnCancel { height:44px; padding:0 18px; border:1.5px solid var(--verde-profundo); color:var(--verde-profundo); background:#fff; border-radius:12px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; transition:background var(--transition); }
+.btnCancel .material-icons { font-size:18px; }
 .btnCancel:hover { background:var(--verde-menta); }
 .btnSave { height:44px; padding:0 22px; background:var(--verde-profundo); color:#fff; border-radius:12px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 8px 20px rgba(27,77,42,.18); transition:background var(--transition); }
+.btnSave .material-icons { font-size:18px; }
 .btnSave:hover:not(:disabled) { background:var(--verde-medio); }
 .btnSave:disabled { opacity:.6; cursor:not-allowed; }
 .spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
@@ -134,11 +136,18 @@
 .confirmModal h3 { font-size:17px; font-weight:800; color:var(--verde-profundo); margin-bottom:8px; }
 .confirmModal p { font-size:13px; color:var(--tierra-calida); margin-bottom:22px; }
 .confirmBtns { display:flex; gap:10px; }
-.confirmCancel { flex:1; height:42px; border:1.5px solid var(--pergamino-verde); color:var(--grafito); border-radius:12px; font-size:13px; font-weight:600; transition:background var(--transition); }
+.confirmCancel { flex:1; height:42px; border:1.5px solid var(--pergamino-verde); color:var(--grafito); border-radius:12px; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; transition:background var(--transition); }
+.confirmCancel .material-icons { font-size:18px; }
 .confirmCancel:hover { background:var(--fondo-claro); }
 .confirmDelete { flex:1; height:42px; background:var(--rojo-alerta); color:#fff; border-radius:12px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px; }
 .confirmDelete:hover { opacity:.88; }
 .confirmDelete .material-icons { font-size:17px; }
+
+/* ── Círculo decorativo del ícono ── */
+.iconCircle { width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.iconCircle .material-icons { font-size:15px !important; font-weight:700; }
+.btnAdd .iconCircle, .btnSave .iconCircle, .btnRetry .iconCircle, .confirmDelete .iconCircle { background:rgba(255,255,255,0.22); }
+.refreshBtn .iconCircle, .btnCancel .iconCircle, .confirmCancel .iconCircle { background:rgba(27,77,42,0.10); }
 
 @media (max-width:680px) {
   .modal { max-height:95vh; }

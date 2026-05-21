@@ -523,6 +523,35 @@
   transform: translateY(-1px);
 }
 
+/* ── Círculo decorativo del ícono ── */
+.iconCircle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.iconCircle .material-icons {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Botones con fondo oscuro (sólido) → círculo claro */
+.btnAdd .iconCircle,
+.emptyBtn .iconCircle,
+.btnRetry .iconCircle,
+.confirmDelete .iconCircle {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Botones con fondo claro/blanco → círculo verde tenue */
+.refreshBtn .iconCircle,
+.confirmCancel .iconCircle {
+  background: rgba(27, 77, 42, 0.10);
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -733,9 +762,12 @@
   border: 1.5px solid var(--pergamino-verde);
   color: var(--grafito); border-radius: 12px;
   font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: background var(--transition);
 }
 .confirmCancel:hover { background: var(--fondo-claro); }
+.confirmCancel .material-icons { font-size: 18px; }
+.confirmCancel .iconCircle .material-icons { font-size: 15px; }
 .confirmDelete {
   flex: 1; height: 44px;
   background: var(--rojo-alerta); color: #fff;
@@ -745,6 +777,7 @@
 }
 .confirmDelete:hover { opacity: .88; }
 .confirmDelete .material-icons { font-size: 18px; }
+.confirmDelete .iconCircle .material-icons { font-size: 15px; }
 
 /* ── Responsive mejorado ─────────────────────────── */
 @media (max-width: 768px) {

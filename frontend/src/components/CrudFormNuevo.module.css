@@ -302,6 +302,30 @@
   box-shadow: none;
 }
 
+/* Círculo decorativo del ícono */
+.iconCircle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btnSave .iconCircle {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.btnCancel .iconCircle {
+  background: rgba(27, 77, 42, 0.10);
+}
+
+.iconCircle .material-icons {
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .spinner {
   width: 16px;
   height: 16px;
@@ -453,4 +477,16 @@
 
 @keyframes spinSm {
   to { transform: rotate(360deg); }
+}
+
+.fieldError {
+  display: block;
+  margin-top: 6px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.inputError {
+  border-color: #b91c1c !important;
 }

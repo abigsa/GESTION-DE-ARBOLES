@@ -244,17 +244,33 @@ const listar = async (req, res) => {
       `
       SELECT
         H.ID_HISTORIAL,
+
+        F.ID_FINCA,
+        F.NOMBRE_FINCA AS nombre_finca,
+
+        S.ID_SECTOR,
+        S.NOMBRE_SECTOR AS nombre_sector,
+
         H.ID_ARBOL,
         TA.NOMBRE_ARBOL AS nombre_arbol,
+        A.NUMERO_SURCO,
+        A.POSICION_Y,
+
         H.ID_ESTADO_ANTERIOR,
         EA1.NOMBRE_ESTADO AS NOMBRE_ESTADO_ANTERIOR,
+
         H.ID_ESTADO_NUEVO,
         EA2.NOMBRE_ESTADO AS NOMBRE_ESTADO_NUEVO,
+
         H.FECHA_CAMBIO,
         H.OBSERVACIONES
       FROM HISTORIAL_ESTADO H
       INNER JOIN ARBOL A
         ON A.ID_ARBOL = H.ID_ARBOL
+      INNER JOIN SECTOR S
+        ON S.ID_SECTOR = A.ID_SECTOR
+      INNER JOIN FINCA F
+        ON F.ID_FINCA = S.ID_FINCA
       LEFT JOIN TIPO_VARIEDAD_ARBOL TA
         ON TA.ID_TIPO_ARBOL = A.ID_TIPO_VARIEDAD_ARBOL
       LEFT JOIN ESTADO_ARBOL EA1

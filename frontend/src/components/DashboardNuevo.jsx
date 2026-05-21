@@ -356,6 +356,9 @@ export default function DashboardNuevo({ onSelect }) {
         </div>
       </section>
 
+          
+
+
       {/* Secciones agrupadas */}
       <div className={s.sectionsGrid}>
         {groupedSections.map(section => {
@@ -386,6 +389,68 @@ export default function DashboardNuevo({ onSelect }) {
             </section>
           );
         })}
+
+
+        <section className={s.alertSummaryCard}>
+  <div className={s.alertHeader}>
+    <div>
+      <p className={s.groupEyebrow}>MONITOREO</p>
+      <h3 className={s.groupTitle}>Resumen General + Alertas</h3>
+    </div>
+    <span className="material-icons">notifications_active</span>
+  </div>
+
+  <div className={s.alertGrid}>
+    <div className={s.alertItem}>
+      <span>🌳</span>
+      <div>
+        <strong>{arboles.length}</strong>
+        <p>Árboles activos</p>
+      </div>
+    </div>
+
+    <div className={s.alertItem}>
+      <span>🐛</span>
+      <div>
+        <strong>{plagasActivas.length}</strong>
+        <p>Plagas activas</p>
+      </div>
+    </div>
+
+    <div className={s.alertItem}>
+      <span>🧪</span>
+      <div>
+        <strong>{registrosTrat.length}</strong>
+        <p>Tratamientos</p>
+      </div>
+    </div>
+
+    <div className={s.alertItem}>
+      <span>📍</span>
+      <div>
+        <strong>{fincas.length}</strong>
+        <p>Fincas activas</p>
+      </div>
+    </div>
+  </div>
+
+  <div className={s.alertList}>
+    <h4>Alertas recientes</h4>
+
+    {plagasActivas.length === 0 ? (
+      <p className={s.alertOk}>Sin plagas activas registradas.</p>
+    ) : (
+      plagasActivas.map((p, index) => (
+        <div key={index} className={s.alertRow}>
+          <span className="material-icons">warning</span>
+          <p>
+            Plaga activa en árbol #{get(p, 'ID_ARBOL', 'id_arbol')}
+          </p>
+        </div>
+      ))
+    )}
+  </div>
+</section>
       </div>
     </div>
   );

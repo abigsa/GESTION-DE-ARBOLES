@@ -189,7 +189,10 @@ useEffect(() => {
     try {
       const res = await apiFetch(`${API}/finca`);
       const resJson = await res.json();
-      const lista = Array.isArray(resJson.data) ? resJson.data : resJson.data?.data || resJson.data?.rows || [];
+      const lista = Array.isArray(resJson.data)
+        ? resJson.data
+        : resJson.data?.data || resJson.data?.rows || [];
+
       setFincas(lista);
 
       if (lista.length > 0) {
@@ -259,22 +262,22 @@ useEffect(() => {
   const largoFinca = Number(finca?.LARGO || 200);
 
   const resumenEspacio = useMemo(() => {
-  const areaTotal = anchoFinca * largoFinca;
-  const arbolesSembrados = arboles.length;
-  const metrosOcupados = arbolesSembrados * AREA_POR_ARBOL_M2;
-  const metrosDisponibles = Math.max(areaTotal - metrosOcupados, 0);
-  const capacidadTotal = Math.floor(areaTotal / AREA_POR_ARBOL_M2);
-  const espaciosDisponibles = Math.max(capacidadTotal - arbolesSembrados, 0);
+    const areaTotal = anchoFinca * largoFinca;
+    const arbolesSembrados = arboles.length;
+    const metrosOcupados = arbolesSembrados * AREA_POR_ARBOL_M2;
+    const metrosDisponibles = Math.max(areaTotal - metrosOcupados, 0);
+    const capacidadTotal = Math.floor(areaTotal / AREA_POR_ARBOL_M2);
+    const espaciosDisponibles = Math.max(capacidadTotal - arbolesSembrados, 0);
 
-  return {
-    areaTotal,
-    arbolesSembrados,
-    metrosOcupados,
-    metrosDisponibles,
-    capacidadTotal,
-    espaciosDisponibles,
-  };
-}, [anchoFinca, largoFinca, arboles.length]);
+    return {
+      areaTotal,
+      arbolesSembrados,
+      metrosOcupados,
+      metrosDisponibles,
+      capacidadTotal,
+      espaciosDisponibles,
+    };
+  }, [anchoFinca, largoFinca, arboles.length]);
 
   const estadosUnicos = useMemo(
     () => [...new Set(arboles.map((a) => a.NOMBRE_ESTADO).filter(Boolean))],
@@ -312,9 +315,9 @@ useEffect(() => {
   }, [arboles]);
 
   const arbolesConPlagas = useMemo(
-  () => arboles.filter((a) => getPlagasActivas(a).length > 0),
-  [arboles]
-);
+    () => arboles.filter((a) => getPlagasActivas(a).length > 0),
+    [arboles]
+  );
 
   const arbolesAlerta = useMemo(
     () =>
@@ -346,7 +349,7 @@ useEffect(() => {
   );
 
   const getNumeroPosicionArbol = (arbol) => {
-    return Math.max(Number(arbol?.POSICION_X || 1), 1);
+    return Math.max(Number(arbol?.POSICION_Y || 1), 1);
   };
 
   const formatFecha = (f) => {
@@ -354,7 +357,6 @@ useEffect(() => {
     const d = new Date(f);
     return isNaN(d) ? String(f) : d.toLocaleDateString("es-GT");
   };
-
 
   const getSectorBox = (_sector, idx, total) => {
     const count = Math.max(Number(total || 1), 1);
@@ -404,6 +406,7 @@ useEffect(() => {
     };
   };
 
+ 
   const getArbolPositionByMatriz = (arbol) => {
     const idxSector = sectores.findIndex(
       (s) => String(s.ID_SECTOR) === String(arbol.ID_SECTOR)
@@ -417,20 +420,60 @@ useEffect(() => {
 
     const box = getSectorBox(sector, idxSector, sectores.length);
 
-    const totalSurcos = Math.max(Number(sector.NUMERO_SURCOS || 1), 1);
-    const posicionesPorSurco = Math.max(Number(sector.POSICIONES_POR_SURCO || 1), 1);
-
+    // Surco / posición del árbol (índices base 1)
     const numeroSurco = Math.max(Number(arbol.NUMERO_SURCO || 1), 1);
-    const numeroPosicion = getNumeroPosicionArbol(arbol);
+    const numeroPosicion = Math.max(Number(arbol.POSICION_Y || 1), 1);
 
-    const relX = ((numeroPosicion - 0.5) / posicionesPorSurco) * 100;
-    const relY = ((numeroSurco - 0.5) / totalSurcos) * 100;
+    // Padding interno (en % del box). Deja espacio a la etiqueta del sector
+    // y a los bordes del recuadro.
+    const PADDING_LEFT = 12;
+    const PADDING_RIGHT = 8;
+    const PADDING_TOP = 24;
+    const PADDING_BOTTOM = 10;
 
-    const safeX = Math.max(8, Math.min(relX, 92));
-    const safeY = Math.max(10, Math.min(relY, 90));
+    const usableW = Math.max(100 - PADDING_LEFT - PADDING_RIGHT, 1);
+    const usableH = Math.max(100 - PADDING_TOP - PADDING_BOTTOM, 1);
 
-    const left = box.left + (box.width * safeX) / 100;
-    const top = box.top + (box.height * safeY) / 100;
+    // Grid lógico = máximo entre lo declarado y lo realmente usado por los
+    // árboles del sector. Garantiza consistencia incluso si los datos no
+    // coinciden con la configuración del sector.
+    const arbolesDelSector = arboles.filter(
+      (a) => String(a.ID_SECTOR) === String(sector.ID_SECTOR)
+    );
+    const maxSurcoArboles = arbolesDelSector.reduce(
+      (mx, a) => Math.max(mx, Number(a.NUMERO_SURCO || 1)),
+      1
+    );
+    const maxPosArboles = arbolesDelSector.reduce(
+      (mx, a) => Math.max(mx, Number(a.POSICION_Y || 1)),
+      1
+    );
+    const declaradoSurcos = Math.max(Number(sector.NUMERO_SURCOS || 1), 1);
+    const declaradoPos = Math.max(Number(sector.POSICIONES_POR_SURCO || 1), 1);
+
+    // Total de surcos/posiciones a representar en el grid
+    const totalSurcos = Math.max(declaradoSurcos, maxSurcoArboles);
+    const totalPosiciones = Math.max(declaradoPos, maxPosArboles);
+
+    // Paso entre celdas (en % del box). Como es constante > 0, dos pares
+    // (surco, pos) distintos SIEMPRE caen en celdas distintas → puntos
+    // distintos del mapa. No hay wrap ni colisiones.
+    const stepX = usableW / totalSurcos;
+    const stepY = usableH / totalPosiciones;
+
+    // Celda lógica (base 0)
+    const surcoIdx = numeroSurco - 1;
+    const posIdx = numeroPosicion - 1;
+
+    // Coordenadas dentro del área usable, centradas en la celda
+    const relX = surcoIdx * stepX + stepX / 2;
+    const relY = posIdx * stepY + stepY / 2;
+
+    // Coordenadas absolutas dentro del mapa
+    const xPctInBox = PADDING_LEFT + relX;
+    const yPctInBox = PADDING_TOP + relY;
+    const left = box.left + (box.width * xPctInBox) / 100;
+    const top = box.top + (box.height * yPctInBox) / 100;
 
     return { left, top };
   };
@@ -482,20 +525,35 @@ useEffect(() => {
 
   const submitNuevoArbol = async (e) => {
     e.preventDefault();
+
     try {
       setModal((m) => ({ ...m, loading: true, error: "" }));
 
-      await apiFetch(`${API}/arbol`, {
+      const res = await apiFetch(`${API}/arbol`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_sector: Number(nuevoArbolForm.id_sector),
           id_tipo_variedad_arbol: Number(nuevoArbolForm.id_tipo_variedad_arbol),
           id_estado: Number(nuevoArbolForm.id_estado),
-          numero_surco: nuevoArbolForm.numero_surco ? Number(nuevoArbolForm.numero_surco) : null,
-          posicion_x: nuevoArbolForm.posicion ? Number(nuevoArbolForm.posicion) : null,
+          numero_surco: nuevoArbolForm.numero_surco
+            ? Number(nuevoArbolForm.numero_surco)
+            : null,
+          posicion_x: nuevoArbolForm.numero_surco
+            ? Number(nuevoArbolForm.numero_surco)
+            : null,
+          posicion_y: nuevoArbolForm.posicion
+            ? Number(nuevoArbolForm.posicion)
+            : null,
           descripcion: nuevoArbolForm.descripcion || null,
         }),
       });
+
+      const json = await res.json();
+
+      if (!(json.success === true || json.ok === true)) {
+        throw new Error(json.message || json.mensaje || "No se pudo crear el árbol.");
+      }
 
       await refrescarTodo();
       closeModal();
@@ -517,6 +575,7 @@ useEffect(() => {
 
       await apiFetch(`${API}/historial-estado`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_arbol: Number(arbolSeleccionado.ID_ARBOL),
           id_estado_nuevo: Number(estadoForm.id_estado_nuevo),
@@ -545,6 +604,7 @@ useEffect(() => {
 
       await apiFetch(`${API}/registro-plaga`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_arbol: Number(arbolSeleccionado.ID_ARBOL),
           id_plaga: Number(alertaForm.id_plaga),
@@ -574,6 +634,7 @@ useEffect(() => {
 
       await apiFetch(`${API}/resiembra`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_arbol_nuevo: Number(arbolSeleccionado.ID_ARBOL),
           fecha_resiembra: resiembraForm.fecha_resiembra,
@@ -802,17 +863,17 @@ const mapTourSteps = [
           <div style={s.card}>
             <p style={s.cardTitle}>Resumen</p>
             {[
-  { l: "Finca", v: finca?.NOMBRE_FINCA || "—" },
-  { l: "Área", v: finca ? `${anchoFinca}m × ${largoFinca}m` : "—" },
-  { l: "Área total", v: `${resumenEspacio.areaTotal} m²` },
-  { l: "Metros ocupados", v: `${resumenEspacio.metrosOcupados} m²` },
-  { l: "Metros disponibles", v: `${resumenEspacio.metrosDisponibles} m²` },
-  { l: "Sectores", v: sectores.length },
-  { l: "Árboles", v: arboles.length },
-  { l: "Espacios disponibles", v: resumenEspacio.espaciosDisponibles },
-  { l: "Con alertas", v: stats.alertas, warn: stats.alertas > 0 },
-  { l: "Con plagas", v: arbolesConPlagas.length, warn: arbolesConPlagas.length > 0 },
-].map(({ l, v, warn }) => (
+              { l: "Finca", v: finca?.NOMBRE_FINCA || "—" },
+              { l: "Área", v: finca ? `${anchoFinca}m × ${largoFinca}m` : "—" },
+              { l: "Área total", v: `${resumenEspacio.areaTotal} m²` },
+              { l: "Metros ocupados", v: `${resumenEspacio.metrosOcupados} m²` },
+              { l: "Metros disponibles", v: `${resumenEspacio.metrosDisponibles} m²` },
+              { l: "Sectores", v: sectores.length },
+              { l: "Árboles", v: arboles.length },
+              { l: "Espacios disponibles", v: resumenEspacio.espaciosDisponibles },
+              { l: "Con alertas", v: stats.alertas, warn: stats.alertas > 0 },
+              { l: "Con plagas", v: arbolesConPlagas.length, warn: arbolesConPlagas.length > 0 },
+            ].map(({ l, v, warn }) => (
               <div key={l} style={s.summaryRow}>
                 <span style={{ color: "#6B7280", fontSize: 11 }}>{l}</span>
                 <strong style={{ fontSize: 12, color: warn ? "#B71C1C" : "#1B4D2A" }}>
@@ -872,89 +933,87 @@ const mapTourSteps = [
                     </span>
                   )}
 
-          <div style={{ marginTop: 10 }}>
-  <button
-    style={{
-      background: "#1B4D2A",
-      color: "#FFFFFF",
-      border: "none",
-      borderRadius: 8,
-      padding: "8px 14px",
-      fontSize: 12,
-      fontWeight: 700,
-      cursor: "pointer",
-      boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
-    }}
-    onClick={() => setMostrarAlertaEspacios(true)}
-  >
-    🌱 Espacios dispo.
-  </button>
-</div>
-                <div style={{ marginTop: 6, fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
-      Área total: {resumenEspacio.areaTotal} m² · Ocupados: {resumenEspacio.metrosOcupados} m² · Disponibles: {resumenEspacio.metrosDisponibles} m²
-    </div>
+                  <div style={{ marginTop: 10 }}>
+                    <button
+                      style={{
+                        background: "#1B4D2A",
+                        color: "#FFFFFF",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+                      }}
+                      onClick={() => setMostrarAlertaEspacios(true)}
+                    >
+                      🌱 Espacios dispo.
+                    </button>
+                  </div>
 
-    <div style={{ fontSize: 11, color: "#1B4D2A", fontWeight: 700, lineHeight: 1.5 }}>
-      Árboles sembrados: {resumenEspacio.arbolesSembrados} · Espacios disponibles: {resumenEspacio.espaciosDisponibles}
-    </div>
-  </div>
+                  <div style={{ marginTop: 6, fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
+                    Área total: {resumenEspacio.areaTotal} m² · Ocupados: {resumenEspacio.metrosOcupados} m² · Disponibles: {resumenEspacio.metrosDisponibles} m²
+                  </div>
 
-               <div className="tour-mapa-controles" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-  <button
-    style={s.btnZoom}
-    onClick={() => setZoom((z) => Math.min(z + 0.25, 2.5))}
-  >
-    ＋
-  </button>
+                  <div style={{ fontSize: 11, color: "#1B4D2A", fontWeight: 700, lineHeight: 1.5 }}>
+                    Árboles sembrados: {resumenEspacio.arbolesSembrados} · Espacios disponibles: {resumenEspacio.espaciosDisponibles}
+                  </div>
+                </div>
 
-  <span style={{ fontSize: 11, color: "#6B7280", minWidth: 34, textAlign: "center" }}>
-    {Math.round(zoom * 100)}%
-  </span>
+                <div className="tour-mapa-controles" style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <button
+                    style={s.btnZoom}
+                    onClick={() => setZoom((z) => Math.min(z + 0.25, 2.5))}
+                  >
+                    ＋
+                  </button>
 
-  <button
-    style={s.btnZoom}
-    onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))}
-  >
-    －
-  </button>
+                  <span style={{ fontSize: 11, color: "#6B7280", minWidth: 34, textAlign: "center" }}>
+                    {Math.round(zoom * 100)}%
+                  </span>
 
-  <button
-    style={s.btnZoom}
-    onClick={() => setZoom(1)}
-  >
-    ↺
-  </button>
+                  <button
+                    style={s.btnZoom}
+                    onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))}
+                  >
+                    －
+                  </button>
 
-  <button
-  style={s.btnPrimary}
-  onClick={() => {
-    setMapTourRun(false);
-    setNuevoArbolTourRun(false);
-    openModal("nuevo_arbol");
+                  <button style={s.btnZoom} onClick={() => setZoom(1)}>
+                    ↺
+                  </button>
 
-    setTimeout(() => {
-      setNuevoArbolTourRun(true);
-    }, 800);
-  }}
->
-  ＋ Nuevo Árbol
-</button>
-<button
-  style={s.btnSecondary}
-  onClick={() => {
-    setNuevoArbolTourRun(false);
-    setMapTourRun(false);
-    
+                  <button
+                    style={s.btnPrimary}
+                    onClick={() => {
+                      setMapTourRun(false);
+                      setNuevoArbolTourRun(false);
+                      openModal("nuevo_arbol");
 
-    setTimeout(() => {
-      setMapTourRun(true);
-    }, 300);
-  }}
->
-  Mini tutorial
-</button>
-</div>
-</div>
+                      setTimeout(() => {
+                        setNuevoArbolTourRun(true);
+                      }, 800);
+                    }}
+                  >
+                    ＋ Nuevo Árbol
+                  </button>
+
+                  <button
+                    style={s.btnSecondary}
+                    onClick={() => {
+                      setNuevoArbolTourRun(false);
+                      setMapTourRun(false);
+
+                      setTimeout(() => {
+                        setMapTourRun(true);
+                      }, 300);
+                    }}
+                  >
+                    Mini tutorial
+                  </button>
+                </div>
+              </div>
 
               <div
   className="tour-mapa-plano"
@@ -967,109 +1026,108 @@ const mapTourSteps = [
                   border: "1px solid #C7D8C8",
                 }}
               >
-               
-               {mostrarAlertaEspacios && (
-    <div
-      style={{
-        position: "absolute",
-        top: 14,
-        right: 14,
-        zIndex: 40,
-        width: 320,
-        background: "linear-gradient(135deg, #1B4D2A 0%, #2E7D32 100%)",
-        color: "#FFFFFF",
-        borderRadius: 14,
-        padding: "14px 16px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
-        border: "1px solid rgba(255,255,255,0.16)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 10,
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 4 }}>
-            🌱 Espacios disponibles
-          </div>
-          <div style={{ fontSize: 11, opacity: 0.9, lineHeight: 1.5 }}>
-            Capacidad actual de siembra en esta finca.
-          </div>
-        </div>
+                {mostrarAlertaEspacios && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 14,
+                      right: 14,
+                      zIndex: 40,
+                      width: 320,
+                      background: "linear-gradient(135deg, #1B4D2A 0%, #2E7D32 100%)",
+                      color: "#FFFFFF",
+                      borderRadius: 14,
+                      padding: "14px 16px",
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+                      border: "1px solid rgba(255,255,255,0.16)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        gap: 10,
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 4 }}>
+                          🌱 Espacios disponibles
+                        </div>
+                        <div style={{ fontSize: 11, opacity: 0.9, lineHeight: 1.5 }}>
+                          Capacidad actual de siembra en esta finca.
+                        </div>
+                      </div>
 
-        <button
-          onClick={() => setMostrarAlertaEspacios(false)}
-          style={{
-            background: "rgba(255,255,255,0.16)",
-            color: "#fff",
-            border: "none",
-            width: 28,
-            height: 28,
-            borderRadius: 8,
-            cursor: "pointer",
-            fontWeight: 700,
-          }}
-        >
-          ✕
-        </button>
-      </div>
+                      <button
+                        onClick={() => setMostrarAlertaEspacios(false)}
+                        style={{
+                          background: "rgba(255,255,255,0.16)",
+                          color: "#fff",
+                          border: "none",
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          cursor: "pointer",
+                          fontWeight: 700,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 10,
-          marginTop: 12,
-        }}
-      >
-        <div
-          style={{
-            background: "rgba(255,255,255,0.12)",
-            borderRadius: 10,
-            padding: "10px 12px",
-          }}
-        >
-          <div style={{ fontSize: 10, opacity: 0.85 }}>Espacios libres</div>
-          <div style={{ fontSize: 22, fontWeight: 800 }}>
-            {resumenEspacio.espaciosDisponibles}
-          </div>
-        </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 10,
+                        marginTop: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: "rgba(255,255,255,0.12)",
+                          borderRadius: 10,
+                          padding: "10px 12px",
+                        }}
+                      >
+                        <div style={{ fontSize: 10, opacity: 0.85 }}>Espacios libres</div>
+                        <div style={{ fontSize: 22, fontWeight: 800 }}>
+                          {resumenEspacio.espaciosDisponibles}
+                        </div>
+                      </div>
 
-        <div
-          style={{
-            background: "rgba(255,255,255,0.12)",
-            borderRadius: 10,
-            padding: "10px 12px",
-          }}
-        >
-          <div style={{ fontSize: 10, opacity: 0.85 }}>Capacidad total</div>
-          <div style={{ fontSize: 22, fontWeight: 800 }}>
-            {resumenEspacio.capacidadTotal}
-          </div>
-        </div>
+                      <div
+                        style={{
+                          background: "rgba(255,255,255,0.12)",
+                          borderRadius: 10,
+                          padding: "10px 12px",
+                        }}
+                      >
+                        <div style={{ fontSize: 10, opacity: 0.85 }}>Capacidad total</div>
+                        <div style={{ fontSize: 22, fontWeight: 800 }}>
+                          {resumenEspacio.capacidadTotal}
+                        </div>
+                      </div>
 
-        <div
-          style={{
-            background: "rgba(255,255,255,0.12)",
-            borderRadius: 10,
-            padding: "10px 12px",
-            gridColumn: "1 / -1",
-          }}
-        >
-          <div style={{ fontSize: 10, opacity: 0.85 }}>Metros disponibles</div>
-          <div style={{ fontSize: 20, fontWeight: 800 }}>
-            {resumenEspacio.metrosDisponibles} m²
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
+                      <div
+                        style={{
+                          background: "rgba(255,255,255,0.12)",
+                          borderRadius: 10,
+                          padding: "10px 12px",
+                          gridColumn: "1 / -1",
+                        }}
+                      >
+                        <div style={{ fontSize: 10, opacity: 0.85 }}>Metros disponibles</div>
+                        <div style={{ fontSize: 20, fontWeight: 800 }}>
+                          {resumenEspacio.metrosDisponibles} m²
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-  {cargando ? (
+                {cargando ? (
                   <div style={s.mapCenter}>
                     <span style={{ fontSize: 22 }}>🌿</span> Cargando mapa agrícola...
                   </div>
@@ -1078,6 +1136,9 @@ const mapTourSteps = [
                     <span style={{ fontSize: 28 }}>⚠️</span>
                     <span style={{ color: "#E65100" }}>{errorMsg}</span>
                     <button style={s.btnSecondary} onClick={() => cargarPlano(fincaSeleccionada)}>
+                      <span style={{ width:20, height:20, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                        <span className="material-icons" style={{fontSize:12}}>refresh</span>
+                      </span>
                       Reintentar
                     </button>
                   </div>
@@ -1098,9 +1159,33 @@ const mapTourSteps = [
                     {sectores.map((sector, i) => {
                       const pos = getSectorBox(sector, i, sectores.length);
                       const activo = String(sectorFiltro) === String(sector.ID_SECTOR);
-                      const cnt = arboles.filter(
+                      const arbolesEnSector = arboles.filter(
                         (a) => String(a.ID_SECTOR) === String(sector.ID_SECTOR)
-                      ).length;
+                      );
+                      const cnt = arbolesEnSector.length;
+
+                      // Líneas guía de surcos: usan EXACTAMENTE la misma
+                      // lógica de paso que getArbolPositionByMatriz, así
+                      // las líneas coinciden con las columnas donde caen
+                      // los árboles.
+                      const maxSurcoArboles = arbolesEnSector.reduce(
+                        (mx, a) => Math.max(mx, Number(a.NUMERO_SURCO || 1)),
+                        1
+                      );
+                      const totalSurcos = Math.max(
+                        Number(sector.NUMERO_SURCOS || 1),
+                        maxSurcoArboles,
+                        1
+                      );
+                      const PADDING_LEFT_PCT = 12;
+                      const PADDING_RIGHT_PCT = 8;
+                      const usableW_PCT = 100 - PADDING_LEFT_PCT - PADDING_RIGHT_PCT;
+                     
+                      // Dibujamos hasta 24 líneas como máximo para no saturar
+                      // visualmente sectores con muchos surcos.
+                      const surcosDibujables = Math.min(totalSurcos, 24);
+                      const stepDibujo = usableW_PCT / surcosDibujables;
+                      const surcosBg = activo ? "rgba(27,77,42,.12)" : "rgba(255,255,255,.10)";
 
                       return (
                         <div
@@ -1113,11 +1198,34 @@ const mapTourSteps = [
                             width: `${pos.width}%`,
                             height: `${pos.height}%`,
                             borderColor: activo ? "#1B4D2A" : "rgba(255,255,255,.55)",
-                            background: activo ? "rgba(27,77,42,.12)" : "rgba(255,255,255,.10)",
+                            background: surcosBg,
                             boxShadow: activo ? "inset 0 0 0 1px rgba(27,77,42,.08)" : "none",
                             cursor: "pointer",
+                            overflow: "hidden",
                           }}
                         >
+                          {/* Líneas verticales que representan los surcos */}
+                          {cnt > 0 &&
+                            Array.from({ length: surcosDibujables }).map((_, k) => {
+                              const xPct =
+                                PADDING_LEFT_PCT + k * stepDibujo + stepDibujo / 2;
+                              return (
+                                <div
+                                  key={`surco-${k}`}
+                                  style={{
+                                    position: "absolute",
+                                    left: `${xPct}%`,
+                                    top: "24%",
+                                    bottom: "10%",
+                                    width: 1,
+                                    background: activo
+                                      ? "rgba(27,77,42,.18)"
+                                      : "rgba(27,77,42,.08)",
+                                    pointerEvents: "none",
+                                  }}
+                                />
+                              );
+                            })}
                           <div style={s.sectorLabel}>
                             <strong style={{ fontSize: 10, color: "#1B4D2A" }}>
                               {sector.NOMBRE_SECTOR}
@@ -2015,6 +2123,7 @@ const mapTourSteps = [
                   min="1"
                   value={nuevoArbolForm.numero_surco}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, numero_surco: e.target.value }))}
+                  required
                 />
 
                 <label style={modalStyles.label}>Posición en surco</label>
@@ -2026,6 +2135,7 @@ const mapTourSteps = [
                   value={nuevoArbolForm.posicion}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, posicion: e.target.value }))}
                   placeholder="Número de posición dentro del surco"
+                  required
                 />
 
                 <label style={modalStyles.label}>Descripción</label>
@@ -2038,14 +2148,20 @@ const mapTourSteps = [
 
                 <div style={modalStyles.footer}>
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>close</span>
+                    </span>
                     Cancelar
                   </button>
                   <button
-  type="submit"
-  className="tour-nuevo-guardar"
-  style={modalStyles.btnPrimary}
-  disabled={modal.loading}
->
+                    type="submit"
+                    className="tour-nuevo-guardar"
+                    style={modalStyles.btnPrimary}
+                    disabled={modal.loading}
+                  >
+                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.22)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="material-icons" style={{ fontSize: 14 }}>{modal.loading ? "hourglass_empty" : "park"}</span>
+                    </span>
                     {modal.loading ? "Guardando..." : "Guardar árbol"}
                   </button>
                 </div>
@@ -2091,9 +2207,15 @@ const mapTourSteps = [
 
                 <div style={modalStyles.footer}>
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>close</span>
+                    </span>
                     Cancelar
                   </button>
                   <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>{modal.loading ? "hourglass_empty" : "update"}</span>
+                    </span>
                     {modal.loading ? "Guardando..." : "Actualizar estado"}
                   </button>
                 </div>
@@ -2147,9 +2269,15 @@ const mapTourSteps = [
 
                 <div style={modalStyles.footer}>
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>close</span>
+                    </span>
                     Cancelar
                   </button>
                   <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>{modal.loading ? "hourglass_empty" : "warning"}</span>
+                    </span>
                     {modal.loading ? "Guardando..." : "Registrar alerta"}
                   </button>
                 </div>
@@ -2180,9 +2308,15 @@ const mapTourSteps = [
 
                 <div style={modalStyles.footer}>
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(27,77,42,0.10)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>close</span>
+                    </span>
                     Cancelar
                   </button>
                   <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                    <span style={{ width:22, height:22, borderRadius:'50%', background:'rgba(255,255,255,0.22)', display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
+                      <span className="material-icons" style={{fontSize:14}}>{modal.loading ? "hourglass_empty" : "yard"}</span>
+                    </span>
                     {modal.loading ? "Guardando..." : "Registrar resiembra"}
                   </button>
                 </div>
@@ -2505,6 +2639,9 @@ const modalStyles = {
     fontSize: 13,
     fontWeight: 700,
     cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
   },
   btnSecondary: {
     background: "#fff",
@@ -2515,6 +2652,9 @@ const modalStyles = {
     fontSize: 13,
     fontWeight: 700,
     cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
   },
   error: {
     margin: 16,

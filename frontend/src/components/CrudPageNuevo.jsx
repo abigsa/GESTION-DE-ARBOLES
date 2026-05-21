@@ -4,75 +4,106 @@ import CrudFormNuevo from './CrudFormNuevo';
 import s from './CrudPageNuevo.module.css';
 import ExportarBtn from './ExportarBtn';
 import { Joyride } from 'react-joyride';
-
 import { API, apiFetch } from '../context/AuthContext';
+
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+const formatDateOnly = (value) => {
+  if (!value) return '—';
+
+  if (typeof value === 'string') {
+    if (value.includes('T')) {
+      const [datePart] = value.split('T');
+      const [year, month, day] = datePart.split('-');
+      return `${day}/${month}/${year}`;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split('-');
+      return `${day}/${month}/${year}`;
+    }
+  }
+
+  return value;
+};
+
+const isDateColumn = (col) => {
+  const k = col.toLowerCase();
+  return (
+    k.includes('fecha') ||
+    k.includes('deteccion') ||
+    k.includes('resolucion')
+  );
+};
 
 export default function CrudPageNuevo({ moduleKey, onBack }) {
   const cfg = MODULES[moduleKey];
   const { title, endpoint, icon = 'dataset' } = cfg;
 
-  const [data,      setData]      = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState('');
-  const [search,    setSearch]    = useState('');
-  const [modal,     setModal]     = useState(null);
-  const [confirmRow,setConfirmRow]= useState(null);
-const TOUR_MODULES = [
-  'tipos-variedad',
-  'tipos-fertilizante',
-  'tipos-tratamiento',
-  'estados-arbol',
-  'plagas-enfermedades',
-  'fincas',
-  'sectores',
-  'arboles',
-  'historial-estados',
-  'registros-plaga',
-  'registros-tratamiento',
-  'resiembras',
-  'movimiento-inventario',
-];
-
-const runTour = TOUR_MODULES.includes(moduleKey);
-
-const [pageTourRun, setPageTourRun] = useState(false);
-
-useEffect(() => {
-  if (runTour && modal === null) {
-    setPageTourRun(false);
-    setTimeout(() => setPageTourRun(true), 800);
-  }
-}, [moduleKey, runTour, modal]);
-
-const tourSteps = [
-  {
-    target: '.tour-buscar',
-    content: `Aquí puedes buscar registros de ${title.toLowerCase()}.`,
-  },
-  {
-    target: '.tour-agregar',
-    content: `Haz clic aquí para agregar un nuevo registro de ${title.toLowerCase()}.`,
-  },
-  {
-    target: '.tour-tabla',
-    content: `Aquí aparecerán los registros de ${title.toLowerCase()}.`,
-  },
-];
-
-  // Paginación
-  const [page,     setPage]     = useState(1);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState(null);
+  const [confirmRow, setConfirmRow] = useState(null);
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [pageTourRun, setPageTourRun] = useState(false);
+
+  const TOUR_MODULES = [
+    'tipos-variedad',
+    'tipos-fertilizante',
+    'tipos-tratamiento',
+    'estados-arbol',
+    'plagas-enfermedades',
+    'fincas',
+    'sectores',
+    'arboles',
+    'historial-estados',
+    'registros-plaga',
+    'registros-tratamiento',
+    'resiembras',
+    'movimiento-inventario',
+  ];
+
+  const runTour = TOUR_MODULES.includes(moduleKey);
+
+  useEffect(() => {
+    if (runTour && modal === null) {
+      setPageTourRun(false);
+      setTimeout(() => setPageTourRun(true), 800);
+    }
+  }, [moduleKey, runTour, modal]);
+
+  const tourSteps = [
+    {
+      target: '.tour-buscar',
+      content: `Aquí puedes buscar registros de ${title.toLowerCase()}.`,
+    },
+    {
+      target: '.tour-agregar',
+      content: `Haz clic aquí para agregar un nuevo registro de ${title.toLowerCase()}.`,
+    },
+    {
+      target: '.tour-tabla',
+      content: `Aquí aparecerán los registros de ${title.toLowerCase()}.`,
+    },
+  ];
 
   const fetchData = useCallback(async () => {
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
+
     try {
-      const res  = await apiFetch(`${API}${endpoint}`, {
+      const res = await apiFetch(`${API}${endpoint}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
+
       if (!res.ok) throw new Error(`Error ${res.status}`);
+
       const json = await res.json();
+
       if (json.ok === true || json.success === true) {
         setData(Array.isArray(json.data) ? json.data : []);
         setPage(1);
@@ -86,24 +117,35 @@ const tourSteps = [
     }
   }, [endpoint]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  // Reset página al buscar
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
- const cols = data.length > 0
-  ? Object.keys(data[0]).filter(
-      k => !HIDDEN_COLS.has(k) && !HIDDEN_COLS.has(k.toLowerCase())
-    )
-  : [];
+  const cols = data.length > 0
+    ? Object.keys(data[0]).filter(
+        k => !HIDDEN_COLS.has(k) && !HIDDEN_COLS.has(k.toLowerCase())
+      )
+    : [];
 
   const pkVal = row => {
     const pkField = MODULE_PK[moduleKey];
+
     if (pkField && row[pkField] !== undefined) return row[pkField];
-    for (const k of Object.keys(row)) if (k.toLowerCase() === 'id') return row[k];
+
     for (const k of Object.keys(row)) {
-      if (k.toLowerCase().startsWith('id_') || k.toLowerCase().endsWith('_id')) return row[k];
+      if (k.toLowerCase() === 'id') return row[k];
     }
+
+    for (const k of Object.keys(row)) {
+      if (k.toLowerCase().startsWith('id_') || k.toLowerCase().endsWith('_id')) {
+        return row[k];
+      }
+    }
+
     return null;
   };
 
@@ -115,48 +157,57 @@ const tourSteps = [
       : data,
   [data, search]);
 
-  // Paginación calculada
-  const totalPages  = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated   = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const pageStart   = filtered.length === 0 ? 0 : (page - 1) * pageSize + 1;
-  const pageEnd     = Math.min(page * pageSize, filtered.length);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const pageStart = filtered.length === 0 ? 0 : (page - 1) * pageSize + 1;
+  const pageEnd = Math.min(page * pageSize, filtered.length);
 
   const goPage = (p) => setPage(Math.max(1, Math.min(p, totalPages)));
 
-  // Generar rango de páginas para mostrar
   const pageRange = useMemo(() => {
     const range = [];
-    const delta = 1; // páginas a cada lado de la actual
+    const delta = 1;
+
     for (let i = Math.max(1, page - delta); i <= Math.min(totalPages, page + delta); i++) {
       range.push(i);
     }
+
     return range;
   }, [page, totalPages]);
 
   const handleDelete = async row => {
     const id = pkVal(row);
-    if (!id) { alert('No se puede identificar el registro'); return; }
-    try {
-      const res  = await apiFetch(`${API}${endpoint}/${id}`, { method: 'DELETE' });
-      window.dispatchEvent(new Event('plagas-actualizadas'));
-      const json = await res.json();
-      if (json.ok === true || json.success === true) {
-  setConfirmRow(null);
-  fetchData();
 
-  // 🔥 NOTIFICAR AL MAPA
-  window.dispatchEvent(new Event('arbol_actualizado'));
-}
-      else {
+    if (!id) {
+      alert('No se puede identificar el registro');
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`${API}${endpoint}/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+
+      if (json.ok === true || json.success === true) {
+        setConfirmRow(null);
+        fetchData();
+
+        window.dispatchEvent(new Event('plagas-actualizadas'));
+        window.dispatchEvent(new Event('arbol_actualizado'));
+      } else {
         alert(json.mensaje ?? json.message ?? 'Error al eliminar');
       }
-    } catch { alert('Error de conexión al eliminar'); }
+    } catch {
+      alert('Error de conexión al eliminar');
+    }
   };
 
   const renderCell = (col, val) => {
-    const v = String(val ?? '—');
+    const formattedValue = isDateColumn(col) ? formatDateOnly(val) : (val ?? '—');
+    const v = String(formattedValue ?? '—');
     const k = col.toLowerCase();
+
     const isBadge = k.includes('riesgo') || k === 'tipo_plaga' || k === 'es_productivo';
+
     if (!isBadge) {
       return (
         <span title={v.length > 42 ? v : ''} className={s.cellText}>
@@ -164,48 +215,49 @@ const tourSteps = [
         </span>
       );
     }
+
     let cls = s.badgeN;
+
     if (['ALTO', 'PLAGA', 'S'].includes(v)) cls = s.badgeD;
-    if (['BAJO', 'N'].includes(v))          cls = s.badgeS;
-    if (v === 'MEDIO')                       cls = s.badgeW;
+    if (['BAJO', 'N'].includes(v)) cls = s.badgeS;
+    if (v === 'MEDIO') cls = s.badgeW;
+
     return <span className={cls}>{v}</span>;
   };
 
   return (
-  <div className={s.root}>
-    {runTour && (
-      <Joyride
-        key={`${moduleKey}-${pageTourRun}`}
-        steps={tourSteps}
-        run={pageTourRun && modal === null}
-        continuous
-        showSkipButton
-        showProgress
-        disableScrolling
-        callback={(data) => {
-          if (data.status === 'finished' || data.status === 'skipped') {
-            setPageTourRun(false);
-          }
-        }}
-        locale={{
-          back: 'Atrás',
-          close: 'Cerrar',
-          last: 'Finalizar',
-          next: 'Siguiente',
-          skip: 'Saltar',
-        }}
-        styles={{
-          options: {
-            zIndex: 10000,
-            primaryColor: '#14532d',
-          },
-        }}
-      />
-    )}
+    <div className={s.root}>
+      {runTour && (
+        <Joyride
+          key={`${moduleKey}-${pageTourRun}`}
+          steps={tourSteps}
+          run={pageTourRun && modal === null}
+          continuous
+          showSkipButton
+          showProgress
+          disableScrolling
+          callback={(data) => {
+            if (data.status === 'finished' || data.status === 'skipped') {
+              setPageTourRun(false);
+            }
+          }}
+          locale={{
+            back: 'Atrás',
+            close: 'Cerrar',
+            last: 'Finalizar',
+            next: 'Siguiente',
+            skip: 'Saltar',
+          }}
+          styles={{
+            options: {
+              zIndex: 10000,
+              primaryColor: '#14532d',
+            },
+          }}
+        />
+      )}
 
-    <div className={s.pageShell}>
-
-        {/* ── Header ── */}
+      <div className={s.pageShell}>
         <header className={s.headerCard}>
           <div className={s.breadcrumb}>
             <button className={s.backBtn} onClick={onBack} type="button">
@@ -229,27 +281,33 @@ const tourSteps = [
                 </p>
               </div>
             </div>
-           
-           <button
-  className={s.refreshBtn}
-  onClick={() => {
-    setPageTourRun(false);
-    setTimeout(() => setPageTourRun(true), 100);
-  }}
-  type="button"
->
-  <span className="material-icons">help_outline</span>
-  <span className={s.btnLabel}>Mini tutorial</span>
-</button>
+
+            <button
+              className={s.refreshBtn}
+              onClick={() => {
+                setPageTourRun(false);
+                setTimeout(() => setPageTourRun(true), 100);
+              }}
+              type="button"
+            >
+              <span className="material-icons">help_outline</span>
+              <span className={s.btnLabel}>Mini tutorial</span>
+            </button>
 
             <div className={s.titleActions}>
               <button className={s.refreshBtn} onClick={fetchData} title="Actualizar" type="button">
-                <span className="material-icons">refresh</span>
+                <span className={s.iconCircle}>
+                  <span className="material-icons">refresh</span>
+                </span>
                 <span className={s.btnLabel}>Actualizar</span>
               </button>
+
               <ExportarBtn data={filtered} cols={cols} title={title} />
+
               <button className={`${s.btnAdd} tour-agregar`} onClick={() => setModal('new')} type="button">
-                <span className="material-icons">add</span>
+                <span className={s.iconCircle}>
+                  <span className="material-icons">add</span>
+                </span>
                 <span className={s.btnLabel}>Agregar registro</span>
               </button>
             </div>
@@ -283,7 +341,6 @@ const tourSteps = [
           </div>
         </header>
 
-        {/* ── Contenido ── */}
         <section className={s.contentCard}>
           {loading ? (
             <div className={s.center}>
@@ -291,22 +348,27 @@ const tourSteps = [
               <p className={s.centerTitle}>Cargando {title.toLowerCase()}...</p>
               <span className={s.centerText}>Espera un momento mientras se consultan los datos.</span>
             </div>
-
           ) : error ? (
             <div className={s.errBox}>
-              <div className={s.errIcon}><span className="material-icons">wifi_off</span></div>
+              <div className={s.errIcon}>
+                <span className="material-icons">wifi_off</span>
+              </div>
               <div className={s.errContent}>
                 <p className={s.errTitle}>Error de conexión</p>
                 <p className={s.errMsg}>{error}</p>
               </div>
               <button className={s.btnRetry} onClick={fetchData} type="button">
-                <span className="material-icons">refresh</span> Reintentar
+                <span className={s.iconCircle}>
+                  <span className="material-icons">refresh</span>
+                </span>
+                Reintentar
               </button>
             </div>
-
           ) : filtered.length === 0 ? (
             <div className={s.emptyState}>
-              <div className={s.emptyIcon}><span className="material-icons">inbox</span></div>
+              <div className={s.emptyIcon}>
+                <span className="material-icons">inbox</span>
+              </div>
               <p className={s.emptyTitle}>
                 {search ? `Sin resultados para "${search}"` : 'Sin registros disponibles'}
               </p>
@@ -317,14 +379,15 @@ const tourSteps = [
               </p>
               {!search && (
                 <button className={s.emptyBtn} onClick={() => setModal('new')} type="button">
-                  <span className="material-icons">add</span> Crear primer registro
+                  <span className={s.iconCircle}>
+                    <span className="material-icons">add</span>
+                  </span>
+                  Crear primer registro
                 </button>
               )}
             </div>
-
           ) : (
             <>
-              {/* Tabla con scroll horizontal en móvil */}
               <div className={`${s.tableWrap} tour-tabla`}>
                 <table className={s.table}>
                   <thead>
@@ -339,7 +402,7 @@ const tourSteps = [
                         {cols.map(c => <td key={c}>{renderCell(c, row[c])}</td>)}
                         <td>
                           <div className={s.actions}>
-                            <ABtn icon="edit"         tip="Editar"    variant="edit"   onClick={() => setModal(row)} />
+                            <ABtn icon="edit" tip="Editar" variant="edit" onClick={() => setModal(row)} />
                             <ABtn icon="delete_outline" tip="Eliminar" variant="delete" onClick={() => setConfirmRow(row)} />
                           </div>
                         </td>
@@ -349,19 +412,20 @@ const tourSteps = [
                 </table>
               </div>
 
-              {/* ── Paginación ── */}
               <div className={s.pagination}>
                 <div className={s.pageInfo}>
                   Mostrando <strong>{pageStart}–{pageEnd}</strong> de <strong>{filtered.length}</strong> registros
                 </div>
 
                 <div className={s.pageControls}>
-                  {/* Registros por página */}
                   <div className={s.pageSizeWrap}>
                     <span className={s.pageSizeLabel}>Por página:</span>
                     <select
                       value={pageSize}
-                      onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                      onChange={e => {
+                        setPageSize(Number(e.target.value));
+                        setPage(1);
+                      }}
                       className={s.pageSizeSelect}
                     >
                       {PAGE_SIZE_OPTIONS.map(n => (
@@ -370,24 +434,12 @@ const tourSteps = [
                     </select>
                   </div>
 
-                  {/* Botones de página */}
                   <div className={s.pageBtns}>
-                    <button
-                      className={s.pageBtn}
-                      onClick={() => goPage(1)}
-                      disabled={page === 1}
-                      title="Primera página"
-                      type="button"
-                    >
+                    <button className={s.pageBtn} onClick={() => goPage(1)} disabled={page === 1} title="Primera página" type="button">
                       <span className="material-icons">first_page</span>
                     </button>
-                    <button
-                      className={s.pageBtn}
-                      onClick={() => goPage(page - 1)}
-                      disabled={page === 1}
-                      title="Página anterior"
-                      type="button"
-                    >
+
+                    <button className={s.pageBtn} onClick={() => goPage(page - 1)} disabled={page === 1} title="Página anterior" type="button">
                       <span className="material-icons">chevron_left</span>
                     </button>
 
@@ -418,22 +470,11 @@ const tourSteps = [
                       </>
                     )}
 
-                    <button
-                      className={s.pageBtn}
-                      onClick={() => goPage(page + 1)}
-                      disabled={page === totalPages}
-                      title="Página siguiente"
-                      type="button"
-                    >
+                    <button className={s.pageBtn} onClick={() => goPage(page + 1)} disabled={page === totalPages} title="Página siguiente" type="button">
                       <span className="material-icons">chevron_right</span>
                     </button>
-                    <button
-                      className={s.pageBtn}
-                      onClick={() => goPage(totalPages)}
-                      disabled={page === totalPages}
-                      title="Última página"
-                      type="button"
-                    >
+
+                    <button className={s.pageBtn} onClick={() => goPage(totalPages)} disabled={page === totalPages} title="Última página" type="button">
                       <span className="material-icons">last_page</span>
                     </button>
                   </div>
@@ -444,18 +485,19 @@ const tourSteps = [
         </section>
       </div>
 
-      {/* Modal formulario */}
       {modal !== null && (
         <CrudFormNuevo
           config={cfg}
           editItem={modal === 'new' ? null : modal}
           editId={modal === 'new' ? null : pkVal(modal)}
           onClose={() => setModal(null)}
-          onSaved={() => { setModal(null); fetchData(); }}
+          onSaved={() => {
+            setModal(null);
+            fetchData();
+          }}
         />
       )}
 
-      {/* Modal confirmar eliminar */}
       {confirmRow !== null && (
         <div className={s.overlay} onClick={() => setConfirmRow(null)}>
           <div className={s.confirmModal} onClick={e => e.stopPropagation()}>
@@ -466,10 +508,16 @@ const tourSteps = [
             <p className={s.confirmMsg}>Esta acción no se puede deshacer.</p>
             <div className={s.confirmBtns}>
               <button className={s.confirmCancel} onClick={() => setConfirmRow(null)} type="button">
+                <span className={s.iconCircle}>
+                  <span className="material-icons">close</span>
+                </span>
                 Cancelar
               </button>
               <button className={s.confirmDelete} onClick={() => handleDelete(confirmRow)} type="button">
-                <span className="material-icons">delete</span> Eliminar
+                <span className={s.iconCircle}>
+                  <span className="material-icons">delete</span>
+                </span>
+                Eliminar
               </button>
             </div>
           </div>
@@ -482,7 +530,9 @@ const tourSteps = [
 function ABtn({ icon, tip, onClick, variant = 'edit' }) {
   return (
     <button
-      title={tip} onClick={onClick} type="button"
+      title={tip}
+      onClick={onClick}
+      type="button"
       className={`${s.actionBtn} ${variant === 'delete' ? s.actionDelete : s.actionEdit}`}
     >
       <span className="material-icons">{icon}</span>
