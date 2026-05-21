@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import s from './HistorialCambios.module.css';
 
 import { API, apiFetch } from '../context/AuthContext';
@@ -53,7 +53,7 @@ export default function HistorialCambios({ onBack }) {
   const [search,      setSearch]      = useState('');
   const [limite,      setLimite]      = useState(100);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true); setError('');
     try {
       const url = filtroTabla
@@ -71,9 +71,11 @@ export default function HistorialCambios({ onBack }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtroTabla, limite]);
 
-  useEffect(() => { fetchData(); }, [filtroTabla, limite]);
+  useEffect(() => {
+  fetchData();
+}, [fetchData]);
 
   const filtered = useMemo(() => {
     let rows = data;

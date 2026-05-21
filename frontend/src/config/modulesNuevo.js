@@ -164,11 +164,17 @@ export const MODULES = {
     fields:[
       { name:'nombre_arbol', label:'Nombre del árbol', type:'text', required:true, onlyLetters:true, minLength:3 },
       { name:'tipo_uso', label:'Tipo de uso', type:'select', required:true, options: TIPO_USO_OPTIONS },
-      { name:'descripcion', label:'Descripción', type:'textarea', maxLength:500 },
+      {
+  name:'descripcion',
+  label:'Descripción',
+  type:'textarea',
+  onlyText:true,
+  maxLength:500
+},
     ],
   },
 
-  'tipos-fertilizante': {
+ 'tipos-fertilizante': {
   title:'Fertilizantes',
   endpoint:'/tipo-fertilizante',
   icon:'science',
@@ -189,124 +195,165 @@ export const MODULES = {
       options: TIPO_FERTILIZANTE_OPTIONS,
     },
     {
-      name:'nutrientes_principales',
-      label:'Nutrientes',
-      type:'textarea',
+  name:'nutrientes_principales',
+  label:'Nutrientes',
+  type:'textarea',
+  required:true,
+  onlyText:true,
+  minLength:3,
+  maxLength:500
+},
+    {
+      name:'metodo_aplicacion',
+      label:'Método aplicación',
+      type:'select',
       required:true,
-      minLength:3,
-      maxLength:500
+      options: METODO_APLICACION_OPTIONS,
     },
     {
-  name:'metodo_aplicacion',
-  label:'Método aplicación',
-  type:'select',
-  required:true,
-  options: METODO_APLICACION_OPTIONS,
-},
-    {
-  name:'frecuencia',
-  label:'Frecuencia',
-  type:'select',
-  required:true,
-  options: FRECUENCIA_OPTIONS,
-},
+      name:'frecuencia',
+      label:'Frecuencia',
+      type:'select',
+      required:true,
+      options: FRECUENCIA_OPTIONS,
+    },
     {
       name:'descripcion',
       label:'Descripción',
       type:'textarea',
+      onlyText:true,
       maxLength:500
     },
   ],
 },
 
   'tipos-tratamiento': {
-    title:'Tratamientos',
-    endpoint:'/tipo-tratamiento',
-    icon:'medical_services',
-    fields:[
-      { name:'nombre_tratamiento', label:'Nombre', type:'text', required:true, minLength:3 },
-      {
-  name:'categoria',
-  label:'Categoría',
-  type:'select',
-  required:true,
-  options: CATEGORIA_TRATAMIENTO_OPTIONS,
-},
-      {
-  name:'metodo_aplicacion',
-  label:'Método aplicación',
-  type:'select',
-  required:true,
-  options: METODO_APLICACION_OPTIONS,
-},
-      {
-  name:'frecuencia',
-  label:'Frecuencia',
-  type:'select',
-  required:true,
-  options: FRECUENCIA_OPTIONS,
-},
-      { name:'descripcion', label:'Descripción', type:'textarea', maxLength:500 },
-    ],
-  },
+  title:'Tratamientos',
+  endpoint:'/tipo-tratamiento',
+  icon:'medical_services',
+  fields:[
+    {
+      name:'nombre_tratamiento',
+      label:'Nombre',
+      type:'text',
+      required:true,
+      onlyText:true,
+      minLength:3
+    },
+    {
+      name:'categoria',
+      label:'Categoría',
+      type:'select',
+      required:true,
+      options: CATEGORIA_TRATAMIENTO_OPTIONS,
+    },
+    {
+      name:'metodo_aplicacion',
+      label:'Método aplicación',
+      type:'select',
+      required:true,
+      options: METODO_APLICACION_OPTIONS,
+    },
+    {
+      name:'frecuencia',
+      label:'Frecuencia',
+      type:'select',
+      required:true,
+      options: FRECUENCIA_OPTIONS,
+    },
+    {
+      name:'descripcion',
+      label:'Descripción',
+      type:'textarea',
+      onlyText:true,
+      maxLength:500
+    },
+  ],
+},  
+
 
   'estados-arbol': {
-    title:'Estados de Árbol',
-    endpoint:'/estado-arbol',
-    icon:'device_hub',
-    fields:[
-      { name:'nombre_estado', label:'Nombre estado', type:'text', required:true, onlyLetters:true, minLength:3 },
-      { name:'orden_ciclo', label:'Orden ciclo', type:'number', min:1 },
-      {
-        name:'es_productivo',
-        label:'Productivo',
-        type:'select',
-        options:[
-          { value:'S', label:'Sí' },
-          { value:'N', label:'No' }
-        ]
-      },
-      { name:'descripcion', label:'Descripción', type:'textarea', maxLength:500 },
-    ],
-  },
-
-  'plagas-enfermedades': {
-    title:'Plagas y Enfermedades',
-    endpoint:'/plaga-enfermedad',
-    icon:'bug_report',
-    fields:[
-      {
-  name:'nombre_plaga',
-  label:'Nombre',
-  type:'text',
-  required:true,
-  onlyLetters:true,
-  minLength:3
+  title:'Estados de Árbol',
+  endpoint:'/estado-arbol',
+  icon:'device_hub',
+  fields:[
+    {
+      name:'nombre_estado',
+      label:'Nombre estado',
+      type:'text',
+      required:true,
+      onlyLetters:true,
+      minLength:3
+    },
+    {
+      name:'orden_ciclo',
+      label:'Orden ciclo',
+      type:'number',
+      required:true,
+      min:1
+    },
+    {
+      name:'es_productivo',
+      label:'Productivo',
+      type:'select',
+      options:[
+        { value:'S', label:'Sí' },
+        { value:'N', label:'No' }
+      ]
+    },
+    {
+      name:'descripcion',
+      label:'Descripción',
+      type:'textarea',
+      onlyText:true,
+      maxLength:500
+    },
+  ],
 },
-      {
-        name:'tipo_plaga',
-        label:'Tipo',
-        type:'select',
-        required:true,
-        options:[
-          { value:'PLAGA', label:'Plaga' },
-          { value:'ENFERMEDAD', label:'Enfermedad' }
-        ]
-      },
-      {
-        name:'nivel_riesgo',
-        label:'Nivel de riesgo',
-        type:'select',
-        required:true,
-        options:[
-          { value:'BAJO', label:'Bajo' },
-          { value:'MEDIO', label:'Medio' },
-          { value:'ALTO', label:'Alto' }
-        ]
-      },
-      { name:'descripcion', label:'Descripción', type:'textarea', maxLength:500 },
-    ],
-  },
+
+'plagas-enfermedades': {
+  title:'Plagas y Enfermedades',
+  endpoint:'/plaga-enfermedad',
+  icon:'bug_report',
+  fields:[
+    {
+      name:'nombre_plaga',
+      label:'Nombre',
+      type:'text',
+      required:true,
+      onlyLetters:true,
+      minLength:3
+    },
+    {
+      name:'tipo_plaga',
+      label:'Tipo',
+      type:'select',
+      required:true,
+      options:[
+        { value:'PLAGA', label:'Plaga' },
+        { value:'ENFERMEDAD', label:'Enfermedad' }
+      ]
+    },
+    {
+      name:'nivel_riesgo',
+      label:'Nivel de riesgo',
+      type:'select',
+      required:true,
+      options:[
+        { value:'BAJO', label:'Bajo' },
+        { value:'MEDIO', label:'Medio' },
+        { value:'ALTO', label:'Alto' }
+      ]
+    },
+    {
+      name:'descripcion',
+      label:'Descripción',
+      type:'textarea',
+      onlyText:true,
+      maxLength:500
+    },
+  ],
+},
 
   fincas: {
     title:'Fincas',
@@ -319,6 +366,7 @@ export const MODULES = {
     type:'text',
     required:true,
     minLength:3,
+    onlyText:true,
     maxLength:100
   },
 
@@ -326,6 +374,7 @@ export const MODULES = {
     name:'ubicacion',
     label:'Ubicación',
     type:'text',
+    onlyText:true,
     minLength:3,
     maxLength:150
   },
@@ -355,12 +404,13 @@ export const MODULES = {
     maxLength:8
   },
 
-  {
-    name:'descripcion',
-    label:'Descripción',
-    type:'textarea',
-    maxLength:500
-  },
+ {
+  name:'descripcion',
+  label:'Descripción',
+  type:'textarea',
+  onlyText:true,
+  maxLength:500
+},
 ],
   },
 
@@ -446,7 +496,13 @@ export const MODULES = {
       },
       { name:'numero_surco', label:'Surco', type:'number', required:true, min:1 },
       { name:'posicion_y', label:'Posición Y (lugar en surco)', type:'number', required:true, min:1 },
-      { name:'descripcion', label:'Descripción', type:'textarea', maxLength:500 },
+      {
+  name:'descripcion',
+  label:'Descripción',
+  type:'textarea',
+  onlyText:true,
+  maxLength:500
+},
     ],
   },
 
@@ -502,7 +558,13 @@ export const MODULES = {
         optionLabel:'nombre_estado',
       },
       { name:'fecha_cambio', label:'Fecha de cambio', type:'date', required:true, noFutureDate:true },
-      { name:'observaciones', label:'Observaciones', type:'textarea', maxLength:500 },
+      {
+  name:'observaciones',
+  label:'Observaciones',
+  type:'textarea',
+  onlyText:true,
+  maxLength:500
+},
     ],
   },
 
@@ -558,8 +620,19 @@ export const MODULES = {
         optionLabel:'NOMBRE_PLAGA',
       },
       { name:'fecha_deteccion', label:'Detección', type:'date', required:true, noFutureDate:true },
-      { name:'fecha_resolucion', label:'Resolución', type:'date', noFutureDate:true, minDateField:'fecha_deteccion' },
-      { name:'observaciones', label:'Observaciones', type:'textarea', maxLength:500 },
+      {
+  name:'fecha_resolucion',
+  label:'Resolución',
+  type:'date',
+  minDateField:'fecha_deteccion'
+},
+      {
+  name:'observaciones',
+  label:'Observaciones',
+  type:'textarea',
+  onlyText:true,
+  maxLength:500
+},
     ],
   },
 
@@ -623,7 +696,13 @@ export const MODULES = {
         optionLabel:'nombre_fertilizante',
       },
       { name:'fecha_aplicacion', label:'Fecha aplic.', type:'date', required:true, noFutureDate:true },
-      { name:'observaciones', label:'Observaciones', type:'textarea', maxLength:500 },
+      {
+  name:'observaciones',
+  label:'Observaciones',
+  type:'textarea',
+  onlyText:true,
+  maxLength:500
+},
     ],
   },
 
@@ -670,7 +749,15 @@ export const MODULES = {
         },
       },
       { name:'fecha_resiembra', label:'Fecha', type:'date', required:true, noFutureDate:true },
-      { name:'motivo', label:'Motivo', type:'textarea', required:true, minLength:5, maxLength:500 },
+      {
+  name:'motivo',
+  label:'Motivo',
+  type:'textarea',
+  required:true,
+  onlyText:true,
+  minLength:5,
+  maxLength:500
+},
     ],
   },
 
@@ -726,7 +813,13 @@ export const MODULES = {
         optionLabel:'NOMBRE',
       },
       { name:'fecha_movimiento', label:'Fecha movimiento', type:'date', required:true, noFutureDate:true },
-      { name:'observaciones', label:'Observaciones', type:'textarea', maxLength:500 },
+      {
+  name:'observaciones',
+  label:'Observaciones',
+  type:'textarea',
+  onlyText:true,
+  maxLength:500
+},
     ],
   },
 };

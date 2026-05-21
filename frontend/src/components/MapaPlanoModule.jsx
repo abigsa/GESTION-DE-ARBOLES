@@ -1048,7 +1048,7 @@ export default function MapaPlanoModule() {
                       const PADDING_LEFT_PCT = 12;
                       const PADDING_RIGHT_PCT = 8;
                       const usableW_PCT = 100 - PADDING_LEFT_PCT - PADDING_RIGHT_PCT;
-                      const stepXpct = usableW_PCT / totalSurcos;
+                     
                       // Dibujamos hasta 24 líneas como máximo para no saturar
                       // visualmente sectores con muchos surcos.
                       const surcosDibujables = Math.min(totalSurcos, 24);
