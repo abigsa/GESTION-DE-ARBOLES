@@ -397,33 +397,157 @@ function ModalUsuario({ editItem, onClose, onSaved }) {
   const [error,   setError]   = useState('');
   const [verPass, setVerPass] = useState(false);
 
-  const set = (k, v) => { setForm(f => ({...f,[k]:v})); setError(''); };
+ const set = (k, v) => {
+
+  // Usuario: solo letras y números
+  if (k === 'username') {
+    if (!/^[A-Za-z0-9]*$/.test(v)) return;
+  }
+
+  // Nombres y apellidos: solo letras
+  if (k === 'nombres' || k === 'apellidos') {
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/.test(v)) return;
+  }
+
+  // Teléfono: solo números
+  if (k === 'telefono') {
+    if (!/^\d*$/.test(v)) return;
+  }
+
+  // Correo electrónico
+if (k === 'email') {
+  if (!/^[A-Za-z0-9@._-]*$/.test(v)) return;
+}
+
+  setForm(f => ({ ...f, [k]: v }));
+  setError('');
+};
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.username) { setError('El nombre de usuario es obligatorio'); return; }
-    if (!isEdit && !form.password) { setError('La contraseña es obligatoria'); return; }
-    if (!isEdit && form.password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
+  e.preventDefault();
 
-    setSaving(true); setError('');
-    try {
-      const body = { ...form };
-      if (!isEdit) body.password_hash = form.password;
-      delete body.password;
+  // Usuario obligatorio
+  if (!form.username.trim()) {
+    setError('El nombre de usuario es obligatorio');
+    return;
+  }
 
-      const id  = isEdit ? (editItem?.ID_USUARIO ?? editItem?.id_usuario) : null;
-      const url = isEdit ? `${API}/usuarios/${id}` : `${API}/usuarios`;
-      const res = await apiFetch(url, {
-        method:  isEdit ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (data.ok || data.success) onSaved();
-      else setError(data.mensaje || data.message || 'Error al guardar');
-    } catch { setError('Error de conexión'); }
-    finally { setSaving(false); }
-  };
+  // Usuario válido
+  if (!/^[A-Za-z0-9]+$/.test(form.username)) {
+    setError('El usuario solo puede contener letras y números');
+    return;
+  }
+
+  // Contraseña
+  if (!isEdit) {
+
+    if (!form.password) {
+      setError('La contraseña es obligatoria');
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+
+    if (!/[A-Z]/.test(form.password)) {
+      setError('La contraseña debe contener al menos una mayúscula');
+      return;
+    }
+
+    if (!/[a-z]/.test(form.password)) {
+      setError('La contraseña debe contener al menos una minúscula');
+      return;
+    }
+
+    if (!/[0-9]/.test(form.password)) {
+      setError('La contraseña debe contener al menos un número');
+      return;
+    }
+  }
+
+  // Nombres
+  if (
+    form.nombres &&
+    !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(form.nombres)
+  ) {
+    setError('Los nombres solo permiten letras');
+    return;
+  }
+
+  // Apellidos
+  if (
+    form.apellidos &&
+    !/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(form.apellidos)
+  ) {
+    setError('Los apellidos solo permiten letras');
+    return;
+  }
+
+  // Correo
+  if (
+    form.email &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
+  ) {
+    setError('Debes ingresar un correo válido');
+    return;
+  }
+
+  // Teléfono
+  if (
+    form.telefono &&
+    !/^\d+$/.test(form.telefono)
+  ) {
+    setError('El teléfono solo permite números');
+    return;
+  }
+
+  setSaving(true);
+  setError('');
+
+  try {
+
+    const body = { ...form };
+
+    if (!isEdit) body.password_hash = form.password;
+
+    delete body.password;
+
+    const id  = isEdit
+      ? (editItem?.ID_USUARIO ?? editItem?.id_usuario)
+      : null;
+
+    const url = isEdit
+      ? `${API}/usuarios/${id}`
+      : `${API}/usuarios`;
+
+    const res = await apiFetch(url, {
+      method: isEdit ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+
+    if (data.ok || data.success) {
+      onSaved();
+    } else {
+      setError(data.mensaje || data.message || 'Error al guardar');
+    }
+
+  } catch {
+
+    setError('Error de conexión');
+
+  } finally {
+
+    setSaving(false);
+
+  }
+};
 
   return (
     <div className={s.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
