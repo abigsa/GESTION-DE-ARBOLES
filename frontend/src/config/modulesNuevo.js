@@ -12,10 +12,11 @@ export const COL_LABELS = {
   area_hectareas:'Área (ha)', propietario:'Propietario',
   telefono_contacto:'Teléfono', id_finca:'ID Finca',
   nombre_sector:'Sector', numero_surcos:'Surcos',
-  posiciones_por_surco:'Pos/surco',
- 
-  numero_surco:'Surco',
-  id_estado_nuevo:'Nuevo estado', observaciones:'Observaciones',
+posiciones_por_surco:'Pos/surco',
+
+numero_surco:'Surco',
+posicion_x:'Posición en surco',
+id_estado_nuevo:'Nuevo estado', observaciones:'Observaciones',
   fecha_cambio:'Fecha cambio', id_plaga:'ID Plaga',
   fecha_deteccion:'Detección', fecha_resolucion:'Resolución',
   id_fertilizante:'Fertilizante',
@@ -39,7 +40,7 @@ export const HIDDEN_COLS = new Set([
   'id_resiembra',
   'ID_RESIEMBRA',
   'id_registro',
-  'ID_REGISTRO',
+  'ID_REGISTRO', 
   'id_estado_nuevo',
   'ID_ESTADO_NUEVO',
   'id_estado_anterior',
@@ -62,7 +63,7 @@ export const HIDDEN_COLS = new Set([
   'id_tratamiento',
   'ID_TRATAMIENTO',
 
-  'posicion_x','POSICION_X',
+  
 ]);
 
 export const DASHBOARD_QUICK_ACCESS = [
@@ -145,7 +146,16 @@ export const MODULES = {
     endpoint:'/tipos-variedad',
     icon:'category',
     fields:[
-      { name:'nombre_arbol', label:'Nombre del árbol', type:'text', required:true },
+      {
+        name:'nombre_arbol',
+        label:'Árbol',
+        type:'remote-select',
+        required:true,
+        optionSource:'/arbol',
+        optionValue:'NOMBRE_ARBOL',
+        optionLabel:'NOMBRE_ARBOL',
+        valueType:'string',
+      },
       {
         name:'tipo_uso',
         label:'Tipo de uso',
@@ -153,7 +163,7 @@ export const MODULES = {
         required:true,
         options: TIPO_USO_OPTIONS,
       },
-      { name:'descripcion',  label:'Descripción',      type:'textarea' },
+      { name:'descripcion', label:'Descripción', type:'textarea' },
     ],
   },
 
@@ -162,7 +172,16 @@ export const MODULES = {
     endpoint:'/tipo-fertilizante',
     icon:'science',
     fields:[
-      { name:'nombre_fertilizante',    label:'Nombre',            type:'text', required:true },
+      {
+        name:'nombre_fertilizante',
+        label:'Nombre',
+        type:'remote-select',
+        required:true,
+        optionSource:'/tipo-fertilizante',
+        optionValue:'nombre_fertilizante',
+        optionLabel:'nombre_fertilizante',
+        valueType:'string',
+      },
       {
         name:'tipo_fertilizante',
         label:'Tipo',
@@ -170,10 +189,10 @@ export const MODULES = {
         required:true,
         options: TIPO_FERTILIZANTE_OPTIONS,
       },
-      { name:'nutrientes_principales', label:'Nutrientes',        type:'textarea' },
-      { name:'metodo_aplicacion',      label:'Método aplicación', type:'text' },
-      { name:'frecuencia',             label:'Frecuencia',        type:'text' },
-      { name:'descripcion',            label:'Descripción',       type:'textarea' },
+      { name:'nutrientes_principales', label:'Nutrientes', type:'textarea' },
+      { name:'metodo_aplicacion', label:'Método aplicación', type:'text' },
+      { name:'frecuencia', label:'Frecuencia', type:'text' },
+      { name:'descripcion', label:'Descripción', type:'textarea' },
     ],
   },
 
@@ -182,11 +201,20 @@ export const MODULES = {
     endpoint:'/tipo-tratamiento',
     icon:'medical_services',
     fields:[
-      { name:'nombre_tratamiento', label:'Nombre',            type:'text', required:true },
-      { name:'categoria',          label:'Categoría',         type:'text' },
-      { name:'metodo_aplicacion',  label:'Método aplicación', type:'text' },
-      { name:'frecuencia',         label:'Frecuencia',        type:'text' },
-      { name:'descripcion',        label:'Descripción',       type:'textarea' },
+      {
+        name:'nombre_tratamiento',
+        label:'Nombre',
+        type:'remote-select',
+        required:true,
+        optionSource:'/tipo-tratamiento',
+        optionValue:'nombre_tratamiento',
+        optionLabel:'nombre_tratamiento',
+        valueType:'string',
+      },
+      { name:'categoria', label:'Categoría', type:'text' },
+      { name:'metodo_aplicacion', label:'Método aplicación', type:'text' },
+      { name:'frecuencia', label:'Frecuencia', type:'text' },
+      { name:'descripcion', label:'Descripción', type:'textarea' },
     ],
   },
 
@@ -195,8 +223,17 @@ export const MODULES = {
     endpoint:'/estado-arbol',
     icon:'device_hub',
     fields:[
-      { name:'nombre_estado', label:'Nombre estado', type:'text', required:true },
-      { name:'orden_ciclo',   label:'Orden ciclo',   type:'number' },
+      {
+        name:'nombre_estado',
+        label:'Estado',
+        type:'remote-select',
+        required:true,
+        optionSource:'/estado-arbol',
+        optionValue:'nombre_estado',
+        optionLabel:'nombre_estado',
+        valueType:'string',
+      },
+      { name:'orden_ciclo', label:'Orden ciclo', type:'number' },
       {
         name:'es_productivo',
         label:'Productivo',
@@ -206,7 +243,7 @@ export const MODULES = {
           { value:'N', label:'No' }
         ]
       },
-      { name:'descripcion',   label:'Descripción',   type:'textarea' },
+      { name:'descripcion', label:'Descripción', type:'textarea' },
     ],
   },
 
@@ -215,7 +252,16 @@ export const MODULES = {
     endpoint:'/plaga-enfermedad',
     icon:'bug_report',
     fields:[
-      { name:'nombre_plaga', label:'Nombre', type:'text', required:true },
+      {
+        name:'nombre_plaga',
+        label:'Nombre',
+        type:'remote-select',
+        required:true,
+        optionSource:'/plaga-enfermedad',
+        optionValue:'nombre_plaga',
+        optionLabel:'nombre_plaga',
+        valueType:'string',
+      },
       {
         name:'tipo_plaga',
         label:'Tipo',
@@ -235,7 +281,7 @@ export const MODULES = {
           { value:'ALTO', label:'Alto' }
         ]
       },
-      { name:'descripcion',  label:'Descripción', type:'textarea' },
+      { name:'descripcion', label:'Descripción', type:'textarea' },
     ],
   },
 
@@ -244,12 +290,12 @@ export const MODULES = {
     endpoint:'/finca',
     icon:'landscape',
     fields:[
-      { name:'nombre_finca',      label:'Nombre finca', type:'text', required:true },
-      { name:'ubicacion',         label:'Ubicación',    type:'text' },
-      { name:'area_hectareas',    label:'Área (ha)',    type:'number' },
-      { name:'propietario',       label:'Propietario',  type:'text' },
-      { name:'telefono_contacto', label:'Teléfono',     type:'text' },
-      { name:'descripcion',       label:'Descripción',  type:'textarea' },
+      { name:'nombre_finca', label:'Nombre finca', type:'text', required:true },
+      { name:'ubicacion', label:'Ubicación', type:'text' },
+      { name:'area_hectareas', label:'Área (ha)', type:'number' },
+      { name:'propietario', label:'Propietario', type:'text' },
+      { name:'telefono_contacto', label:'Teléfono', type:'text' },
+      { name:'descripcion', label:'Descripción', type:'textarea' },
     ],
   },
 
@@ -280,12 +326,11 @@ export const MODULES = {
         type:'select',
         options: TIPO_CULTIVO_OPTIONS,
       },
-      { name:'area_hectareas',       label:'Área (ha)',      type:'number' },
-      { name:'numero_surcos',        label:'Surcos',         type:'number' },
+      { name:'area_hectareas', label:'Área (ha)', type:'number' },
+      { name:'numero_surcos', label:'Surcos', type:'number' },
       { name:'posiciones_por_surco', label:'Pos. por surco', type:'number' },
     ],
   },
-
   arboles: {
     title:'Árboles',
     endpoint:'/arbol',

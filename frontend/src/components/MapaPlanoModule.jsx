@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Joyride } from 'react-joyride';
 import { API, apiFetch } from '../context/AuthContext';
 
 const ESTADO_ESTILOS = {
@@ -96,6 +97,8 @@ export default function MapaPlanoModule() {
   const [zoom, setZoom] = useState(1);
   const [errorMsg, setErrorMsg] = useState(null);
   const [mostrarAlertaEspacios, setMostrarAlertaEspacios] = useState(false);
+const [mapTourRun, setMapTourRun] = useState(false);
+const [nuevoArbolTourRun, setNuevoArbolTourRun] = useState(false);
 
   const [catalogos, setCatalogos] = useState({
     estados: [],
@@ -137,34 +140,50 @@ export default function MapaPlanoModule() {
     motivo: "",
   });
 
-  useEffect(() => {
-    cargarFincas();
-    cargarCatalogos();
-  }, []);
+ useEffect(() => {
+  cargarFincas();
+  cargarCatalogos();
+}, []);
 
-  useEffect(() => {
-    if (fincaSeleccionada) {
-      setArbolSeleccionado(null);
-      setSectorFiltro("");
-      setEstadoFiltro("");
-      setErrorMsg(null);
-      cargarPlano(fincaSeleccionada);
-    }
-  }, [fincaSeleccionada]);
+useEffect(() => {
+  if (datosPlano && vista === VISTA.MAPA) {
+    setMapTourRun(false);
+  
 
-  useEffect(() => {
+    setTimeout(() => {
+      setMapTourRun(true);
+    }, 800);
+  }
+}, [datosPlano, vista]);
+
+
+useEffect(() => {
+  if (fincaSeleccionada) {
+    setArbolSeleccionado(null);
+    setSectorFiltro("");
+    setEstadoFiltro("");
+    setErrorMsg(null);
+    cargarPlano(fincaSeleccionada);
+  }
+}, [fincaSeleccionada]);
+
+useEffect(() => {
   const handleUpdate = () => {
     if (fincaSeleccionada) {
       cargarPlano(fincaSeleccionada);
     }
   };
 
-  window.addEventListener('arbol_actualizado', handleUpdate);
+  window.addEventListener("arbol_actualizado", handleUpdate);
 
   return () => {
-    window.removeEventListener('arbol_actualizado', handleUpdate);
+    window.removeEventListener("arbol_actualizado", handleUpdate);
   };
 }, [fincaSeleccionada]);
+
+
+
+ 
 
   const cargarFincas = async () => {
     try {
@@ -419,16 +438,18 @@ export default function MapaPlanoModule() {
   const openModal = (tipo) => {
     setModal({ tipo, loading: false, error: "" });
 
-    if (tipo === "nuevo_arbol") {
-      setNuevoArbolForm({
-        id_sector: sectorFiltro || "",
-        id_tipo_variedad_arbol: "",
-        id_estado: "",
-        numero_surco: "",
-        descripcion: "",
-        posicion: "",
-      });
-    }
+   if (tipo === "nuevo_arbol") {
+  setNuevoArbolForm({
+    id_sector: sectorFiltro || "",
+    id_tipo_variedad_arbol: "",
+    id_estado: "",
+    numero_surco: "",
+    descripcion: "",
+    posicion: "",
+  });
+
+  
+}
 
     if (tipo === "actualizar_estado" && arbolSeleccionado) {
       setEstadoForm({
@@ -570,7 +591,23 @@ export default function MapaPlanoModule() {
       }));
     }
   };
-
+  const nuevoArbolTourSteps = [
+  { target: '.tour-nuevo-sector', content: 'Selecciona el sector donde estará ubicado el árbol.' },
+  { target: '.tour-nuevo-variedad', content: 'Selecciona la variedad del árbol.' },
+  { target: '.tour-nuevo-estado', content: 'Selecciona el estado inicial del árbol.' },
+  { target: '.tour-nuevo-surco', content: 'Ingresa el número de surco.' },
+  { target: '.tour-nuevo-posicion', content: 'Ingresa la posición del árbol dentro del surco.' },
+  { target: '.tour-nuevo-descripcion', content: 'Agrega una descripción si es necesario.' },
+  { target: '.tour-nuevo-guardar', content: 'Cuando termines, presiona aquí para guardar el árbol.' },
+];
+const mapTourSteps = [
+  { target: '.tour-mapa-finca', content: 'Aquí seleccionas la finca.' },
+  { target: '.tour-mapa-tabs', content: 'Aquí cambias entre Mapa, Alertas y Gestión de resiembra.' },
+  { target: '.tour-mapa-diagnostico', content: 'Aquí ves el diagnóstico general de los árboles.' },
+  { target: '.tour-mapa-filtros', content: 'Aquí puedes filtrar por sector o estado.' },
+  { target: '.tour-mapa-plano', content: 'Aquí se muestra el mapa visual de árboles.' },
+  { target: '.tour-mapa-detalle', content: 'Aquí verás el detalle del árbol seleccionado.' },
+];
   const sectoresDeLaFinca = useMemo(() => {
     if (!fincaSeleccionada) return catalogos.sectores;
 
@@ -595,8 +632,66 @@ export default function MapaPlanoModule() {
             </div>
           </div>
         </div>
+<Joyride
+  steps={mapTourSteps}
+  run={mapTourRun}
+  continuous
+  showSkipButton
+  showProgress
+  disableScrolling
+  callback={(data) => {
+  if (data.status === "finished" || data.status === "skipped") {
+    setMapTourRun(false);
+  }
+}}
 
-        <div style={s.tabs}>
+    
+  floaterProps={{
+    offset: 60,
+  }}
+  locale={{
+    back: 'Atrás',
+    close: 'Cerrar',
+    last: 'Finalizar',
+    next: 'Siguiente',
+    skip: 'Saltar',
+  }}
+  styles={{
+    options: {
+      zIndex: 30000,
+      primaryColor: '#14532d',
+    },
+  }}
+/>
+<Joyride
+  steps={nuevoArbolTourSteps}
+  run={nuevoArbolTourRun}
+  continuous
+  showSkipButton
+  showProgress
+  disableScrolling
+  callback={(data) => {
+    const { status } = data;
+
+    if (status === "finished" || status === "skipped") {
+      setNuevoArbolTourRun(false);
+    }
+  }}
+  locale={{
+    back: 'Atrás',
+    close: 'Cerrar',
+    last: 'Finalizar',
+    next: 'Siguiente',
+    skip: 'Saltar',
+  }}
+  styles={{
+    options: {
+      zIndex: 50000,
+      primaryColor: '#14532d',
+    },
+  }}
+/>
+       <div className="tour-mapa-tabs" style={s.tabs}>
           {[
             { id: VISTA.MAPA, ic: "🗺", tx: "Mapa" },
             { id: VISTA.ALERTAS, ic: "⚠️", tx: `Alertas (${stats.alertas})` },
@@ -612,8 +707,9 @@ export default function MapaPlanoModule() {
           ))}
         </div>
 
-        <select
-          style={s.selectFinca}
+       <select
+  className="tour-mapa-finca"
+  style={s.selectFinca}
           value={fincaSeleccionada}
           onChange={(e) => setFincaSeleccionada(e.target.value)}
         >
@@ -627,8 +723,8 @@ export default function MapaPlanoModule() {
 
       <div style={s.layout}>
         <aside style={s.aside}>
-          <div style={s.card}>
-            <p style={s.cardTitle}>Diagnóstico General</p>
+         <div className="tour-mapa-diagnostico" style={s.card}>
+  <p style={s.cardTitle}>Diagnóstico General</p>
 
             <div style={{ ...s.diagItem, background: "#E8F5E9" }}>
               <span style={{ fontSize: 11 }}>Total árboles</span>
@@ -659,8 +755,8 @@ export default function MapaPlanoModule() {
             )}
           </div>
 
-          <div style={s.card}>
-            <p style={s.cardTitle}>Filtros</p>
+         <div className="tour-mapa-filtros" style={s.card}>
+  <p style={s.cardTitle}>Filtros</p>
 
             <label style={s.label}>Sección</label>
             <select
@@ -803,29 +899,67 @@ export default function MapaPlanoModule() {
     </div>
   </div>
 
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <button style={s.btnZoom} onClick={() => setZoom((z) => Math.min(z + 0.25, 2.5))}>
-                    ＋
-                  </button>
-                  <span style={{ fontSize: 11, color: "#6B7280", minWidth: 34, textAlign: "center" }}>
-                    {Math.round(zoom * 100)}%
-                  </span>
-                  <button style={s.btnZoom} onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))}>
-                    －
-                  </button>
-                  <button style={s.btnZoom} onClick={() => setZoom(1)}>
-                    ↺
-                  </button>
-                  <button style={s.btnPrimary} onClick={() => openModal("nuevo_arbol")}>
-                    ＋ Nuevo Árbol
-                  </button>
-                 
-                </div>
-              </div>
+               <div className="tour-mapa-controles" style={{ display: "flex", gap: 6, alignItems: "center" }}>
+  <button
+    style={s.btnZoom}
+    onClick={() => setZoom((z) => Math.min(z + 0.25, 2.5))}
+  >
+    ＋
+  </button>
+
+  <span style={{ fontSize: 11, color: "#6B7280", minWidth: 34, textAlign: "center" }}>
+    {Math.round(zoom * 100)}%
+  </span>
+
+  <button
+    style={s.btnZoom}
+    onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))}
+  >
+    －
+  </button>
+
+  <button
+    style={s.btnZoom}
+    onClick={() => setZoom(1)}
+  >
+    ↺
+  </button>
+
+  <button
+  style={s.btnPrimary}
+  onClick={() => {
+    setMapTourRun(false);
+    setNuevoArbolTourRun(false);
+    openModal("nuevo_arbol");
+
+    setTimeout(() => {
+      setNuevoArbolTourRun(true);
+    }, 800);
+  }}
+>
+  ＋ Nuevo Árbol
+</button>
+<button
+  style={s.btnSecondary}
+  onClick={() => {
+    setNuevoArbolTourRun(false);
+    setMapTourRun(false);
+    
+
+    setTimeout(() => {
+      setMapTourRun(true);
+    }, 300);
+  }}
+>
+  Mini tutorial
+</button>
+</div>
+</div>
 
               <div
-                style={{
-                  position: "relative",
+  className="tour-mapa-plano"
+  style={{
+    position: "relative",
                   width: "100%",
                   height: 420,
                   borderRadius: 10,
@@ -1636,8 +1770,8 @@ export default function MapaPlanoModule() {
         </section>
 
         <aside style={{ ...s.aside, maxWidth: 225 }}>
-          <div style={s.card}>
-            <p style={s.cardTitle}>Detalle del Árbol</p>
+         <div className="tour-mapa-detalle" style={s.card}>
+  <p style={s.cardTitle}>Detalle del Árbol</p>
 
             {!arbolSeleccionado ? (
               <p style={{ color: "#9CA3AF", fontSize: 12, lineHeight: 1.7 }}>
@@ -1822,7 +1956,8 @@ export default function MapaPlanoModule() {
               <form onSubmit={submitNuevoArbol} style={modalStyles.form}>
                 <label style={modalStyles.label}>Sector</label>
                 <select
-                  style={modalStyles.input}
+  className="tour-nuevo-sector"
+  style={modalStyles.input}
                   value={nuevoArbolForm.id_sector}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, id_sector: e.target.value }))}
                   required
@@ -1837,7 +1972,8 @@ export default function MapaPlanoModule() {
 
                 <label style={modalStyles.label}>Variedad</label>
                 <select
-                  style={modalStyles.input}
+  className="tour-nuevo-variedad"
+  style={modalStyles.input}
                   value={nuevoArbolForm.id_tipo_variedad_arbol}
                   onChange={(e) =>
                     setNuevoArbolForm((f) => ({ ...f, id_tipo_variedad_arbol: e.target.value }))
@@ -1856,8 +1992,9 @@ export default function MapaPlanoModule() {
                 </select>
 
                 <label style={modalStyles.label}>Estado inicial</label>
-                <select
-                  style={modalStyles.input}
+               <select
+  className="tour-nuevo-estado"
+  style={modalStyles.input}
                   value={nuevoArbolForm.id_estado}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, id_estado: e.target.value }))}
                   required
@@ -1872,8 +2009,9 @@ export default function MapaPlanoModule() {
 
                 <label style={modalStyles.label}>Surco</label>
                 <input
-                  style={modalStyles.input}
-                  type="number"
+  className="tour-nuevo-surco"
+  style={modalStyles.input}
+  type="number"
                   min="1"
                   value={nuevoArbolForm.numero_surco}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, numero_surco: e.target.value }))}
@@ -1881,8 +2019,9 @@ export default function MapaPlanoModule() {
 
                 <label style={modalStyles.label}>Posición en surco</label>
                 <input
-                  style={modalStyles.input}
-                  type="number"
+  className="tour-nuevo-posicion"
+  style={modalStyles.input}
+  type="number"
                   min="1"
                   value={nuevoArbolForm.posicion}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, posicion: e.target.value }))}
@@ -1891,7 +2030,8 @@ export default function MapaPlanoModule() {
 
                 <label style={modalStyles.label}>Descripción</label>
                 <textarea
-                  style={{ ...modalStyles.input, minHeight: 100 }}
+  className="tour-nuevo-descripcion"
+  style={{ ...modalStyles.input, minHeight: 100 }}
                   value={nuevoArbolForm.descripcion}
                   onChange={(e) => setNuevoArbolForm((f) => ({ ...f, descripcion: e.target.value }))}
                 />
@@ -1900,7 +2040,12 @@ export default function MapaPlanoModule() {
                   <button type="button" style={modalStyles.btnSecondary} onClick={closeModal}>
                     Cancelar
                   </button>
-                  <button type="submit" style={modalStyles.btnPrimary} disabled={modal.loading}>
+                  <button
+  type="submit"
+  className="tour-nuevo-guardar"
+  style={modalStyles.btnPrimary}
+  disabled={modal.loading}
+>
                     {modal.loading ? "Guardando..." : "Guardar árbol"}
                   </button>
                 </div>

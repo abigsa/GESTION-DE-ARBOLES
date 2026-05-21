@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import DatePickerField from './DatePickerField';
 import s from './CrudFormNuevo.module.css';
+import { Joyride } from 'react-joyride';
 
 import { API, apiFetch } from '../context/AuthContext';
 
@@ -35,10 +36,306 @@ export default function CrudFormNuevo({ config, editItem, editId, onClose, onSav
   const [error, setError] = useState('');
   const [remoteOptions, setRemoteOptions] = useState({});
   const [loadingOptions, setLoadingOptions] = useState({});
-  // ── Colisión de posición ──────────────────────────
+
+
+  // Colisión de posición
   const [posConflict, setPosConflict] = useState(false);
   const [checkingPos, setCheckingPos] = useState(false);
 
+  const isVariedad = title === 'Tipos de Variedad';
+  const isFertilizante = title === 'Fertilizantes';
+  const isTratamiento = title === 'Tratamientos';
+  const isEstadoArbol = title === 'Estados de Árbol';
+  const isPlaga = title === 'Plagas y Enfermedades';
+  const isFinca = title === 'Fincas';
+  const isSector = title === 'Sectores';
+  const isArbol = title === 'Árboles';
+  const isHistorialEstado = title === 'Historial de Estados';
+  const isRegistroPlaga = title === 'Registros de Plaga';
+  const isRegistroTratamiento = title === 'Registros de Tratamiento';
+  const isResiembra = title === 'Resiembras';
+  const isMovimientoInventario = title === 'Movimiento de Inventario';
+
+  const runFormTour =
+    (
+      isVariedad ||
+      isFertilizante ||
+      isTratamiento ||
+      isEstadoArbol ||
+      isPlaga ||
+      isFinca ||
+      isSector ||
+      isArbol ||
+      isHistorialEstado ||
+      isRegistroPlaga ||
+      isRegistroTratamiento ||
+      isResiembra ||
+      isMovimientoInventario
+    ) && !!config;
+const formTourSteps =
+isMovimientoInventario
+  ? [
+      { target: '.tour-campo-finca-movimiento', content: 'Selecciona la finca.' },
+      { target: '.tour-campo-sector-movimiento', content: 'Selecciona el sector.' },
+      { target: '.tour-campo-arbol-movimiento', content: 'Selecciona el árbol.' },
+      { target: '.tour-campo-tipo-movimiento', content: 'Selecciona el tipo de movimiento.' },
+      { target: '.tour-campo-fecha-movimiento', content: 'Selecciona la fecha del movimiento.' },
+      { target: '.tour-campo-observaciones', content: 'Agrega observaciones si es necesario.' },
+      { target: '.tour-guardar', content: 'Cuando termines, presiona aquí para guardar.' },
+    ]
+      : isResiembra
+  ? [
+      { target: '.tour-campo-finca-resiembra', content: 'Selecciona la finca.' },
+      { target: '.tour-campo-sector-resiembra', content: 'Selecciona el sector.' },
+      { target: '.tour-campo-arbol-resiembra', content: 'Selecciona el árbol.' },
+      { target: '.tour-campo-fecha-resiembra', content: 'Selecciona la fecha de resiembra.' },
+      { target: '.tour-campo-motivo', content: 'Escribe el motivo de la resiembra.' },
+      { target: '.tour-guardar', content: 'Cuando termines, presiona aquí para guardar.' },
+    ]
+:
+isRegistroTratamiento
+  ? [
+      { target: '.tour-campo-finca-regtrat', content: 'Selecciona la finca.' },
+      { target: '.tour-campo-sector-regtrat', content: 'Selecciona el sector.' },
+      { target: '.tour-campo-arbol-regtrat', content: 'Selecciona el árbol.' },
+      { target: '.tour-campo-tratamiento-regtrat', content: 'Selecciona el tratamiento.' },
+      { target: '.tour-campo-fertilizante-regtrat', content: 'Selecciona el fertilizante si aplica.' },
+      { target: '.tour-campo-fecha-aplicacion', content: 'Selecciona la fecha de aplicación.' },
+      { target: '.tour-campo-observaciones', content: 'Agrega observaciones.' },
+      { target: '.tour-guardar', content: 'Cuando termines, presiona aquí para guardar.' },
+    ]
+:
+isRegistroPlaga
+  ? [
+      { target: '.tour-campo-finca-regplaga', content: 'Selecciona la finca.' },
+      { target: '.tour-campo-sector-regplaga', content: 'Selecciona el sector.' },
+      { target: '.tour-campo-arbol-regplaga', content: 'Selecciona el árbol.' },
+      { target: '.tour-campo-plaga-regplaga', content: 'Selecciona la plaga o enfermedad.' },
+      { target: '.tour-campo-deteccion', content: 'Selecciona la fecha de detección.' },
+      { target: '.tour-campo-resolucion', content: 'Selecciona la fecha de resolución.' },
+      { target: '.tour-campo-observaciones', content: 'Agrega observaciones.' },
+      { target: '.tour-guardar', content: 'Cuando termines, presiona aquí para guardar.' },
+    ]
+: isArbol
+    ? [
+        {
+          target: '.tour-campo-finca-arbol',
+          content: 'Selecciona la finca.',
+        },
+        {
+          target: '.tour-campo-sector-arbol',
+          content: 'Selecciona el sector.',
+        },
+        {
+          target: '.tour-campo-variedad-arbol',
+          content: 'Selecciona la variedad del árbol.',
+        },
+        {
+          target: '.tour-campo-estado-arbol',
+          content: 'Selecciona el estado actual.',
+        },
+        {
+          target: '.tour-campo-surco-arbol',
+          content: 'Ingresa el número de surco.',
+        },
+        {
+          target: '.tour-campo-posicion-arbol',
+          content: 'Ingresa la posición dentro del surco.',
+        },
+        {
+          target: '.tour-campo-descripcion',
+          content: 'Agrega una descripción si deseas.',
+        },
+        {
+          target: '.tour-guardar',
+          content: 'Cuando termines, presiona aquí para guardar.',
+        },
+      ]
+  : 
+isSector
+  ? [
+      {
+        target: '.tour-campo-finca-sector',
+        content: 'Selecciona la finca correspondiente.',
+      },
+      {
+        target: '.tour-campo-sector',
+        content: 'Selecciona el sector. Ejemplo: Sector Norte.',
+      },
+      {
+        target: '.tour-campo-area',
+        content: 'Ingresa el área en hectáreas. Ejemplo: 10.',
+      },
+      {
+        target: '.tour-campo-surcos',
+        content: 'Ingresa la cantidad de surcos.',
+      },
+      {
+        target: '.tour-campo-pos-surco',
+        content: 'Ingresa las posiciones por surco.',
+      },
+      {
+        target: '.tour-campo-tipo-cultivo',
+        content: 'Escribe el tipo de cultivo. Ejemplo: Mango.',
+      },
+      {
+        target: '.tour-guardar',
+        content: 'Cuando termines, presiona aquí para guardar.',
+      },
+    ]
+: isFinca
+  ? [
+      {
+        target: '.tour-campo-nombre-finca',
+        content: 'Escribe el nombre de la finca. Ejemplo: Finca El Paraíso.',
+      },
+      {
+        target: '.tour-campo-ubicacion',
+        content: 'Escribe la ubicación. Ejemplo: Baja Verapaz.',
+      },
+      {
+        target: '.tour-campo-area',
+        content: 'Indica el área en hectáreas. Ejemplo: 25.',
+      },
+      {
+        target: '.tour-campo-propietario',
+        content: 'Escribe el propietario. Ejemplo: Ángel Galeano.',
+      },
+      {
+        target: '.tour-campo-telefono',
+        content: 'Ingresa el teléfono de contacto. Ejemplo: 32945163.',
+      },
+      {
+        target: '.tour-campo-descripcion',
+        content: 'Agrega una descripción breve de la finca.',
+      },
+      {
+        target: '.tour-guardar',
+        content: 'Cuando termines, presiona aquí para crear la finca.',
+      },
+    ]
+: isPlaga
+  ? [
+      {
+        target: '.tour-campo-nombre-plaga',
+        content: 'Selecciona la plaga o enfermedad. Ejemplo: Pulgones.',
+      },
+      {
+        target: '.tour-campo-tipo-plaga',
+        content: 'Selecciona el tipo. Ejemplo: PLAGA o ENFERMEDAD.',
+      },
+      {
+        target: '.tour-campo-riesgo',
+        content: 'Selecciona el nivel de riesgo. Ejemplo: ALTO, MEDIO o BAJO.',
+      },
+      {
+        target: '.tour-campo-descripcion',
+        content: 'Agrega una descripción breve.',
+      },
+      {
+        target: '.tour-guardar',
+        content: 'Cuando termines, presiona aquí para guardar el registro.',
+      },
+    ]
+: isEstadoArbol
+    ? [
+        {
+          target: '.tour-campo-nombre-estado',
+          content: 'Escribe el estado del árbol. Ejemplo: Semilla, Crecimiento o Producción.',
+        },
+        {
+          target: '.tour-campo-orden-ciclo',
+          content: 'Indica el orden del ciclo. Ejemplo: 1 para etapas iniciales.',
+        },
+        {
+          target: '.tour-campo-productivo',
+          content: 'Selecciona si este estado es productivo. Ejemplo: Sí o No.',
+        },
+        {
+          target: '.tour-campo-descripcion',
+          content: 'Agrega una descripción breve del estado.',
+        },
+        {
+          target: '.tour-guardar',
+          content: 'Cuando termines, presiona aquí para crear el registro.',
+        },
+      ]
+    : isTratamiento
+    ? [
+        {
+          target: '.tour-campo-nombre-tratamiento',
+          content: 'Selecciona el tratamiento. Ejemplo: Poda de Formación.',
+        },
+        {
+          target: '.tour-campo-categoria',
+          content: 'Escribe la categoría. Ejemplo: Fitosanitario.',
+        },
+        {
+          target: '.tour-campo-metodo',
+          content: 'Escribe el método de aplicación. Ejemplo: Aspersión foliar.',
+        },
+        {
+          target: '.tour-campo-frecuencia',
+          content: 'Indica la frecuencia. Ejemplo: Anual o Según necesidad.',
+        },
+        {
+          target: '.tour-campo-descripcion',
+          content: 'Agrega una descripción breve del tratamiento.',
+        },
+        {
+          target: '.tour-guardar',
+          content: 'Cuando termines, presiona aquí para crear el registro.',
+        },
+      ]
+    : isFertilizante
+    ? [
+        {
+          target: '.tour-campo-nombre-fertilizante',
+          content: 'Selecciona el fertilizante. Ejemplo: Urea.',
+        },
+        {
+          target: '.tour-campo-tipo-fertilizante',
+          content: 'Escribe el tipo. Ejemplo: Químico.',
+        },
+        {
+          target: '.tour-campo-nutrientes',
+          content: 'Indica los nutrientes principales.',
+        },
+        {
+          target: '.tour-campo-metodo',
+          content: 'Método de aplicación.',
+        },
+        {
+          target: '.tour-campo-frecuencia',
+          content: 'Frecuencia de aplicación.',
+        },
+        {
+          target: '.tour-campo-descripcion',
+          content: 'Descripción del fertilizante.',
+        },
+        {
+          target: '.tour-guardar',
+          content: 'Presiona aquí para guardar.',
+        },
+      ]
+    : [
+        {
+          target: '.tour-campo-arbol',
+          content: 'Selecciona el árbol.',
+        },
+        {
+          target: '.tour-campo-tipo-uso',
+          content: 'Escribe el tipo de uso.',
+        },
+        {
+          target: '.tour-campo-descripcion',
+          content: 'Descripción del registro.',
+        },
+        {
+          target: '.tour-guardar',
+          content: 'Presiona aquí para guardar.',
+        },
+      ];
   const requiredCount = useMemo(
     () => fields.filter(field => field.required).length,
     [fields]
@@ -423,6 +720,38 @@ url.searchParams.set(queryParam, parentValue);
       className={s.overlay}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
+  
+ {runFormTour && (
+  <Joyride
+  steps={formTourSteps}
+  run={runFormTour}
+  continuous
+  showSkipButton
+  showProgress
+  disableScrolling
+  disableScrollParentFix
+  floaterProps={{
+  hideArrow: false,
+  offset: 16,
+}}
+    disableOverlayClose
+    spotlightClicks
+    locale={{
+      back: 'Atrás',
+      close: 'Cerrar',
+      last: 'Finalizar',
+      next: 'Siguiente',
+      skip: 'Saltar',
+    }}
+    styles={{
+      options: {
+        zIndex: 20000,
+        primaryColor: '#14532d',
+      },
+    }}
+  />
+)}
+
       <div className={s.modal}>
         <div className={s.header}>
           <div className={s.headerMain}>
@@ -463,7 +792,77 @@ url.searchParams.set(queryParam, parentValue);
             {fields.map(field => (
               <div
                 key={field.name}
-                className={`${s.fieldWrap} ${field.type === 'textarea' ? s.fieldFull : ''}`}
+                className={`${s.fieldWrap} ${field.type === 'textarea' ? s.fieldFull : ''} ${
+ field.name === 'nombre_arbol' ? 'tour-campo-arbol' :
+field.name === 'tipo_uso' ? 'tour-campo-tipo-uso' :
+field.name === 'nombre_fertilizante' ? 'tour-campo-nombre-fertilizante' :
+field.name === 'tipo_fertilizante' ? 'tour-campo-tipo-fertilizante' :
+field.name === 'nombre_tratamiento' ? 'tour-campo-nombre-tratamiento' :
+field.name === 'categoria' ? 'tour-campo-categoria' :
+field.name === 'nutrientes_principales' ? 'tour-campo-nutrientes' :
+field.name === 'metodo_aplicacion' ? 'tour-campo-metodo' :
+field.name === 'frecuencia' ? 'tour-campo-frecuencia' :
+field.name === 'descripcion' ? 'tour-campo-descripcion' :
+field.name === 'nombre_estado' ? 'tour-campo-nombre-estado' :
+field.name === 'orden_ciclo' ? 'tour-campo-orden-ciclo' :
+field.name === 'es_productivo' ? 'tour-campo-productivo' :
+field.name === 'nombre_plaga' ? 'tour-campo-nombre-plaga' :
+field.name === 'tipo_plaga' ? 'tour-campo-tipo-plaga' :
+field.name === 'nivel_riesgo' ? 'tour-campo-riesgo' :
+field.name === 'nombre_finca' ? 'tour-campo-nombre-finca' :
+field.name === 'ubicacion' ? 'tour-campo-ubicacion' :
+field.name === 'propietario' ? 'tour-campo-propietario' :
+field.name === 'telefono_contacto' ? 'tour-campo-telefono' :
+field.name === 'id_finca' ? 'tour-campo-finca-sector' :
+field.name === 'nombre_sector' ? 'tour-campo-sector' :
+field.name === 'area_hectareas' ? 'tour-campo-area' :
+field.name === 'numero_surcos' ? 'tour-campo-surcos' :
+field.name === 'posiciones_por_surco' ? 'tour-campo-pos-surco' :
+field.name === 'tipo_cultivo' ? 'tour-campo-tipo-cultivo' :
+field.name === 'id_sector' ? (
+  isMovimientoInventario ? 'tour-campo-sector-movimiento' :
+  isResiembra ? 'tour-campo-sector-resiembra' :
+  'tour-campo-sector-arbol'
+) :
+field.name === 'id_tipo_variedad_arbol' ? 'tour-campo-variedad-arbol' :
+field.name === 'id_estado' ? 'tour-campo-estado-arbol' :
+field.name === 'numero_surco' ? 'tour-campo-surco-arbol' :
+field.name === 'posicion_x' ? 'tour-campo-posicion-arbol' :
+field.name === 'id_arbol_nuevo' ? 'tour-campo-arbol-resiembra' :
+field.name === 'id_plaga' ? 'tour-campo-plaga-regplaga' :
+field.name === 'fecha_deteccion' ? 'tour-campo-deteccion' :
+field.name === 'fecha_resolucion' ? 'tour-campo-resolucion' :
+field.name === 'observaciones' ? 'tour-campo-observaciones' :
+field.name === 'id_tipo_tratamiento' ? 'tour-campo-tratamiento-regtrat' :
+field.name === 'id_fertilizante' ? 'tour-campo-fertilizante-regtrat' :
+field.name === 'fecha_aplicacion' ? 'tour-campo-fecha-aplicacion' :
+field.name === 'fecha_resiembra' ? 'tour-campo-fecha-resiembra' :
+field.name === 'motivo' ? 'tour-campo-motivo' :
+field.name === 'id_finca_filtro' ? (
+  isMovimientoInventario ? 'tour-campo-finca-movimiento' :
+  isResiembra ? 'tour-campo-finca-resiembra' :
+  isRegistroTratamiento ? 'tour-campo-finca-regtrat' :
+  isRegistroPlaga ? 'tour-campo-finca-regplaga' :
+  isHistorialEstado ? 'tour-campo-finca-historial' :
+  'tour-campo-finca-arbol'
+) :
+field.name === 'id_sector_filtro' ? (
+  isMovimientoInventario ? 'tour-campo-sector-movimiento' :
+  isResiembra ? 'tour-campo-sector-resiembra' :
+  isRegistroTratamiento ? 'tour-campo-sector-regtrat' :
+  isRegistroPlaga ? 'tour-campo-sector-regplaga' :
+  'tour-campo-sector-historial'
+) :
+field.name === 'id_arbol' ? (
+  isMovimientoInventario ? 'tour-campo-arbol-movimiento' :
+  isRegistroTratamiento ? 'tour-campo-arbol-regtrat' :
+  isRegistroPlaga ? 'tour-campo-arbol-regplaga' :
+  'tour-campo-arbol-historial'
+) :
+field.name === 'id_tipo_movimiento' ? 'tour-campo-tipo-movimiento' :
+field.name === 'fecha_movimiento' ? 'tour-campo-fecha-movimiento' :
+''
+}`}
               >
                 <label className={s.label}>
                   <span>{field.label}</span>
@@ -576,7 +975,7 @@ url.searchParams.set(queryParam, parentValue);
               Cancelar
             </button>
 
-            <button type="submit" form="crudForm" className={s.btnSave} disabled={saving}>
+            <button type="submit" form="crudForm" className={`${s.btnSave} tour-guardar`} disabled={saving}>
               {saving ? (
                 <>
                   <span className={s.spinner} />
