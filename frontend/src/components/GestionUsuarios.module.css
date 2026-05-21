@@ -149,6 +149,43 @@
 .btnAdd .iconCircle, .btnSave .iconCircle, .btnRetry .iconCircle, .confirmDelete .iconCircle { background:rgba(255,255,255,0.22); }
 .refreshBtn .iconCircle, .btnCancel .iconCircle, .confirmCancel .iconCircle { background:rgba(27,77,42,0.10); }
 
+/* === Toggle de Estado (Activo / Inactivo) === */
+.estadoToggle {
+  display:flex; align-items:center; gap:12px;
+  width:100%; min-height:44px;
+  background:#fff; border:1px solid var(--pergamino-verde); border-radius:12px;
+  padding:0 14px; cursor:pointer;
+  transition:border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  font-family:inherit;
+}
+.estadoToggle:hover { border-color:rgba(27,77,42,.4); }
+.estadoToggle:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(27,77,42,.18); }
+
+.estadoSwitch {
+  position:relative; flex-shrink:0;
+  width:42px; height:22px; border-radius:999px;
+  background:#c9c9c9;
+  transition:background var(--transition);
+}
+.estadoSwitchKnob {
+  position:absolute; top:2px; left:2px;
+  width:18px; height:18px; border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 4px rgba(0,0,0,.25);
+  transition:transform var(--transition), background var(--transition);
+}
+.estadoToggleText {
+  font-size:13px; font-weight:600; color:var(--verde-profundo);
+  letter-spacing:.2px;
+}
+
+.estadoToggleOn .estadoSwitch { background:var(--verde-medio, #2e7d4f); }
+.estadoToggleOn .estadoSwitchKnob { transform:translateX(20px); }
+.estadoToggleOn .estadoToggleText { color:var(--verde-profundo); }
+
+.estadoToggleOff .estadoSwitch { background:#bdbdbd; }
+.estadoToggleOff .estadoToggleText { color:var(--tierra-calida); }
+
 @media (max-width:680px) {
   .modal { max-height:95vh; }
   .formGrid { grid-template-columns:1fr; }
