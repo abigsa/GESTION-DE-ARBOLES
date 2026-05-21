@@ -8,6 +8,28 @@ import { API, apiFetch } from '../context/AuthContext';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
+// ── Skeleton de carga (filas fantasma animadas) ──────────────
+// Usa las clases definidas en src/mejoras.css
+function SkeletonTable({ columns = 5, rows = 6 }) {
+  const cells = Math.min(Math.max(columns, 3), 6); // entre 3 y 6 columnas visibles
+  return (
+    <div className="skeletonWrap" aria-busy="true" aria-label="Cargando datos">
+      <div className="skeletonRow skeletonHeader">
+        {Array.from({ length: cells }).map((_, i) => (
+          <div key={`h${i}`} className="skeletonCell" />
+        ))}
+      </div>
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} className="skeletonRow">
+          {Array.from({ length: cells }).map((_, c) => (
+            <div key={c} className="skeletonCell" />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const formatDateOnly = (value) => {
   if (!value) return '—';
 
@@ -343,11 +365,7 @@ export default function CrudPageNuevo({ moduleKey, onBack }) {
 
         <section className={s.contentCard}>
           {loading ? (
-            <div className={s.center}>
-              <div className={s.spinner} />
-              <p className={s.centerTitle}>Cargando {title.toLowerCase()}...</p>
-              <span className={s.centerText}>Espera un momento mientras se consultan los datos.</span>
-            </div>
+            <SkeletonTable columns={(cols?.length || 4) + 1} rows={6} />
           ) : error ? (
             <div className={s.errBox}>
               <div className={s.errIcon}>

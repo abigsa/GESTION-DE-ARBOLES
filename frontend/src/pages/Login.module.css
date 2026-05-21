@@ -82,7 +82,11 @@
   padding:12px 0; font-size:13px; color:var(--verde-profundo); font-weight:500; outline:none;
 }
 .field input::placeholder { color:var(--tierra-calida); font-weight:400; }
-.field button { color:var(--tierra-calida); display:flex; align-items:center; }
+.field button {
+  color:var(--tierra-calida); display:flex; align-items:center;
+  flex-shrink:0;          /* evita que el botón se deforme */
+  padding:4px; margin-right:-4px;
+}
 .field button .material-icons { font-size:18px; }
 
 .error {
@@ -128,10 +132,13 @@
 
 @media (max-width:768px) {
   .root { flex-direction:column; }
-  .left { flex:none; min-height:200px; padding:28px 24px; }
-  .features { top:16px; left:24px; }
-  .branding h1 { font-size:26px; }
-  .right { flex:none; min-height:calc(100vh - 200px); padding:24px; }
+  .left { flex:none; min-height:180px; padding:24px; justify-content:center; }
+  .features { display:none; }          /* en móvil ocultamos la lista para dar aire al branding */
+  .branding { text-align:center; }
+  .branding h1 { font-size:24px; }
+  .leaf1, .leaf2 { display:none; }      /* hojas decorativas fuera en móvil */
+  .right { flex:none; min-height:calc(100vh - 180px); padding:24px 16px; align-items:flex-start; padding-top:32px; }
+  .card { padding:28px 20px 20px; max-width:100%; }
 }
 
 /* ── Footer links dentro del card ───────────────── */

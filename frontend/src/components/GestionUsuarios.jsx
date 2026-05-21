@@ -660,13 +660,21 @@ if (k === 'email') {
 
               <div className={s.fieldWrap}>
                 <label className={s.fieldLabel}>Estado</label>
-                <div className={s.field}>
-                  <span className="material-icons">toggle_on</span>
-                  <select value={form.estado} onChange={e => set('estado', e.target.value)}>
-                    <option value="ACTIVO">Activo</option>
-                    <option value="INACTIVO">Inactivo</option>
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={form.estado === 'ACTIVO'}
+                  aria-label="Cambiar estado del usuario"
+                  onClick={() => set('estado', form.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO')}
+                  className={`${s.estadoToggle} ${form.estado === 'ACTIVO' ? s.estadoToggleOn : s.estadoToggleOff}`}
+                >
+                  <span className={s.estadoSwitch}>
+                    <span className={s.estadoSwitchKnob} />
+                  </span>
+                  <span className={s.estadoToggleText}>
+                    {form.estado === 'ACTIVO' ? 'Activo' : 'Inactivo'}
+                  </span>
+                </button>
               </div>
             </div>
           </form>
