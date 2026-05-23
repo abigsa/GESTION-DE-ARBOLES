@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import s from './Login.module.css';
 
 export default function Login({ onRegistro }) {
   const { login, loading } = useAuth();
+  const { isDark, toggle } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [verPass,  setVerPass]  = useState(false);
@@ -129,6 +131,24 @@ export default function Login({ onRegistro }) {
             <a href="/privacidad.html" target="_blank" rel="noopener noreferrer">
               Privacidad
             </a>
+            <div className={s.cardFooterSep} />
+            <button
+              type="button"
+              onClick={toggle}
+              title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              style={{
+                display:'flex', alignItems:'center', gap:5,
+                background:'none', border:'none', cursor:'pointer',
+                fontSize:11, fontWeight:600,
+                color: isDark ? '#86efac' : '#6B7280',
+                padding:'2px 4px', borderRadius:6,
+              }}
+            >
+              <span className="material-icons" style={{ fontSize:15 }}>
+                {isDark ? 'light_mode' : 'dark_mode'}
+              </span>
+              {isDark ? 'Claro' : 'Oscuro'}
+            </button>
           </div>
         </div>
       </div>

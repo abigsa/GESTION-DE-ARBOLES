@@ -1,3 +1,4 @@
+import { useTheme } from '../context/ThemeContext';
 import { useState, useEffect, useMemo } from 'react';
 
 
@@ -205,6 +206,7 @@ function generarPDFHistorial(datos, estadosMap, arbolesMap) {
 
 // ── Componente principal ──────────────────────────────────────
 export default function ReporteHistorialEstados({ onBack }) {
+  const { isDark } = useTheme();
 
   const [historial, setHistorial] = useState([]);
   const [estados,   setEstados]   = useState([]);
@@ -354,7 +356,42 @@ export default function ReporteHistorialEstados({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historial, arbolesMap]);
 
-  const st = styles;
+  const st = {
+    root:       { minHeight:'100vh', background: isDark ? '#0f1117' : C.fondoClaro },
+    header:     { background: isDark ? '#1a1f2e' : '#fff', borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : `2px solid ${C.pergaminoVerde}`, padding:'20px 28px 12px' },
+    breadcrumb: { display:'flex', alignItems:'center', gap:8, fontSize:12, color: isDark ? '#64748b' : C.tierraCalida, marginBottom:12 },
+    backBtn:    { background:'none', border:'none', cursor:'pointer', color: isDark ? '#86efac' : C.verdeMedio, fontWeight:700, display:'flex', alignItems:'center', gap:2, fontSize:12 },
+    sep:        { color: isDark ? 'rgba(255,255,255,0.18)' : C.pergaminoVerde },
+    bcCur:      { color: isDark ? '#86efac' : C.verdeProfundo, fontWeight:700 },
+    titleRow:   { display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12, marginBottom:14 },
+    titleBlock: { display:'flex', alignItems:'center', gap:14 },
+    titleIcon:  { width:48, height:48, background: isDark ? 'rgba(34,197,94,0.12)' : C.verdeMenta, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', color: isDark ? '#4ade80' : C.verdeProfundo, fontSize:26 },
+    panelLabel: { fontSize:9, fontWeight:800, color: isDark ? '#4ade80' : C.tierraCalida, textTransform:'uppercase', letterSpacing:'.8px', margin:0 },
+    pageTitle:  { fontSize:22, fontWeight:800, color: isDark ? '#e2e8f0' : C.verdeProfundo, margin:0 },
+    pageSub:    { fontSize:11, color: isDark ? '#64748b' : C.tierraCalida, marginTop:2 },
+    refreshBtn: { background:C.verdeMedio, color:'#fff', border:'none', borderRadius:10, padding:'8px 14px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700 },
+    filters:    { display:'flex', flexWrap:'wrap', gap:8, marginBottom:10 },
+    searchWrap: { display:'flex', alignItems:'center', gap:6, background: isDark ? 'rgba(255,255,255,0.05)' : C.fondoClaro, border: isDark ? '1px solid rgba(255,255,255,0.10)' : `1px solid ${C.pergaminoVerde}`, borderRadius:8, padding:'6px 10px', flex:1, minWidth:200 },
+    searchInput:{ border:'none', background:'none', outline:'none', fontSize:12, flex:1, color: isDark ? '#e2e8f0' : C.grafito },
+    sel:        { border: isDark ? '1px solid rgba(255,255,255,0.10)' : `1px solid ${C.pergaminoVerde}`, borderRadius:8, padding:'6px 10px', fontSize:12, color: isDark ? '#e2e8f0' : C.grafito, background: isDark ? 'rgba(255,255,255,0.05)' : '#fff', cursor:'pointer' },
+    counter:    { fontSize:12, color: isDark ? '#64748b' : C.tierraCalida },
+    topCard:    { background: isDark ? '#1a1f2e' : '#fff', borderRadius:12, margin:'16px 20px 0', padding:'16px 20px', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.35)' : `0 2px 8px rgba(27,77,42,.06)`, border: isDark ? '1px solid rgba(255,255,255,0.07)' : 'none' },
+    topTitle:   { fontSize:11, fontWeight:800, color: isDark ? '#86efac' : C.verdeProfundo, textTransform:'uppercase', letterSpacing:'.6px', marginBottom:12 },
+    topBars:    { display:'flex', flexDirection:'column', gap:8 },
+    topItem:    { display:'flex', alignItems:'center', gap:10 },
+    topLabel:   { width:140, fontSize:11, fontWeight:600, color: isDark ? '#94a3b8' : C.grafito, flexShrink:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' },
+    topBarTrack:{ flex:1, height:12, background: isDark ? 'rgba(255,255,255,0.06)' : C.pergaminoVerde, borderRadius:6, overflow:'hidden' },
+    topBarFill: { height:'100%', borderRadius:6, transition:'width .4s' },
+    topCount:   { width:24, fontSize:11, fontWeight:800, color: isDark ? '#86efac' : C.verdeProfundo, textAlign:'right' },
+    content:    { padding:'16px 20px' },
+    center:     { display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 0', color: isDark ? '#64748b' : C.tierraCalida, gap:12 },
+    spinner:    { width:32, height:32, border: isDark ? '3px solid rgba(255,255,255,0.10)' : `3px solid ${C.pergaminoVerde}`, borderTopColor:C.verdeMedio, borderRadius:'50%', animation:'spin 1s linear infinite' },
+    errBox:     { display:'flex', alignItems:'center', gap:12, background: isDark ? 'rgba(239,68,68,0.10)' : '#fff5f5', border: isDark ? '1px solid rgba(239,68,68,0.25)' : `1px solid #fcc`, borderRadius:12, padding:'16px 20px', color: isDark ? '#fca5a5' : '#8B2E2E' },
+    empty:      { display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 0' },
+    table:      { width:'100%', borderCollapse:'collapse', background: isDark ? '#1a1f2e' : '#fff', borderRadius:12, overflow:'hidden', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.35)' : `0 2px 8px rgba(27,77,42,.06)` },
+    th:         { background: isDark ? 'rgba(34,197,94,0.08)' : C.verdeProfundo, color: isDark ? '#86efac' : '#fff', padding:'10px 12px', textAlign:'left', fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', fontWeight:700 },
+    td:         { padding:'10px 12px', borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${C.pergaminoVerde}`, fontSize:12, color: isDark ? '#cbd5e1' : 'inherit' },
+  };
 
   return (
     <div style={st.root}>
@@ -493,18 +530,20 @@ export default function ReporteHistorialEstados({ onBack }) {
                   const fCambio = fmt(get(row,'FECHA_CAMBIO','fecha_cambio'));
                   const obs     = get(row,'OBSERVACIONES','observaciones') || '—';
                   return (
-                    <tr key={i} style={i%2===0?{}:{background:C.fondoClaro}}>
+                    <tr key={i} style={i%2===0
+                      ? { background: isDark ? '#1a1f2e' : '#fff' }
+                      : { background: isDark ? 'rgba(255,255,255,0.03)' : C.fondoClaro }}>
                       <td style={st.td}>{i+1}</td>
-                      <td style={{...st.td, fontWeight:600, color:C.verdeProfundo}}>{arbol}</td>
-                      <td style={{...st.td, color:C.tierraCalida}}>{estAnt}</td>
+                      <td style={{...st.td, fontWeight:600, color: isDark ? '#86efac' : C.verdeProfundo}}>{arbol}</td>
+                      <td style={{...st.td, color: isDark ? '#94a3b8' : C.tierraCalida}}>{estAnt}</td>
                       <td style={st.td}>
-                        <span style={{background:C.verdeMenta, color:C.verdeProfundo,
+                        <span style={{background: isDark ? 'rgba(34,197,94,0.12)' : C.verdeMenta, color: isDark ? '#86efac' : C.verdeProfundo,
                           padding:'3px 8px', borderRadius:20, fontSize:11, fontWeight:700}}>
                           {estNuevo}
                         </span>
                       </td>
                       <td style={st.td}>{fCambio}</td>
-                      <td style={{...st.td, color:C.tierraCalida, fontSize:11}}>{obs}</td>
+                      <td style={{...st.td, color: isDark ? '#64748b' : C.tierraCalida, fontSize:11}}>{obs}</td>
                     </tr>
                   );
                 })}
@@ -517,39 +556,5 @@ export default function ReporteHistorialEstados({ onBack }) {
   );
 }
 
-const styles = {
-  root:       { minHeight:'100vh', background:C.fondoClaro },
-  header:     { background:'#fff', borderBottom:`2px solid ${C.pergaminoVerde}`, padding:'20px 28px 12px' },
-  breadcrumb: { display:'flex', alignItems:'center', gap:8, fontSize:12, color:C.tierraCalida, marginBottom:12 },
-  backBtn:    { background:'none', border:'none', cursor:'pointer', color:C.verdeMedio, fontWeight:700, display:'flex', alignItems:'center', gap:2, fontSize:12 },
-  sep:        { color:C.pergaminoVerde },
-  bcCur:      { color:C.verdeProfundo, fontWeight:700 },
-  titleRow:   { display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12, marginBottom:14 },
-  titleBlock: { display:'flex', alignItems:'center', gap:14 },
-  titleIcon:  { width:48, height:48, background:C.verdeMenta, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', color:C.verdeProfundo, fontSize:26 },
-  panelLabel: { fontSize:9, fontWeight:800, color:C.tierraCalida, textTransform:'uppercase', letterSpacing:'.8px', margin:0 },
-  pageTitle:  { fontSize:22, fontWeight:800, color:C.verdeProfundo, margin:0 },
-  pageSub:    { fontSize:11, color:C.tierraCalida, marginTop:2 },
-  refreshBtn: { background:C.verdeMedio, color:'#fff', border:'none', borderRadius:10, padding:'8px 14px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700 },
-  filters:    { display:'flex', flexWrap:'wrap', gap:8, marginBottom:10 },
-  searchWrap: { display:'flex', alignItems:'center', gap:6, background:C.fondoClaro, border:`1px solid ${C.pergaminoVerde}`, borderRadius:8, padding:'6px 10px', flex:1, minWidth:200 },
-  searchInput:{ border:'none', background:'none', outline:'none', fontSize:12, flex:1, color:C.grafito },
-  sel:        { border:`1px solid ${C.pergaminoVerde}`, borderRadius:8, padding:'6px 10px', fontSize:12, color:C.grafito, background:'#fff', cursor:'pointer' },
-  counter:    { fontSize:12, color:C.tierraCalida },
-  topCard:    { background:'#fff', borderRadius:12, margin:'16px 20px 0', padding:'16px 20px', boxShadow:`0 2px 8px rgba(27,77,42,.06)` },
-  topTitle:   { fontSize:11, fontWeight:800, color:C.verdeProfundo, textTransform:'uppercase', letterSpacing:'.6px', marginBottom:12 },
-  topBars:    { display:'flex', flexDirection:'column', gap:8 },
-  topItem:    { display:'flex', alignItems:'center', gap:10 },
-  topLabel:   { width:140, fontSize:11, fontWeight:600, color:C.grafito, flexShrink:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' },
-  topBarTrack:{ flex:1, height:12, background:C.pergaminoVerde, borderRadius:6, overflow:'hidden' },
-  topBarFill: { height:'100%', borderRadius:6, transition:'width .4s' },
-  topCount:   { width:24, fontSize:11, fontWeight:800, color:C.verdeProfundo, textAlign:'right' },
-  content:    { padding:'16px 20px' },
-  center:     { display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 0', color:C.tierraCalida, gap:12 },
-  spinner:    { width:32, height:32, border:`3px solid ${C.pergaminoVerde}`, borderTopColor:C.verdeMedio, borderRadius:'50%', animation:'spin 1s linear infinite' },
-  errBox:     { display:'flex', alignItems:'center', gap:12, background:'#fff5f5', border:`1px solid #fcc`, borderRadius:12, padding:'16px 20px', color:'#8B2E2E' },
-  empty:      { display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'60px 0' },
-  table:      { width:'100%', borderCollapse:'collapse', background:'#fff', borderRadius:12, overflow:'hidden', boxShadow:`0 2px 8px rgba(27,77,42,.06)` },
-  th:         { background:C.verdeProfundo, color:'#fff', padding:'10px 12px', textAlign:'left', fontSize:10, textTransform:'uppercase', letterSpacing:'.5px', fontWeight:700 },
-  td:         { padding:'10px 12px', borderBottom:`1px solid ${C.pergaminoVerde}`, fontSize:12 },
-};
+
+

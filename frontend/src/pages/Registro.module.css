@@ -21,3 +21,37 @@
 .loginRow button { color:var(--verde-profundo); font-weight:700; margin-left:4px; }
 .loginRow button:hover { text-decoration:underline; }
 @media (max-width:480px) { .row2 { grid-template-columns:1fr; } }
+
+/* ══ DARK MODE ══ */
+[data-theme="dark"] .card, [data-theme="dark"] .panel, [data-theme="dark"] .wrap { background: #1a1f2e !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .title, [data-theme="dark"] .heading { color: #e2e8f0 !important; }
+[data-theme="dark"] .subtitle, [data-theme="dark"] .sub, [data-theme="dark"] .muted { color: #64748b !important; }
+[data-theme="dark"] .input, [data-theme="dark"] .field { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.10) !important; color: #e2e8f0 !important; }
+[data-theme="dark"] .label { color: #94a3b8 !important; }
+
+/* ══ DARK MODE ══ */
+[data-theme="dark"] .right       { background: #0f1117 !important; }
+[data-theme="dark"] .card        { background: #1a1f2e !important; border-color: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .cardHeader h2 { color: #e2e8f0 !important; }
+[data-theme="dark"] .cardHeader p  { color: #64748b !important; }
+[data-theme="dark"] .divider     { background: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .field       { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.10) !important; color: #e2e8f0 !important; }
+[data-theme="dark"] .field:focus-within { border-color: #22c55e !important; }
+[data-theme="dark"] .field input { color: #e2e8f0 !important; background: transparent !important; }
+[data-theme="dark"] .field input::placeholder { color: #475569 !important; }
+
+/* ══ DARK MODE ══ */
+:global([data-theme="dark"]) .right   { background: #0f1117; }
+:global([data-theme="dark"]) .card {
+  background: #1a1f2e;
+  border-color: rgba(255,255,255,0.08);
+}
+:global([data-theme="dark"]) .cardHeader h2 { color: #e2e8f0; }
+:global([data-theme="dark"]) .cardHeader p  { color: #64748b; }
+:global([data-theme="dark"]) .divider { background: rgba(255,255,255,0.06); }
+:global([data-theme="dark"]) .field {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.10);
+}
+:global([data-theme="dark"]) .field:focus-within { border-color: #22c55e; }
+:global([data-theme="dark"]) .field input { color: #e2e8f0; background: transparent; }

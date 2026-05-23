@@ -255,3 +255,61 @@
   z-index: 0;
 }
 .sidebarTop, .nav, .footer { position: relative; z-index: 1; }
+
+/* ══ DARK MODE ══ */
+[data-theme="dark"] .sidebar {
+  background: linear-gradient(135deg, #06090e 0%, #0d1117 55%, #0f1520 100%);
+  border-right: 1px solid rgba(255,255,255,0.05);
+}
+[data-theme="dark"] .rail {
+  background: linear-gradient(180deg, #06090e 0%, #0d1117 100%);
+  border-right: 1px solid rgba(255,255,255,0.05);
+}
+[data-theme="dark"] .sidebarTop  { border-bottom-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .logoTitle   { color: #e2e8f0; }
+[data-theme="dark"] .logoSub     { color: rgba(255,255,255,0.45); }
+[data-theme="dark"] .homeText span  { color: #e2e8f0; }
+[data-theme="dark"] .homeText small { color: rgba(255,255,255,0.45); }
+[data-theme="dark"] .groupTitle  { color: rgba(255,255,255,0.35); }
+[data-theme="dark"] .navText     { color: rgba(255,255,255,0.70); }
+[data-theme="dark"] .navActive .navText { color: #86efac; }
+[data-theme="dark"] .navActive   { background: rgba(34,197,94,0.10) !important; border-color: rgba(34,197,94,0.25) !important; }
+[data-theme="dark"] .navIcon     { color: rgba(255,255,255,0.45); }
+[data-theme="dark"] .navActive .navIcon { color: #4ade80; }
+[data-theme="dark"] .footer      { border-top-color: rgba(255,255,255,0.05); background: rgba(0,0,0,0.20); }
+[data-theme="dark"] .userName    { color: #e2e8f0; }
+[data-theme="dark"] .userRole    { color: rgba(255,255,255,0.45); }
+[data-theme="dark"] .adminBtn    { color: rgba(255,255,255,0.60); }
+[data-theme="dark"] .adminBtn:hover { background: rgba(255,255,255,0.05); color: #86efac; }
+[data-theme="dark"] .logoutBtn   { color: rgba(255,255,255,0.45); border-top-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .logoutBtn:hover { color: #f87171; background: rgba(239,68,68,0.08); }
+[data-theme="dark"] .railLogo    { background: rgba(255,255,255,0.04); border-bottom-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .railBtn     { color: rgba(255,255,255,0.45); }
+[data-theme="dark"] .railBtn:hover { background: rgba(255,255,255,0.06); color: #86efac; }
+[data-theme="dark"] .railActive  { background: rgba(34,197,94,0.12) !important; color: #4ade80 !important; }
+[data-theme="dark"] .railDiv     { background: rgba(255,255,255,0.06); }
+[data-theme="dark"] .avatar      { background: rgba(34,197,94,0.18); color: #4ade80; }
+
+/* ══ LOGO: amarillo → verde (aplica en ambos modos) ══ */
+.logoIcon {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  box-shadow: 0 6px 16px rgba(22,163,74,0.35) !important;
+}
+.logoIcon .material-icons { color: #fff !important; }
+
+.railLogo {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+}
+.railLogo .material-icons { color: #fff !important; }
+
+/* ══ DARK MODE sidebar (el verde se mantiene, solo ajustes finos) ══ */
+:global([data-theme="dark"]) .sidebar {
+  background: linear-gradient(135deg, #06090e 0%, #0d1117 55%, #0f1520 100%);
+}
+:global([data-theme="dark"]) .navActive {
+  background: rgba(34,197,94,0.12) !important;
+  border-color: rgba(34,197,94,0.28) !important;
+}
+:global([data-theme="dark"]) .navActive .navText  { color: #86efac; }
+:global([data-theme="dark"]) .navActive .navIcon  { color: #4ade80; }
+:global([data-theme="dark"]) .logoutBtn:hover { background: rgba(239,68,68,0.08); color: #f87171; }

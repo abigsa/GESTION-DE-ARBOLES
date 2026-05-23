@@ -424,3 +424,103 @@ svg {
   font-size: 13px; font-weight: 800;
   color: var(--verde-profundo); margin-bottom: 14px;
 }
+
+/* ══════════════════════════════════════════════════════
+   DARK MODE — variables que sobreescriben el tema claro
+   Se activan cuando <html data-theme="dark">
+══════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  /* Brand colors — se mantienen pero ligeramente más brillantes */
+  --verde-profundo:  #4ade80;
+  --verde-medio:     #22c55e;
+  --verde-salvia:    #86efac;
+  --verde-menta:     #052e16;
+  --tierra-calida:   #a78a66;
+  --oro-forestal:    #fbbf24;
+  --rojo-alerta:     #f87171;
+  --fondo-claro:     #0f1117;
+  --pergamino-verde: #1a2d1e;
+  --grafito:         #e2e8f0;
+
+  /* Shadows para dark */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.45), 0 3px 8px rgba(0,0,0,0.30);
+  --shadow-lg: 0 18px 48px rgba(0,0,0,0.60), 0 6px 18px rgba(0,0,0,0.40);
+
+  /* Tokens de superficie */
+  --dm-bg:          #0f1117;
+  --dm-bg-card:     #1a1f2e;
+  --dm-bg-surface:  #141820;
+  --dm-border:      rgba(255,255,255,0.07);
+  --dm-border-hi:   rgba(255,255,255,0.13);
+  --dm-text:        #e2e8f0;
+  --dm-text-sub:    #94a3b8;
+  --dm-text-muted:  #475569;
+}
+
+/* ── Body dark ── */
+[data-theme="dark"] body {
+  background-color: #0f1117;
+  background-image: radial-gradient(circle, rgba(34,197,94,0.04) 1.5px, transparent 1.5px);
+  color: #e2e8f0;
+}
+
+/* ── Scrollbar dark ── */
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #2d3748; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+
+/* ══ TOPBAR dark ══ */
+[data-theme="dark"] .desktopTopbar {
+  background: linear-gradient(135deg, #0a0f15 0%, #0d1a12 55%, #0f1f15 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+[data-theme="dark"] .mobileTopbar {
+  background: rgba(10,15,20,0.97);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ══ PAGE TOOLBAR dark ══ */
+[data-theme="dark"] .pageToolbar {
+  background: rgba(15,17,23,0.92);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+[data-theme="dark"] .breadcrumbCurrent { color: #86efac; }
+[data-theme="dark"] .breadcrumbSep     { color: rgba(255,255,255,0.25); }
+[data-theme="dark"] .breadcrumbBtn     { color: #94a3b8; }
+[data-theme="dark"] .breadcrumbBtn:hover { background: rgba(34,197,94,0.08); color: #86efac; }
+
+/* ══ CHART CARD dark ══ */
+[data-theme="dark"] .chartCard {
+  background: #1a1f2e;
+  border-color: rgba(255,255,255,0.07);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] .chartTitle { color: #86efac; }
+
+/* ══ ACCESO DENEGADO dark ══ */
+[data-theme="dark"] .accesoIcon { background: #2d1515 !important; }
+
+/* ══ OVERLAY MOBILE dark ══ */
+[data-theme="dark"] .mobileOverlay { background: rgba(0,0,0,0.70); }
+
+/* ── Toggle animation ── */
+.themeToggle {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 20px; cursor: pointer;
+  transition: background 0.2s;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.85);
+  font-size: 12px; font-weight: 600;
+  user-select: none;
+}
+.themeToggle:hover { background: rgba(255,255,255,0.10); }
+.themeToggle .material-icons { font-size: 16px; transition: transform 0.4s; }
+[data-theme="dark"] .themeToggle .material-icons { transform: rotate(20deg); }
+
+/* ══ LOGO MOBILE — amarillo → verde ══ */
+.mobileBrandIcon {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  box-shadow: 0 6px 14px rgba(22,163,74,0.28) !important;
+}
+.mobileBrandIcon .material-icons { color: #fff !important; }
