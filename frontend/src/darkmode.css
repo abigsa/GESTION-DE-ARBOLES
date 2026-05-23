@@ -1,0 +1,292 @@
+/* ══════════════════════════════════════════════════════════════
+   darkmode.css — Modo oscuro completo (área blanca + logo)
+   Importar en src/index.js DESPUÉS de mejoras.css:
+       import './darkmode.css';
+   El sidebar verde NO se toca. Solo área de contenido.
+══════════════════════════════════════════════════════════════ */
+
+/* ══ 1. LOGO — amarillo → verde con árbol blanco ══ */
+.logoIcon {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  box-shadow: 0 6px 16px rgba(22,163,74,0.35) !important;
+}
+.logoIcon .material-icons { color: #fff !important; }
+
+.railLogo {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+}
+.railLogo .material-icons { color: #fff !important; }
+
+.mobileBrandIcon {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  box-shadow: 0 6px 14px rgba(22,163,74,0.28) !important;
+}
+.mobileBrandIcon .material-icons { color: #fff !important; }
+
+/* ══ 2. TOKENS ══ */
+[data-theme="dark"] {
+  --dm-bg:      #0f1117;
+  --dm-card:    #1a1f2e;
+  --dm-card2:   #141820;
+  --dm-border:  rgba(255,255,255,0.07);
+  --dm-text:    #e2e8f0;
+  --dm-sub:     #94a3b8;
+  --dm-muted:   #475569;
+  --dm-green:   #4ade80;
+  --dm-green2:  #86efac;
+}
+
+/* ══ 3. BODY ══ */
+[data-theme="dark"] body {
+  background-color: #0f1117;
+  background-image: radial-gradient(circle, rgba(34,197,94,0.035) 1.5px, transparent 1.5px);
+  color: #e2e8f0;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb       { background: #2d3748; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+
+/* ══ 4. GLOBAL TOPBAR & TOOLBAR ══ */
+[data-theme="dark"] .desktopTopbar {
+  background: linear-gradient(135deg,#07090e 0%,#0d1117 60%,#0f1520 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+[data-theme="dark"] .mobileTopbar {
+  background: rgba(7,9,14,0.98);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+[data-theme="dark"] .pageToolbar {
+  background: rgba(13,17,23,0.97);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+}
+[data-theme="dark"] .breadcrumbCurrent { color: #86efac; }
+[data-theme="dark"] .breadcrumbSep     { color: rgba(255,255,255,0.20); }
+[data-theme="dark"] .breadcrumbBtn     { color: #64748b; }
+[data-theme="dark"] .breadcrumbBtn:hover { background: rgba(34,197,94,0.08); color: #86efac; }
+[data-theme="dark"] .chartCard { background: #1a1f2e; border-color: rgba(255,255,255,0.07); }
+[data-theme="dark"] .chartTitle { color: #86efac; }
+
+/* ══ 5. THEME TOGGLE BUTTON ══ */
+.themeToggle {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 20px; cursor: pointer;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.13);
+  color: rgba(255,255,255,0.88);
+  font-size: 11px; font-weight: 600;
+  user-select: none; transition: background 0.2s;
+}
+.themeToggle:hover { background: rgba(255,255,255,0.12); }
+.themeToggle .material-icons { font-size: 16px; transition: transform 0.4s; }
+[data-theme="dark"] .themeToggle .material-icons { transform: rotate(20deg); }
+
+/* ══ 6. TABLE GLOBAL (blanco → oscuro) ══ */
+/* La tabla del CRUD tiene fondo blanco directo — lo sobrescribimos */
+[data-theme="dark"] .contentCard,
+[data-theme="dark"] .tableWrap   {
+  background: #1a1f2e !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.40) !important;
+}
+[data-theme="dark"] .table thead th {
+  background: rgba(34,197,94,0.07) !important;
+  color: #86efac !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table tbody td {
+  color: #cbd5e1 !important;
+  border-color: rgba(255,255,255,0.05) !important;
+}
+[data-theme="dark"] .table tbody tr { background: transparent !important; }
+[data-theme="dark"] .table tbody tr:hover {
+  background: rgba(34,197,94,0.06) !important;
+  box-shadow: inset 3px 0 0 #22c55e !important;
+}
+/* Pagination area */
+[data-theme="dark"] .paginWrap,
+[data-theme="dark"] .pagination { background: #141820 !important; border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .paginInfo  { color: #64748b !important; }
+[data-theme="dark"] .paginBtn   { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.10) !important; color: #94a3b8 !important; }
+
+/* ══ 7. HEADER CARD (panel admin title area) ══ */
+[data-theme="dark"] .headerCard {
+  background: #1a1f2e !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.40) !important;
+}
+[data-theme="dark"] .pageTitle   { color: #e2e8f0 !important; }
+[data-theme="dark"] .pageSubtitle { color: #64748b !important; }
+[data-theme="dark"] .panelLabel  { color: #4ade80 !important; }
+[data-theme="dark"] .titleIcon   { background: rgba(34,197,94,0.10) !important; }
+[data-theme="dark"] .titleIcon .material-icons { color: #4ade80 !important; }
+[data-theme="dark"] .bcSep       { color: rgba(255,255,255,0.18) !important; }
+[data-theme="dark"] .bcCur       { color: #86efac !important; }
+[data-theme="dark"] .backBtn     { color: #64748b !important; }
+[data-theme="dark"] .backBtn:hover { background: rgba(34,197,94,0.08) !important; color: #86efac !important; }
+
+/* ══ 8. TOOLBAR / SEARCH ══ */
+[data-theme="dark"] .toolbar     { background: #141820 !important; border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .searchWrap  { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.10) !important; }
+[data-theme="dark"] .searchWrap:focus-within { border-color: #22c55e !important; box-shadow: 0 0 0 3px rgba(34,197,94,0.10) !important; }
+[data-theme="dark"] .searchWrap input { color: #e2e8f0 !important; background: transparent !important; }
+[data-theme="dark"] .searchWrap input::placeholder { color: #475569 !important; }
+[data-theme="dark"] .searchWrap .material-icons { color: #475569 !important; }
+[data-theme="dark"] .filterSelect { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.10) !important; color: #e2e8f0 !important; }
+
+/* ══ 9. COUNTER CARDS (visibles / total) ══ */
+[data-theme="dark"] .counterCard  { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .counterLabel { color: #64748b !important; }
+[data-theme="dark"] .counterValue { color: #e2e8f0 !important; }
+
+/* ══ 10. REFRESH / ACTION BUTTONS ══ */
+[data-theme="dark"] .refreshBtn  { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.10) !important; color: #94a3b8 !important; }
+[data-theme="dark"] .refreshBtn:hover { background: rgba(255,255,255,0.09) !important; color: #e2e8f0 !important; }
+[data-theme="dark"] .btnRetry    { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.10) !important; color: #94a3b8 !important; }
+
+/* ══ 11. CRUD FORM MODAL ══ */
+[data-theme="dark"] .overlay     { background: rgba(0,0,0,0.80) !important; backdrop-filter: blur(10px) !important; }
+[data-theme="dark"] .modal       { background: #1a1f2e !important; border-color: rgba(255,255,255,0.09) !important; box-shadow: 0 32px 80px rgba(0,0,0,0.70) !important; }
+[data-theme="dark"] .modal .header { background: #141820 !important; border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .modal .header h3 { color: #e2e8f0 !important; }
+[data-theme="dark"] .hIcon       { background: rgba(34,197,94,0.12) !important; }
+[data-theme="dark"] .hIcon .material-icons { color: #4ade80 !important; }
+[data-theme="dark"] .eyebrow     { color: #4ade80 !important; }
+[data-theme="dark"] .headerDesc  { color: #64748b !important; }
+[data-theme="dark"] .closeBtn    { color: #64748b !important; }
+[data-theme="dark"] .closeBtn:hover { background: rgba(239,68,68,0.10) !important; color: #f87171 !important; }
+[data-theme="dark"] .metaBar     { background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .metaItem    { color: #64748b !important; }
+[data-theme="dark"] .metaItem .material-icons { color: #4ade80 !important; }
+[data-theme="dark"] .label       { color: #94a3b8 !important; }
+[data-theme="dark"] .req         { color: #f87171 !important; }
+[data-theme="dark"] .input,
+[data-theme="dark"] input[class*="input"],
+[data-theme="dark"] select[class*="input"] {
+  background: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .input:focus { border-color: #22c55e !important; background: rgba(34,197,94,0.05) !important; box-shadow: 0 0 0 3px rgba(34,197,94,0.12) !important; }
+[data-theme="dark"] .input::placeholder,
+[data-theme="dark"] input::placeholder { color: #475569 !important; }
+[data-theme="dark"] .textarea    { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.10) !important; color: #e2e8f0 !important; }
+[data-theme="dark"] .modal .footer { background: #141820 !important; border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .helperText  { color: #64748b !important; }
+
+/* ══ 12. DASHBOARD KPI CARDS ══ */
+[data-theme="dark"] .kpiCard     { background: #1a1f2e !important; border-color: rgba(255,255,255,0.08) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.35) !important; }
+[data-theme="dark"] .kpiCard:hover { border-color: rgba(34,197,94,0.25) !important; transform: translateY(-2px); }
+[data-theme="dark"] .kpiIcon     { background: rgba(255,255,255,0.05) !important; }
+[data-theme="dark"] .kpiLabel    { color: #64748b !important; }
+[data-theme="dark"] .kpiVal      { color: #e2e8f0 !important; }
+[data-theme="dark"] .hero        { background: linear-gradient(135deg,#06090e 0%,#091409 55%,#0c1a0b 100%) !important; }
+[data-theme="dark"] .pageLabel   { color: #4ade80 !important; }
+[data-theme="dark"] .userBadge   { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .badgeAvatar { background: rgba(34,197,94,0.18) !important; color: #4ade80 !important; }
+[data-theme="dark"] .sectionEyebrow,
+[data-theme="dark"] .groupEyebrow { color: #4ade80 !important; }
+[data-theme="dark"] .sectionTitle  { color: #e2e8f0 !important; }
+[data-theme="dark"] .sectionDescription,
+[data-theme="dark"] .groupDescription { color: #64748b !important; }
+[data-theme="dark"] .groupCard    { background: #1a1f2e !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .groupTitle   { color: #86efac !important; }
+[data-theme="dark"] .modCard      { background: #1a1f2e !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .modCard:hover { border-color: rgba(34,197,94,0.30) !important; background: #1e2436 !important; }
+[data-theme="dark"] .modLabel     { color: #e2e8f0 !important; }
+[data-theme="dark"] .modHint      { color: #64748b !important; }
+[data-theme="dark"] .modArrow     { color: #475569 !important; }
+[data-theme="dark"] .modCard:hover .modArrow { color: #4ade80 !important; }
+[data-theme="dark"] .modIcon      { background: rgba(34,197,94,0.10) !important; }
+
+/* ══ 13. HISTORIAL DE CAMBIOS ══ */
+[data-theme="dark"] .content     { background: #1a1f2e !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .item:hover  { background: rgba(255,255,255,0.03) !important; }
+[data-theme="dark"] .itemDesc    { color: #94a3b8 !important; }
+[data-theme="dark"] .itemMeta    { color: #64748b !important; }
+[data-theme="dark"] .itemTabla   { background: rgba(34,197,94,0.12) !important; color: #86efac !important; }
+
+/* ══ 14. REPORTE HISTORIAL ESTADOS (inline styles — overriden via CSS) ══ */
+/* Este componente usa estilos inline, forzamos con atributo */
+[data-theme="dark"] [style*="background:#fff"],
+[data-theme="dark"] [style*="background: #fff"],
+[data-theme="dark"] [style*="background:white"] {
+  background: #1a1f2e !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+
+/* ══ 15. NOTIFICACIONES PANEL ══ */
+[data-theme="dark"] .bell        { color: rgba(255,255,255,0.65) !important; }
+[data-theme="dark"] .bell:hover  { background: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .bellOpen    { background: rgba(34,197,94,0.10) !important; color: #4ade80 !important; }
+[data-theme="dark"] .panel       { background: #1a1f2e !important; border-color: rgba(255,255,255,0.08) !important; box-shadow: 0 20px 60px rgba(0,0,0,0.65) !important; }
+[data-theme="dark"] .panelHeader { border-color: rgba(255,255,255,0.06) !important; background: #141820 !important; }
+[data-theme="dark"] .panelTitle  { color: #e2e8f0 !important; }
+[data-theme="dark"] .panelSub    { color: #64748b !important; }
+[data-theme="dark"] .markAll     { color: #4ade80 !important; }
+[data-theme="dark"] .markAll:hover { background: rgba(34,197,94,0.08) !important; }
+
+/* ══ 16. GESTIÓN USUARIOS (tabla blanca) ══ */
+[data-theme="dark"] .tableCard   { background: #1a1f2e !important; border-color: rgba(255,255,255,0.07) !important; }
+
+/* ══ 17. PERFIL USUARIO ══ */
+[data-theme="dark"] .avatarCard  { background: linear-gradient(135deg,#0d2010,#1a2d1e) !important; border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .avatarName  { color: #e2e8f0 !important; }
+[data-theme="dark"] .avatarRole  { color: #64748b !important; }
+[data-theme="dark"] .formCard    { background: #1a1f2e !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .formHeader h3 { color: #e2e8f0 !important; }
+[data-theme="dark"] .formHeader p  { color: #64748b !important; }
+
+/* ══ 18. LOGIN / REGISTRO ══ */
+[data-theme="dark"] .right       { background: #0f1117 !important; }
+[data-theme="dark"] .card        { background: #1a1f2e !important; border-color: rgba(255,255,255,0.08) !important; box-shadow: 0 20px 60px rgba(0,0,0,0.55) !important; }
+[data-theme="dark"] .cardHeader h2 { color: #e2e8f0 !important; }
+[data-theme="dark"] .cardHeader p  { color: #64748b !important; }
+[data-theme="dark"] .divider     { background: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .field       { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.10) !important; }
+[data-theme="dark"] .field:focus-within { border-color: #22c55e !important; box-shadow: 0 0 0 3px rgba(34,197,94,0.12) !important; }
+[data-theme="dark"] .field input { color: #e2e8f0 !important; background: transparent !important; }
+[data-theme="dark"] .field input::placeholder { color: #475569 !important; }
+[data-theme="dark"] .field .material-icons { color: #4ade80 !important; }
+[data-theme="dark"] .logo        { background: rgba(34,197,94,0.15) !important; }
+
+/* ══ 19. SKELETON SHIMMER dark ══ */
+[data-theme="dark"] .skeletonRow  { border-bottom-color: rgba(255,255,255,0.04) !important; }
+[data-theme="dark"] .skeletonCell {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 37%,
+    rgba(255,255,255,0.04) 63%
+  ) !important;
+  background-size: 400% 100% !important;
+}
+
+/* ══ 20. TABLE ROWS global override (mejoras.css) ══ */
+[data-theme="dark"] table tbody tr:hover {
+  background: rgba(34,197,94,0.06) !important;
+  box-shadow: inset 3px 0 0 #22c55e !important;
+}
+[data-theme="dark"] table tbody tr { background: transparent; }
+
+/* ══ SELECT NATIVE DROPDOWN — opciones en modo oscuro ══ */
+/* Aplica en todos los módulos: paginador, filtros, formularios */
+[data-theme="dark"] select {
+  background: #1a1f2e !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255,255,255,0.10) !important;
+  color-scheme: dark;
+}
+[data-theme="dark"] select option {
+  background: #1a1f2e !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] select option:hover,
+[data-theme="dark"] select option:focus,
+[data-theme="dark"] select option:checked {
+  background: #22c55e !important;
+  color: #fff !important;
+}
+/* Scrollbar dentro del select nativo en Webkit */
+[data-theme="dark"] select::-webkit-scrollbar { background: #1a1f2e; }

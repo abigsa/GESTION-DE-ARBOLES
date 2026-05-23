@@ -203,3 +203,41 @@
   background: rgba(139,46,46,.08);
   color: var(--rojo-alerta);
 }
+
+/* ══ DARK MODE ══ */
+[data-theme="dark"] .card, [data-theme="dark"] .panel, [data-theme="dark"] .wrap { background: #1a1f2e !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .title, [data-theme="dark"] .heading { color: #e2e8f0 !important; }
+[data-theme="dark"] .subtitle, [data-theme="dark"] .sub, [data-theme="dark"] .muted { color: #64748b !important; }
+[data-theme="dark"] .input, [data-theme="dark"] .field { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.10) !important; color: #e2e8f0 !important; }
+[data-theme="dark"] .label { color: #94a3b8 !important; }
+
+/* ══ DARK MODE ══ */
+[data-theme="dark"] .root        { background: transparent; }
+[data-theme="dark"] .backBtn     { color: #64748b !important; }
+[data-theme="dark"] .backBtn:hover { background: rgba(34,197,94,0.08) !important; color: #86efac !important; }
+[data-theme="dark"] .bcCur       { color: #86efac !important; }
+[data-theme="dark"] .avatarCard  { background: linear-gradient(135deg,#0d2010,#1a2d1e) !important; border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .avatarName  { color: #e2e8f0 !important; }
+[data-theme="dark"] .avatarRole  { color: #64748b !important; }
+[data-theme="dark"] .metaItem    { color: #94a3b8 !important; }
+[data-theme="dark"] .formCard    { background: #1a1f2e !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .formHeader h3 { color: #e2e8f0 !important; }
+[data-theme="dark"] .formHeader p  { color: #64748b !important; }
+[data-theme="dark"] .formHeader .material-icons { color: #4ade80 !important; }
+
+/* ══ DARK MODE ══ */
+:global([data-theme="dark"]) .avatarCard {
+  background: linear-gradient(135deg,#0d2010,#1a2d1e);
+  border-color: rgba(255,255,255,0.06);
+}
+:global([data-theme="dark"]) .avatarName { color: #e2e8f0; }
+:global([data-theme="dark"]) .avatarRole { color: #64748b; }
+:global([data-theme="dark"]) .formCard {
+  background: #1a1f2e;
+  border-color: rgba(255,255,255,0.07);
+}
+:global([data-theme="dark"]) .formHeader h3 { color: #e2e8f0; }
+:global([data-theme="dark"]) .formHeader p  { color: #64748b; }
+:global([data-theme="dark"]) .bcCur  { color: #86efac; }
+:global([data-theme="dark"]) .backBtn { color: #64748b; }
+:global([data-theme="dark"]) .backBtn:hover { background: rgba(34,197,94,0.08); color: #86efac; }
