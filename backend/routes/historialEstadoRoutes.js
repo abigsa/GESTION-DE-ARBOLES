@@ -3,6 +3,11 @@
 // ============================================================
 const express = require('express');
 const router  = express.Router();
+
+const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
 const {
   insertar,
   actualizar,
@@ -16,7 +21,7 @@ const {
 // POST   /api/historial-estado           -> Insertar
 // PUT    /api/historial-estado/:id       -> Actualizar
 // DELETE /api/historial-estado/:id       -> Eliminar (físico)
-
+router.use(verificarToken);
 router.get('/',                listar);
 router.get('/:id_historial',   obtenerPorId);
 router.post('/',               insertar);

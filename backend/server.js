@@ -26,6 +26,7 @@ const tipoMovimientoInventarioRoutes  = require('./routes/tipoMovimientoInventar
 const mapaplanoRoutes                 = require('./routes/mapaPlanoRoutes');
 const usuarioRoutes                   = require('./routes/usuarioRoutes');
 const auditoriaRoutes                 = require('./routes/auditoriaRoutes');
+const reporteRoutes = require('./routes/reporteRoutes');
 
 const app = express();
 
@@ -54,6 +55,8 @@ app.get('/', (req, res) => res.json({ ok: true, message: 'API Gestion de Arboles
 
 // ── Rutas de usuarios (login es publico) ──────────────────
 app.use('/api/usuarios', usuarioRoutes);
+
+app.use('/api/reportes', reporteRoutes);
 
 // ── JWT — protege todo lo de abajo ────────────────────────
 app.use(verificarToken);

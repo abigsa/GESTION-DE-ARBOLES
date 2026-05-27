@@ -3,14 +3,28 @@
 // ============================================================
 const express = require('express');
 const router  = express.Router();
-const { listar, listarRecientes, listarPorTabla } = require('../controllers/auditoriaController');
 
-// GET /api/auditoria                    → Todos los registros
-// GET /api/auditoria/recientes?limite=N → Últimos N registros
-// GET /api/auditoria/tabla/:tabla       → Por tabla específica
+const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
 
-router.get('/',                listar);
-router.get('/recientes',       listarRecientes);
-router.get('/tabla/:tabla',    listarPorTabla);
+const {
+  listar,
+  listarRecientes,
+  listarPorTabla,
+  resumenUsuariosActivos
+} = require('../controllers/auditoriaController');
+
+// Todas las rutas de auditoría protegidas
+router.use(verificarToken);
+
+// Solo Super Admin y Admin pueden ver auditoría
+router.use(requiereRol(2));
+
+router.get('/', listar);
+router.get('/recientes', listarRecientes);
+router.get('/tabla/:tabla', listarPorTabla);
+router.get('/usuarios-activos', resumenUsuariosActivos);
 
 module.exports = router;

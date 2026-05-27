@@ -3,6 +3,12 @@
 // ============================================================
 const express = require('express');
 const router  = express.Router();
+
+const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
+
 const {
   insertar,
   actualizar,
@@ -16,7 +22,7 @@ const {
 // POST   /api/resiembras           -> Insertar
 // PUT    /api/resiembras/:id       -> Actualizar
 // DELETE /api/resiembras/:id       -> Eliminar (físico)
-
+router.use(verificarToken);
 router.get('/',               listar);
 router.get('/:id_resiembra',   obtenerPorId);
 router.post('/',               insertar);

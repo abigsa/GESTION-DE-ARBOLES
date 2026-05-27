@@ -122,7 +122,14 @@ const insertar = async (req, res) => {
         tipo_cultivo:         tipo_cultivo ?? null,
       },
       );
-    await auditoria(conn, { tabla: 'SECTOR', operacion: 'INSERT', descripcion: 'Sector creado' });
+    await auditoria(conn, {
+  tabla: 'SECTOR',
+  operacion: 'INSERT',
+  idRegistro: null,
+  descripcion: 'Sector creado',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
     await conn.commit();
     res.status(201).json({
       success: true,
@@ -206,7 +213,14 @@ const actualizar = async (req, res) => {
         tipo_cultivo:         tipo_cultivo ?? null,
       },
 );
-    await auditoria(conn, { tabla: 'SECTOR', operacion: 'UPDATE', descripcion: 'Sector actualizado' });
+    await auditoria(conn, {
+  tabla: 'SECTOR',
+  operacion: 'UPDATE',
+  idRegistro: id_sector,
+  descripcion: 'Sector actualizado',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
     await conn.commit();
 
     res.status(200).json({
@@ -237,7 +251,14 @@ const eliminar = async (req, res) => {
       `BEGIN PKG_SECTOR.ELIMINAR(:id_sector); END;`,
       { id_sector: toNullableNumber(id_sector) },
 );
-    await auditoria(conn, { tabla: 'SECTOR', operacion: 'DELETE', descripcion: 'Sector eliminado' });
+    await auditoria(conn, {
+  tabla: 'SECTOR',
+  operacion: 'DELETE',
+  idRegistro: id_sector,
+  descripcion: 'Sector eliminado',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
     await conn.commit();
 
     res.status(200).json({

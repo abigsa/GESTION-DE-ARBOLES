@@ -24,8 +24,19 @@ const insertar = async (req, res) => {
       },
       { autoCommit: true }
     );
-    res.status(201).json({ success: true, message: 'Tipo de tratamiento insertado correctamente.' });
-    await registrarAuditoria(conn, { tabla:'TIPO_TRATAMIENTO', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en TIPO_TRATAMIENTO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
+    await registrarAuditoria(conn, {
+  tabla: 'TIPO_TRATAMIENTO',
+  operacion: 'INSERT',
+  idRegistro: null,
+  descripcion: 'Nuevo registro en TIPO_TRATAMIENTO',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
+
+res.status(201).json({
+  success: true,
+  message: 'Tipo de tratamiento insertado correctamente.'
+});
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -54,8 +65,19 @@ const actualizar = async (req, res) => {
       },
       { autoCommit: true }
     );
-    res.status(200).json({ success: true, message: 'Tipo de tratamiento actualizado correctamente.' });
-    await registrarAuditoria(conn, { tabla:'TIPO_TRATAMIENTO', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en TIPO_TRATAMIENTO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
+   await registrarAuditoria(conn, {
+  tabla: 'TIPO_TRATAMIENTO',
+  operacion: 'UPDATE',
+  idRegistro: id_tipo_tratamiento,
+  descripcion: 'Registro actualizado en TIPO_TRATAMIENTO',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
+
+res.status(200).json({
+  success: true,
+  message: 'Tipo de tratamiento actualizado correctamente.'
+});
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -76,9 +98,19 @@ const eliminar = async (req, res) => {
       { id_tipo_tratamiento: Number(id_tipo_tratamiento) },
       { autoCommit: true }
     );
-    res.status(200).json({ success: true, message: 'Tipo de tratamiento eliminado correctamente.' });
-    await registrarAuditoria(conn, { tabla:'TIPO_TRATAMIENTO', operacion:'DELETE', idRegistro:null, descripcion:`Registro eliminado en TIPO_TRATAMIENTO`, usuarioId: null, usuarioNombre: 'Sistema' });
-  } catch (err) {
+    await registrarAuditoria(conn, {
+  tabla: 'TIPO_TRATAMIENTO',
+  operacion: 'DELETE',
+  idRegistro: id_tipo_tratamiento,
+  descripcion: 'Registro eliminado en TIPO_TRATAMIENTO',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
+
+res.status(200).json({
+  success: true,
+  message: 'Tipo de tratamiento eliminado correctamente.'
+});
     res.status(500).json({ success: false, message: err.message });
   } finally {
     await closeConnection(conn);

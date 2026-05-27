@@ -143,6 +143,15 @@ const login = async (req, res) => {
     // ── Generar y devolver JWT ──────────────────────
     const token = generarToken(usuario);
 
+    await registrarAuditoria(conn, {
+  tabla: 'USUARIO',
+  operacion: 'LOGIN',
+  idRegistro: usuario.ID_USUARIO || usuario.id_usuario,
+  descripcion: `Inicio de sesión: ${usuario.USERNAME || usuario.username}`,
+  usuarioId: usuario.ID_USUARIO || usuario.id_usuario,
+  usuarioNombre: usuario.USERNAME || usuario.username,
+});
+
     res.status(200).json({ ok: true, data: usuario, token });
   } catch (err) {
     res.status(500).json({ ok: false, mensaje: err.message });

@@ -3,6 +3,12 @@
 // ============================================================
 const express = require('express');
 const router  = express.Router();
+
+const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
+
 const {
   insertar,
   actualizar,
@@ -16,6 +22,8 @@ const {
 // POST   /api/fincas          -> Insertar
 // PUT    /api/fincas/:id      -> Actualizar
 // DELETE /api/fincas/:id      -> Eliminar (lógico)
+
+router.use(verificarToken);
 
 router.get('/',     listar);
 router.get('/:id_finca',  obtenerPorId);

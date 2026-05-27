@@ -100,10 +100,13 @@ const insertar = async (req, res) => {
     );
 
     await auditoria(conn, {
-      tabla: 'ARBOL',
-      operacion: 'INSERT',
-      descripcion: 'Árbol registrado',
-    });
+  tabla: 'ARBOL',
+  operacion: 'INSERT',
+  idRegistro: null,
+  descripcion: 'Árbol registrado',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
 
     await conn.commit();
 
@@ -193,10 +196,13 @@ const actualizar = async (req, res) => {
     );
 
     await auditoria(conn, {
-      tabla: 'ARBOL',
-      operacion: 'UPDATE',
-      descripcion: 'Árbol actualizado',
-    });
+  tabla: 'ARBOL',
+  operacion: 'UPDATE',
+  idRegistro: id_arbol,
+  descripcion: 'Árbol actualizado',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
 
     await conn.commit();
 
@@ -233,11 +239,14 @@ const eliminar = async (req, res) => {
       { id_arbol: toNullableNumber(id_arbol) }
     );
 
-    await auditoria(conn, {
-      tabla: 'ARBOL',
-      operacion: 'DELETE',
-      descripcion: 'Árbol eliminado',
-    });
+   await auditoria(conn, {
+  tabla: 'ARBOL',
+  operacion: 'DELETE',
+  idRegistro: id_arbol,
+  descripcion: 'Árbol eliminado',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
 
     await conn.commit();
 
