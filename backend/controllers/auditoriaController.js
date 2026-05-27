@@ -92,4 +92,59 @@ const listarPorTabla = async (req, res) => {
   }
 };
 
-module.exports = { registrar, listar, listarRecientes, listarPorTabla };
+const resumenUsuariosActivos = async (req, res) => {
+  let conn;
+
+  try {
+    conn = await getConnection();
+
+    const result = await conn.execute(
+      `
+      SELECT
+        USUARIO_ID,
+        USUARIO_NOMBRE,
+
+        COUNT(*) AS TOTAL_ACCIONES,
+
+        SUM(CASE WHEN TABLA = 'ARBOL' THEN 1 ELSE 0 END) AS TOTAL_ARBOLES,
+        SUM(CASE WHEN TABLA = 'FINCA' THEN 1 ELSE 0 END) AS TOTAL_FINCAS,
+        SUM(CASE WHEN TABLA = 'SECTOR' THEN 1 ELSE 0 END) AS TOTAL_SECTORES,
+        SUM(CASE WHEN TABLA = 'REGISTRO_PLAGA' THEN 1 ELSE 0 END) AS TOTAL_PLAGAS,
+        SUM(CASE WHEN TABLA = 'REGISTRO_TRATAMIENTO' THEN 1 ELSE 0 END) AS TOTAL_TRATAMIENTOS,
+        SUM(CASE WHEN TABLA = 'RESIEMBRA' THEN 1 ELSE 0 END) AS TOTAL_RESIEMBRAS,
+        SUM(CASE WHEN TABLA = 'MOVIMIENTO_INVENTARIO' THEN 1 ELSE 0 END) AS TOTAL_MOVIMIENTOS,
+        SUM(CASE WHEN OPERACION = 'LOGIN' THEN 1 ELSE 0 END) AS TOTAL_LOGINS,
+
+        MAX(FECHA_ACCION) AS ULTIMA_ACTIVIDAD
+
+      FROM AUDITORIA_ACCIONES
+      WHERE USUARIO_ID IS NOT NULL
+      GROUP BY USUARIO_ID, USUARIO_NOMBRE
+      ORDER BY TOTAL_ACCIONES DESC
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result.rows
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  } finally {
+    await closeConnection(conn);
+  }
+};
+
+module.exports = {
+  registrar,
+  listar,
+  listarRecientes,
+  listarPorTabla,
+  resumenUsuariosActivos
+};

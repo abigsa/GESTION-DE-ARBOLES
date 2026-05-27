@@ -3,6 +3,11 @@
 // ============================================================
 const express = require('express');
 const router  = express.Router();
+
+const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
 const {
   insertar,
   actualizar,
@@ -16,7 +21,7 @@ const {
 // POST   /api/plagas-enfermedades           -> Insertar
 // PUT    /api/plagas-enfermedades/:id       -> Actualizar
 // DELETE /api/plagas-enfermedades/:id       -> Eliminar (lógico)
-
+router.use(verificarToken);
 router.get('/',           listar);
 router.get('/:id_plaga',   obtenerPorId);
 router.post('/',           insertar);

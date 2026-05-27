@@ -5,9 +5,6 @@ const oracledb = require('oracledb');
 const { registrar: registrarAuditoria } = require('./auditoriaController');
 const { getConnection, closeConnection } = require('../config/db');
 
-// ----------------------------------------------------------
-// Helpers
-// ----------------------------------------------------------
 const toNumberOrNull = (value) => {
   if (value === undefined || value === null || value === '') return null;
   const n = Number(value);
@@ -19,6 +16,11 @@ const toDateOrNow = (value) => {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? new Date() : d;
 };
+
+const getUsuarioAuditoria = (req) => ({
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
 
 const obtenerEstadoActualArbol = async (conn, idArbol) => {
   const result = await conn.execute(
@@ -104,18 +106,23 @@ const insertar = async (req, res) => {
 
     await actualizarEstadoActualArbol(conn, idArbol, idEstadoNuevo);
 
+    await registrarAuditoria(conn, {
+      tabla: 'HISTORIAL_ESTADO',
+      operacion: 'INSERT',
+      idRegistro: null,
+      descripcion: 'Nuevo registro en HISTORIAL_ESTADO',
+      ...getUsuarioAuditoria(req),
+    });
+
     await conn.commit();
 
     res.status(201).json({
       success: true,
       message: 'Historial de estado insertado correctamente y árbol actualizado.',
     });
-    await registrarAuditoria(conn, { tabla:'HISTORIAL_ESTADO', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en HISTORIAL_ESTADO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     if (conn) {
-      try {
-        await conn.rollback();
-      } catch (_) {}
+      try { await conn.rollback(); } catch (_) {}
     }
 
     res.status(500).json({
@@ -174,18 +181,23 @@ const actualizar = async (req, res) => {
 
     await actualizarEstadoActualArbol(conn, idArbol, idEstadoNuevo);
 
+    await registrarAuditoria(conn, {
+      tabla: 'HISTORIAL_ESTADO',
+      operacion: 'UPDATE',
+      idRegistro: idHistorial,
+      descripcion: 'Registro actualizado en HISTORIAL_ESTADO',
+      ...getUsuarioAuditoria(req),
+    });
+
     await conn.commit();
 
     res.status(200).json({
       success: true,
       message: 'Historial de estado actualizado correctamente y árbol sincronizado.',
     });
-    await registrarAuditoria(conn, { tabla:'HISTORIAL_ESTADO', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en HISTORIAL_ESTADO`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
   } catch (err) {
     if (conn) {
-      try {
-        await conn.rollback();
-      } catch (_) {}
+      try { await conn.rollback(); } catch (_) {}
     }
 
     res.status(500).json({
@@ -205,6 +217,15 @@ const eliminar = async (req, res) => {
   let conn;
 
   try {
+    const idHistorial = toNumberOrNull(id_historial);
+
+    if (!idHistorial) {
+      return res.status(400).json({
+        success: false,
+        message: 'id_historial es obligatorio.',
+      });
+    }
+
     conn = await getConnection();
 
     await conn.execute(
@@ -212,16 +233,29 @@ const eliminar = async (req, res) => {
         DELETE FROM HISTORIAL_ESTADO
         WHERE ID_HISTORIAL = :id_historial
       `,
-      { id_historial: Number(id_historial) },
-      { autoCommit: true }
+      { id_historial: idHistorial },
+      { autoCommit: false }
     );
+
+    await registrarAuditoria(conn, {
+      tabla: 'HISTORIAL_ESTADO',
+      operacion: 'DELETE',
+      idRegistro: idHistorial,
+      descripcion: 'Registro eliminado en HISTORIAL_ESTADO',
+      ...getUsuarioAuditoria(req),
+    });
+
+    await conn.commit();
 
     res.status(200).json({
       success: true,
       message: 'Historial de estado eliminado correctamente.',
     });
-    await registrarAuditoria(conn, { tabla:'HISTORIAL_ESTADO', operacion:'DELETE', idRegistro:null, descripcion:`Registro eliminado en HISTORIAL_ESTADO`, usuarioId: null, usuarioNombre: 'Sistema' });
   } catch (err) {
+    if (conn) {
+      try { await conn.rollback(); } catch (_) {}
+    }
+
     res.status(500).json({
       success: false,
       message: err.message,

@@ -5,6 +5,11 @@ const express = require('express');
 const router  = express.Router();
 
 const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
+
+const {
   insertar,
   actualizar,
   eliminar,
@@ -18,6 +23,7 @@ const {
 // POST   /api/sectores               -> Insertar
 // PUT    /api/sectores/:id_sector    -> Actualizar
 // DELETE /api/sectores/:id_sector    -> Eliminar (lógico)
+router.use(verificarToken);
 
 router.get('/', listar);
 router.get('/:id_sector', obtenerPorId);

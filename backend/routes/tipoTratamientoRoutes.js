@@ -3,6 +3,11 @@
 // ============================================================
 const express = require('express');
 const router  = express.Router();
+
+const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
 const {
   insertar,
   actualizar,
@@ -16,7 +21,7 @@ const {
 // POST   /api/tipos-tratamiento           -> Insertar
 // PUT    /api/tipos-tratamiento/:id       -> Actualizar
 // DELETE /api/tipos-tratamiento/:id       -> Eliminar (lógico)
-
+router.use(verificarToken);
 router.get('/',                       listar);
 router.get('/:id_tipo_tratamiento',   obtenerPorId);
 router.post('/',                      insertar);

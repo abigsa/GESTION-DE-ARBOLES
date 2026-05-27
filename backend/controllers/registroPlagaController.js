@@ -42,8 +42,8 @@ const insertar = async (req, res) => {
       operacion: 'INSERT',
       idRegistro: null,
       descripcion: 'Nuevo registro en REGISTRO_PLAGA',
-      usuarioId: req.body?.usuario_id || null,
-      usuarioNombre: req.body?.usuario_nombre || 'Sistema',
+      usuarioId: req.usuario?.id || null,
+      usuarioNombre: req.usuario?.username || 'Sistema',
     });
 
     res.status(201).json({
@@ -97,8 +97,8 @@ const actualizar = async (req, res) => {
       operacion: 'UPDATE',
       idRegistro: null,
       descripcion: 'Registro actualizado en REGISTRO_PLAGA',
-      usuarioId: req.body?.usuario_id || null,
-      usuarioNombre: req.body?.usuario_nombre || 'Sistema',
+      usuarioId: req.usuario?.id || null,
+      usuarioNombre: req.usuario?.username || 'Sistema',
     });
 
     res.status(200).json({

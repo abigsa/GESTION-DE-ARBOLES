@@ -149,12 +149,14 @@ const insertar = async (req, res) => {
 
   try {
     const {
-      id_arbol,
-      id_tipo_movimiento,
-      fecha_movimiento,
-      observaciones,
-      usuario_registro,
-    } = req.body;
+  id_arbol,
+  id_tipo_movimiento,
+  fecha_movimiento,
+  observaciones,
+} = req.body;
+
+const usuarioRegistro = req.usuario?.username || 'Sistema';
+const usuarioId = req.usuario?.id || null;
 
     conn = await getConnection();
 
@@ -182,19 +184,19 @@ VALUES (
         id_tipo_movimiento: Number(id_tipo_movimiento),
         fecha_movimiento: fecha_movimiento || null,
         observaciones: observaciones || null,
-        usuario_registro: usuario_registro || 'Sistema',
+        usuario_registro: usuarioRegistro,
       },
       { autoCommit: false }
     );
 
     await registrarAuditoria(conn, {
-      tabla: 'MOVIMIENTO_INVENTARIO',
-      operacion: 'INSERT',
-      idRegistro: null,
-      descripcion: `Nuevo movimiento de inventario registrado por ${usuario_registro || 'Sistema'}`,
-      usuarioId: null,
-      usuarioNombre: usuario_registro || 'Sistema',
-    });
+  tabla: 'MOVIMIENTO_INVENTARIO',
+  operacion: 'INSERT',
+  idRegistro: null,
+  descripcion: `Nuevo movimiento de inventario registrado por ${usuarioRegistro}`,
+  usuarioId: usuarioId,
+  usuarioNombre: usuarioRegistro,
+});
 
     await conn.commit();
 
@@ -230,12 +232,14 @@ const actualizar = async (req, res) => {
     const { id } = req.params;
 
     const {
-      id_arbol,
-      id_tipo_movimiento,
-      fecha_movimiento,
-      observaciones,
-      usuario_registro,
-    } = req.body;
+  id_arbol,
+  id_tipo_movimiento,
+  fecha_movimiento,
+  observaciones,
+} = req.body;
+
+const usuarioRegistro = req.usuario?.username || 'Sistema';
+const usuarioId = req.usuario?.id || null;
 
     conn = await getConnection();
 
@@ -255,19 +259,19 @@ const actualizar = async (req, res) => {
         id_tipo_movimiento: Number(id_tipo_movimiento),
         fecha_movimiento: fecha_movimiento || null,
         observaciones: observaciones || null,
-        usuario_registro: usuario_registro || 'Sistema',
+        usuario_registro: usuarioRegistro,
       },
       { autoCommit: false }
     );
 
     await registrarAuditoria(conn, {
-      tabla: 'MOVIMIENTO_INVENTARIO',
-      operacion: 'UPDATE',
-      idRegistro: id,
-      descripcion: `Movimiento #${id} actualizado por ${usuario_registro || 'Sistema'}`,
-      usuarioId: null,
-      usuarioNombre: usuario_registro || 'Sistema',
-    });
+  tabla: 'MOVIMIENTO_INVENTARIO',
+  operacion: 'UPDATE',
+  idRegistro: id,
+  descripcion: `Movimiento #${id} actualizado por ${usuarioRegistro}`,
+  usuarioId: usuarioId,
+  usuarioNombre: usuarioRegistro,
+});
 
     await conn.commit();
 
@@ -311,6 +315,15 @@ const eliminar = async (req, res) => {
       { id: Number(id) },
       { autoCommit: true }
     );
+
+    await registrarAuditoria(conn, {
+  tabla: 'MOVIMIENTO_INVENTARIO',
+  operacion: 'DELETE',
+  idRegistro: id,
+  descripcion: `Movimiento #${id} eliminado`,
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
 
     res.json({
       success: true,

@@ -5,6 +5,11 @@ const express = require('express');
 const router  = express.Router();
 
 const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
+
+const {
   insertar,
   actualizar,
   eliminar,
@@ -18,6 +23,9 @@ const {
 // POST   /api/arboles               -> Insertar
 // PUT    /api/arboles/:id_arbol     -> Actualizar
 // DELETE /api/arboles/:id_arbol     -> Eliminar (lógico)
+
+
+router.use(verificarToken);
 
 router.get('/', listar);
 router.get('/:id_arbol', obtenerPorId);

@@ -66,13 +66,13 @@ const insertar = async (req, res) => {
     );
 
     await registrarAuditoria(conn, {
-      tabla: 'RESIEMBRA',
-      operacion: 'INSERT',
-      idRegistro: null,
-      descripcion: 'Nuevo registro en RESIEMBRA',
-      usuarioId: req.body?.usuario_id || null,
-      usuarioNombre: req.body?.usuario_nombre || 'Sistema',
-    });
+  tabla: 'RESIEMBRA',
+  operacion: 'INSERT',
+  idRegistro: null,
+  descripcion: 'Nuevo registro en RESIEMBRA',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
 
     res.status(201).json({
       success: true,
@@ -117,13 +117,13 @@ const actualizar = async (req, res) => {
     );
 
     await registrarAuditoria(conn, {
-      tabla: 'RESIEMBRA',
-      operacion: 'UPDATE',
-      idRegistro: null,
-      descripcion: 'Registro actualizado en RESIEMBRA',
-      usuarioId: req.body?.usuario_id || null,
-      usuarioNombre: req.body?.usuario_nombre || 'Sistema',
-    });
+  tabla: 'RESIEMBRA',
+  operacion: 'UPDATE',
+  idRegistro: id_resiembra,
+  descripcion: 'Registro actualizado en RESIEMBRA',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
 
     res.status(200).json({
       success: true,
@@ -153,13 +153,13 @@ const eliminar = async (req, res) => {
     );
 
     await registrarAuditoria(conn, {
-      tabla: 'RESIEMBRA',
-      operacion: 'DELETE',
-      idRegistro: null,
-      descripcion: 'Registro eliminado en RESIEMBRA',
-      usuarioId: null,
-      usuarioNombre: 'Sistema',
-    });
+  tabla: 'RESIEMBRA',
+  operacion: 'DELETE',
+  idRegistro: id_resiembra,
+  descripcion: 'Registro eliminado en RESIEMBRA',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
 
     res.status(200).json({
       success: true,

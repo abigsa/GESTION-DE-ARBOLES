@@ -23,8 +23,19 @@ const insertar = async (req, res) => {
       },
       { autoCommit: true }
     );
-    res.status(201).json({ success: true, message: 'Plaga/Enfermedad insertada correctamente.' });
-    await registrarAuditoria(conn, { tabla:'PLAGA_ENFERMEDAD', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en PLAGA_ENFERMEDAD`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
+    await registrarAuditoria(conn, {
+  tabla: 'PLAGA_ENFERMEDAD',
+  operacion: 'INSERT',
+  idRegistro: null,
+  descripcion: 'Nuevo registro en PLAGA_ENFERMEDAD',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
+
+res.status(201).json({
+  success: true,
+  message: 'Plaga/Enfermedad insertada correctamente.'
+});
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -52,8 +63,19 @@ const actualizar = async (req, res) => {
       },
       { autoCommit: true }
     );
-    res.status(200).json({ success: true, message: 'Plaga/Enfermedad actualizada correctamente.' });
-    await registrarAuditoria(conn, { tabla:'PLAGA_ENFERMEDAD', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en PLAGA_ENFERMEDAD`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
+    await registrarAuditoria(conn, {
+  tabla: 'PLAGA_ENFERMEDAD',
+  operacion: 'UPDATE',
+  idRegistro: id_plaga,
+  descripcion: 'Registro actualizado en PLAGA_ENFERMEDAD',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
+
+res.status(200).json({
+  success: true,
+  message: 'Plaga/Enfermedad actualizada correctamente.'
+});
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -74,8 +96,19 @@ const eliminar = async (req, res) => {
       { id_plaga: Number(id_plaga) },
       { autoCommit: true }
     );
-    res.status(200).json({ success: true, message: 'Plaga/Enfermedad eliminada correctamente.' });
-    await registrarAuditoria(conn, { tabla:'PLAGA_ENFERMEDAD', operacion:'DELETE', idRegistro:null, descripcion:`Registro eliminado en PLAGA_ENFERMEDAD`, usuarioId: null, usuarioNombre: 'Sistema' });
+    await registrarAuditoria(conn, {
+  tabla: 'PLAGA_ENFERMEDAD',
+  operacion: 'DELETE',
+  idRegistro: id_plaga,
+  descripcion: 'Registro eliminado en PLAGA_ENFERMEDAD',
+  usuarioId: req.usuario?.id || null,
+  usuarioNombre: req.usuario?.username || 'Sistema',
+});
+
+res.status(200).json({
+  success: true,
+  message: 'Plaga/Enfermedad eliminada correctamente.'
+});
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {

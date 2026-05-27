@@ -26,7 +26,7 @@ const insertar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(201).json({ success: true, message: 'Finca insertada correctamente.' });
-    await registrarAuditoria(conn, { tabla:'FINCA', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en FINCA`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
+    await registrarAuditoria(conn, { tabla:'FINCA', operacion:'INSERT', idRegistro:null, descripcion:`Nuevo registro en FINCA`, usuarioId: req.usuario?.id || null, usuarioNombre: req.usuario?.username || 'Sistema' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {
@@ -57,7 +57,7 @@ const actualizar = async (req, res) => {
       { autoCommit: true }
     );
     res.status(200).json({ success: true, message: 'Finca actualizada correctamente.' });
-    await registrarAuditoria(conn, { tabla:'FINCA', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en FINCA`, usuarioId: req.body?.usuario_id||null, usuarioNombre: req.body?.usuario_nombre||'Sistema' });
+    await registrarAuditoria(conn, { tabla:'FINCA', operacion:'UPDATE', idRegistro:null, descripcion:`Registro actualizado en FINCA`, usuarioId: req.usuario?.id || null, usuarioNombre: req.usuario?.username || 'Sistema' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   } finally {

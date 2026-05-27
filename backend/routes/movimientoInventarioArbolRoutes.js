@@ -1,5 +1,10 @@
-const express = require("express");
-const router = express.Router();
+const express = require('express');
+const router  = express.Router();
+
+const {
+  verificarToken,
+  requiereRol
+} = require('../middleware/auth');
 
 const {
   listar,
@@ -9,6 +14,8 @@ const {
   eliminar
 } = require("../controllers/movimientoInventarioArbolController");
 
+
+router.use(verificarToken);
 router.get("/", listar);
 router.get("/:id", obtenerPorId);
 router.post("/", insertar);
