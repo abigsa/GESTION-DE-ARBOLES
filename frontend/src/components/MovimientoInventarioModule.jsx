@@ -474,7 +474,7 @@ export default function MovimientoInventarioModule() {
             <table style={st.table}>
               <thead>
                 <tr>
-                  {['#','Árbol','Tipo','Origen','Destino','Fecha mov.','Fecha aplic.','Próx. revisión','Registrado por','Obs.','Acciones'].map(h => (
+                 {['Árbol','Tipo','Origen','Destino','Fecha mov.','Fecha aplic.','Próx. revisión','Registrado por','Obs.','Acciones'].map(h => (
                     <th key={h} style={st.th}>{h}</th>
                   ))}
                 </tr>
@@ -487,7 +487,7 @@ export default function MovimientoInventarioModule() {
                   const rowBg = dias !== null && dias <= 3 ? '#FFFDE7' : i%2===0 ? '#fff' : C.fondoClaro;
                   return (
                     <tr key={id} style={{background:rowBg}}>
-                      <td style={st.td}>{id}</td>
+                      
                       <td style={{...st.td, fontWeight:600, color:C.verdeProfundo}}>
                         {getText(m,'ARBOL','arbol','NOMBRE_ARBOL','nombre_arbol') || getText(m,'ID_ARBOL','id_arbol')}
                       </td>

@@ -49,6 +49,9 @@ export const colLabel = (key) =>
   COL_LABELS[key?.toLowerCase()] ?? key?.replace(/_/g,' ') ?? key;
 
 export const HIDDEN_COLS = new Set([
+  'id_tipo_movimiento','ID_TIPO_MOVIMIENTO',
+  'id_movimiento','ID_MOVIMIENTO',
+  'id','ID',
   'fecha_creacion','fecha_actualizacion','created_at','updated_at',
   'FECHA_CREACION','FECHA_ACTUALIZACION','CREATED_AT','UPDATED_AT','ACTIVO',
   'id_arbol_nuevo','ID_ARBOL_NUEVO',
