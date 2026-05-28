@@ -62,24 +62,62 @@ const insertar = async (req, res) => {
         fecha_resiembra: fecha_resiembra || null,
         motivo: motivo || null,
       },
-      { autoCommit: true }
+      { autoCommit: false }
+    );
+
+    const estadoResiembra = await conn.execute(
+      `
+      SELECT ID_ESTADO
+      FROM ESTADO_ARBOL
+      WHERE UPPER(NOMBRE_ESTADO) = 'RESIEMBRA'
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (!estadoResiembra.rows || estadoResiembra.rows.length === 0) {
+      throw new Error('No existe el estado RESIEMBRA en ESTADO_ARBOL.');
+    }
+
+    const idEstadoResiembra = estadoResiembra.rows[0].ID_ESTADO;
+
+    await conn.execute(
+      `
+      UPDATE ARBOL
+      SET ID_ESTADO = :id_estado
+      WHERE ID_ARBOL = :id_arbol
+      `,
+      {
+        id_estado: idEstadoResiembra,
+        id_arbol: Number(id_arbol_nuevo),
+      },
+      { autoCommit: false }
     );
 
     await registrarAuditoria(conn, {
-  tabla: 'RESIEMBRA',
-  operacion: 'INSERT',
-  idRegistro: null,
-  descripcion: 'Nuevo registro en RESIEMBRA',
-  usuarioId: req.usuario?.id || null,
-  usuarioNombre: req.usuario?.username || 'Sistema',
-});
+      tabla: 'RESIEMBRA',
+      operacion: 'INSERT',
+      idRegistro: null,
+      descripcion: 'Nuevo registro en RESIEMBRA',
+      usuarioId: req.usuario?.id || null,
+      usuarioNombre: req.usuario?.username || 'Sistema',
+    });
+
+    await conn.commit();
 
     res.status(201).json({
       success: true,
-      message: 'Resiembra insertada correctamente.',
+      message: 'Resiembra insertada correctamente y árbol actualizado a estado RESIEMBRA.',
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    if (conn) {
+      try { await conn.rollback(); } catch (_) {}
+    }
+
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   } finally {
     await closeConnection(conn);
   }
