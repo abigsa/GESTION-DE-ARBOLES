@@ -294,17 +294,24 @@ export default function ReporteHistorialEstados({ onBack }) {
     let rows = historial;
     if (filtroArbol)  rows = rows.filter(r => String(get(r,'ID_ARBOL','id_arbol')) === filtroArbol);
     if (filtroEstado) rows = rows.filter(r =>
-      String(get(r,'ID_ESTADO_NUEVO','id_estado_nuevo')) === filtroEstado ||
-      String(get(r,'ID_ESTADO_ANTERIOR','id_estado_anterior')) === filtroEstado
+      String(get(r,'ID_ESTADO_NUEVO','id_estado_nuevo')) === filtroEstado
     );
     if (fechaDesde) {
-      const d = new Date(fechaDesde);
-      rows = rows.filter(r => new Date(get(r,'FECHA_CAMBIO','fecha_cambio')) >= d);
+      // Comparar solo la parte de fecha (YYYY-MM-DD) para evitar problemas de zona horaria
+      rows = rows.filter(r => {
+        const fechaRaw = get(r,'FECHA_CAMBIO','fecha_cambio');
+        if (!fechaRaw) return false;
+        const fechaRegistro = String(fechaRaw).slice(0, 10); // "YYYY-MM-DD"
+        return fechaRegistro >= fechaDesde;
+      });
     }
     if (fechaHasta) {
-      const d = new Date(fechaHasta);
-      d.setHours(23,59,59);
-      rows = rows.filter(r => new Date(get(r,'FECHA_CAMBIO','fecha_cambio')) <= d);
+      rows = rows.filter(r => {
+        const fechaRaw = get(r,'FECHA_CAMBIO','fecha_cambio');
+        if (!fechaRaw) return false;
+        const fechaRegistro = String(fechaRaw).slice(0, 10); // "YYYY-MM-DD"
+        return fechaRegistro <= fechaHasta;
+      });
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -339,19 +346,31 @@ export default function ReporteHistorialEstados({ onBack }) {
 
   const maxTop = Math.max(...top5.map(t => t.count), 1);
 
-  // Lista única de árboles que aparecen en el historial (ordenada alfabéticamente
-  // por nombre). Esta lista alimenta el dropdown del filtro y siempre incluye
-  // árboles que existieron alguna vez, aunque ya estén inactivos.
+  // Lista única de árboles que aparecen en el historial, deduplicada por ID.
+  // Incluye conteo de cambios para que el cliente vea cuántos registros tiene cada árbol.
   const arbolesDelHistorial = useMemo(() => {
-    const vistos = new Map();
+    const vistos = new Map(); // id → { variedad, surco, posY, conteo }
     historial.forEach(r => {
       const id = get(r,'ID_ARBOL','id_arbol');
-      if (id != null && !vistos.has(id)) {
-        vistos.set(id, nombreArbolDeRegistro(r));
+      if (id == null) return;
+      if (!vistos.has(id)) {
+        const variedad = get(r,'NOMBRE_ARBOL','nombre_arbol') || '';
+        const surco    = get(r,'NUMERO_SURCO','numero_surco');
+        const posY     = get(r,'POSICION_Y','posicion_y');
+        vistos.set(id, { variedad, surco, posY, conteo: 1 });
+      } else {
+        vistos.get(id).conteo++;
       }
     });
     return Array.from(vistos.entries())
-      .map(([id, nombre]) => ({ id, nombre }))
+      .map(([id, d]) => {
+        const partes = [];
+        if (d.variedad) partes.push(d.variedad);
+        if (d.surco != null) partes.push(`Surco ${d.surco}`);
+        if (d.posY  != null) partes.push(`Pos ${d.posY}`);
+        const nombre = partes.length > 0 ? partes.join(' · ') : `Árbol #${id}`;
+        return { id, nombre, conteo: d.conteo };
+      })
       .sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historial, arbolesMap]);
@@ -447,9 +466,9 @@ export default function ReporteHistorialEstados({ onBack }) {
             />
           </div>
           <select style={st.sel} value={filtroArbol} onChange={e => setFiltroArbol(e.target.value)}>
-            <option value="">Todos los árboles</option>
-            {arbolesDelHistorial.map(({ id, nombre }) => (
-              <option key={id} value={id}>{nombre}</option>
+            <option value="">— Todos los árboles —</option>
+            {arbolesDelHistorial.map(({ id, nombre, conteo }) => (
+              <option key={id} value={id}>{nombre}  ({conteo} cambio{conteo !== 1 ? 's' : ''})</option>
             ))}
           </select>
           <select style={st.sel} value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
